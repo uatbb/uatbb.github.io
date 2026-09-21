@@ -2,6 +2,7 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   let adminStarted = false;
+  let lastUserId = null;
 
   /* ---------- تبديل التبويبات ---------- */
   window.switchTo = function (id) {
@@ -32,10 +33,19 @@
   }
 
   function startAdminApp() {
-    if (adminStarted) return;
-    adminStarted = true;
-    initBottomNav();
-    window.Admin.init();
+    DB.auth.getUser().then(({ data }) => {
+      const uid = data && data.user ? data.user.id : null;
+      // تبديل الحساب في نفس التبويب → إعادة تحميل كاملة لحالة نظيفة
+      if (lastUserId && uid && lastUserId !== uid) {
+        location.reload();
+        return;
+      }
+      lastUserId = uid;
+      if (adminStarted) return;
+      adminStarted = true;
+      initBottomNav();
+      window.Admin.init();
+    });
   }
 
   /* ---------- إغلاق النوافذ المنبثقة ---------- */
@@ -81,6 +91,7 @@
       // لوحة المدير: خلف تسجيل الدخول
       $('page-admin').classList.remove('hidden');
       window.Auth.onAuthed = startAdminApp;
+      window.Auth.onSignedOut = () => setTimeout(() => location.reload(), 400);
       window.Auth.init();
     }
   }

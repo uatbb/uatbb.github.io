@@ -4,6 +4,8 @@
   const $ = (id) => document.getElementById(id);
 
   A.onAuthed = null; // يُعيَّن من app.js
+  A.onSignedOut = null;
+  let wasAuthed = false;
 
   A.init = function () {
     updateUI(false);
@@ -29,7 +31,11 @@
         if (nameEl && data && data.user) nameEl.textContent = data.user.email || '';
       });
       if (A.onAuthed) A.onAuthed();
+    } else if (wasAuthed && A.onSignedOut) {
+      // انتقال فعلي من دخول إلى خروج (لا عند إقلاع الصفحة)
+      A.onSignedOut();
     }
+    wasAuthed = authed;
   }
 
   function onLogin(e) {

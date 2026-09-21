@@ -24,8 +24,21 @@
     initRole().then(() => A.loadTenders());
   };
 
+  // استعادة شريط التنقل لحالته الكاملة (قبل تطبيق قيود الدور)
+  function restoreNav() {
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('hidden'));
+    const navGrid = document.querySelector('.bottom-nav > div');
+    if (navGrid) {
+      navGrid.classList.remove('grid-cols-1', 'grid-cols-2');
+      navGrid.classList.add('grid-cols-4');
+    }
+    const badge = $('role-badge');
+    if (badge) badge.classList.add('hidden');
+  }
+
   // تحديد دور المستخدم: admin (كامل) | committee (لجنة عرض) | opener (لجنة فتح)
   async function initRole() {
+    restoreNav();
     let role = 'admin';
     try {
       const { data: { user } } = await DB.auth.getUser();
@@ -37,14 +50,17 @@
   }
 
   function applyRestrictedMode() {
-    // تبويبا الإنشاء والحسابات للإداري فقط
-    document.querySelectorAll('.nav-btn[data-tab="tab-create"], .nav-btn[data-tab="tab-accounts"]').forEach((b) => b.remove());
+    // تبويبا الإنشاء والحسابات للإداري فقط (إخفاء — لا حذف، لتبقى قابلة للاستعادة)
+    document.querySelectorAll('.nav-btn[data-tab="tab-create"], .nav-btn[data-tab="tab-accounts"]').forEach((b) => b.classList.add('hidden'));
     // لجنة الفتح: تبويب الفتح فقط (تُخفى قائمة الاستشارات أيضًا)
     if (A.role === 'opener') {
-      document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.remove());
+      document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.classList.add('hidden'));
     }
     const navGrid = document.querySelector('.bottom-nav > div');
-    if (navGrid) navGrid.classList.replace('grid-cols-4', A.role === 'opener' ? 'grid-cols-1' : 'grid-cols-2');
+    if (navGrid) {
+      navGrid.classList.remove('grid-cols-4', 'grid-cols-1', 'grid-cols-2');
+      navGrid.classList.add(A.role === 'opener' ? 'grid-cols-1' : 'grid-cols-2');
+    }
     const badge = $('role-badge');
     if (badge) {
       badge.classList.remove('hidden');
