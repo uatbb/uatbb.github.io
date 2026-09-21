@@ -39,8 +39,12 @@
   function applyRestrictedMode() {
     // تبويبا الإنشاء والحسابات للإداري فقط
     document.querySelectorAll('.nav-btn[data-tab="tab-create"], .nav-btn[data-tab="tab-accounts"]').forEach((b) => b.remove());
+    // لجنة الفتح: تبويب الفتح فقط (تُخفى قائمة الاستشارات أيضًا)
+    if (A.role === 'opener') {
+      document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.remove());
+    }
     const navGrid = document.querySelector('.bottom-nav > div');
-    if (navGrid) navGrid.classList.replace('grid-cols-4', 'grid-cols-2');
+    if (navGrid) navGrid.classList.replace('grid-cols-4', A.role === 'opener' ? 'grid-cols-1' : 'grid-cols-2');
     const badge = $('role-badge');
     if (badge) {
       badge.classList.remove('hidden');
@@ -288,7 +292,9 @@
       '<button data-act="downloads" data-id="' + t.id + '" class="w-full btn-secondary">👥 من حمّل (' + dl + ')</button>' +
       (isPub && canOpen()
         ? '<button data-act="replace" data-id="' + t.id + '" class="w-full btn-secondary">📄 تغيير دفتر الشروط</button>' +
-          '<button data-act="open" data-id="' + t.id + '" class="w-full btn-danger">🔓 فتح الأظرفة</button>'
+          (new Date(t.opening_date).getTime() <= Date.now()
+            ? '<button data-act="open" data-id="' + t.id + '" class="w-full btn-danger">🔓 فتح الأظرفة</button>'
+            : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center" title="يتفعّل في ' + fmtDate(t.opening_date, true) + '">🔒 بانتظار موعد الفتح</span>')
         : '') +
       (isAdmin()
         ? '<button data-act="delete" data-id="' + t.id + '" class="w-full btn-secondary !text-red-600">🗑️ حذف الاستشارة</button>'
@@ -560,6 +566,9 @@
     const t = openTender;
     if (!t) return;
     if (!canOpen()) return toast('الفتح متاح للإداري ولجنة فتح الأظرفة فقط', 'error');
+    if (new Date(t.opening_date).getTime() > Date.now()) {
+      return toast('لم يحن موعد فتح الأظرفة بعد — الموعد: ' + fmtDate(t.opening_date, true), 'error', 6000);
+    }
     if (val('open-ref-input') !== t.reference) return toast('رقم الاستشارة غير مطابق', 'error');
 
     const btn = $('open-confirm-btn');
