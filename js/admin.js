@@ -432,10 +432,11 @@
     $('qr-duration').textContent = t.duration || '—';
     $('qr-opening').textContent = fmtDate(t.opening_date, true);
 
-    // رابط QR
+    // رابط QR: رمز قصير من أرقام المرجع (01/2026 → ?c=012026) — وUUID كامل احتياطًا
     const configured = (window.TENDER_CONFIG || {}).PUBLIC_BASE_URL;
     const base = (configured || location.href.split('?')[0]).replace(/\/$/, '');
-    const url = base + '?open=' + t.id;
+    const code = (t.reference || '').replace(/\D/g, '');
+    const url = code ? base + '?c=' + code : base + '?open=' + t.id;
     const qrUrl = $('qr-url');
     if (qrUrl) qrUrl.textContent = url;
 
