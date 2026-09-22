@@ -455,7 +455,7 @@
       toast(t('t_qr_load'), 'error');
       return;
     }
-    window.QRCode.toCanvas(canvas, url, { width: 220, margin: 2, errorCorrectionLevel: 'M' }, (err) => {
+    window.QRCode.toCanvas(canvas, url, { width: 380, margin: 2, errorCorrectionLevel: 'M' }, (err) => {
       if (err) {
         console.error(err);
         toast(t('t_qr_gen'), 'error');

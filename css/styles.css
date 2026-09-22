@@ -82,18 +82,28 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 /* ===== شريط التنقل السفلي ===== */
 .bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
 
-/* ===== الطباعة: بطاقة QR فقط ===== */
+/* ===== الطباعة: بطاقة QR على ورقة A4 كاملة ===== */
+@page { size: A4 portrait; margin: 0; }
 @media print {
+  body { background: #fff !important; }
   body * { visibility: hidden !important; }
+  #qr-modal {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+    background: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
   #qr-card, #qr-card * { visibility: visible !important; }
   #qr-card {
-    position: fixed;
-    top: 0; right: 0; left: 0;
-    margin: 0 auto;
-    width: 92%;
-    max-width: 480px;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
     box-shadow: none !important;
-    border: 1px solid #94a3b8;
   }
   header, nav, .no-print { display: none !important; }
 }
