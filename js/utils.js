@@ -15,7 +15,8 @@
     if (!iso) return '—';
     const d = new Date(iso);
     if (isNaN(d)) return '—';
-    return new Intl.DateTimeFormat(AR_LOCALE, {
+    const loc = (window.I18N && I18N.lang === 'fr') ? 'fr-FR' : AR_LOCALE;
+    return new Intl.DateTimeFormat(loc, {
       dateStyle: 'medium',
       ...(withTime ? { timeStyle: 'short' } : {}),
     }).format(d);
@@ -26,14 +27,15 @@
   };
 
   window.fmtCountdown = function (ms) {
-    if (ms <= 0) return 'انتهى';
+    if (ms <= 0) return (window.I18N ? I18N.t('cd_expired') : 'انتهى');
     const s = Math.floor(ms / 1000);
     const d = Math.floor(s / 86400);
     const h = Math.floor((s % 86400) / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
     const p = (n) => String(n).padStart(2, '0');
-    return (d > 0 ? d + ' يوم ' : '') + p(h) + ':' + p(m) + ':' + p(sec);
+    const dayPart = d > 0 ? (window.I18N ? I18N.t('cd_day', { d }) : d + ' يوم ') : '';
+    return dayPart + p(h) + ':' + p(m) + ':' + p(sec);
   };
 
   window.downloadBlob = function (blob, filename) {
@@ -126,9 +128,10 @@
   };
 
   window.statusBadge = function (s) {
+    const t = window.I18N ? I18N.t : (k) => k;
     const map = {
-      published: ['منشورة', 'bg-teal-50 text-teal-700 border-teal-200'],
-      opened: ['تم فتح الأظرفة', 'bg-slate-100 text-slate-500 border-slate-200'],
+      published: [t('st_published'), 'bg-teal-50 text-teal-700 border-teal-200'],
+      opened: [t('st_opened'), 'bg-slate-100 text-slate-500 border-slate-200'],
     };
     const item = map[s] || [s, 'bg-slate-100 text-slate-500 border-slate-200'];
     return (

@@ -63,10 +63,47 @@
     });
   }
 
+  /* ---------- رمز قصير (?c=012026) — نفس منطق الموقع العام ---------- */
+  function resolveByCode(code) {
+    const root = $('download-root');
+    root.innerHTML = '<div class="text-center"><div class="spinner my-8"></div></div>';
+    DB.from('tenders_public').select('id, reference, opening_date').then(({ data, error }) => {
+      if (!error) {
+        const matches = (data || []).filter((r) => (r.reference || '').replace(/\D/g, '') === code);
+        if (matches.length) {
+          matches.sort((a, b) => String(b.opening_date || '').localeCompare(String(a.opening_date || '')));
+          window.DownloadPage.init(matches[0].id);
+          return;
+        }
+      }
+      window.DownloadPage.init('__invalid__');
+    });
+  }
+
+  /* ---------- تبديل اللغة ---------- */
+  function initLang() {
+    const lb = $('lang-btn');
+    if (lb) {
+      lb.textContent = I18N.label();
+      lb.addEventListener('click', () => I18N.setLang(I18N.other()));
+    }
+    document.addEventListener('langchange', () => {
+      const A = window.Admin;
+      if (A && adminStarted) {
+        if (A.updateRoleBadge) A.updateRoleBadge();
+        if (A.refreshTenders) A.refreshTenders();
+        if (A.loadOpening) A.loadOpening();
+        if (A.refreshAccounts) A.refreshAccounts();
+      }
+    });
+  }
+
   /* ---------- الإقلاع ---------- */
   function boot() {
+    I18N.init();
     const params = new URLSearchParams(location.search);
     const token = params.get('open');
+    const code = params.get('c');
 
     let db = null;
     try {
@@ -82,11 +119,15 @@
     }
 
     initModals();
+    initLang();
 
     if (token) {
       // صفحة المتعامل: عامة، بدون تسجيل دخول
       $('page-download').classList.remove('hidden');
       window.DownloadPage.init(token);
+    } else if (code) {
+      $('page-download').classList.remove('hidden');
+      resolveByCode(code);
     } else {
       // لوحة المدير: خلف تسجيل الدخول
       $('page-admin').classList.remove('hidden');

@@ -42,16 +42,16 @@
     e.preventDefault();
     const email = $('login-email').value.trim();
     const password = $('login-password').value;
-    if (!email || !password) return toast('أدخل البريد وكلمة المرور', 'error');
+    if (!email || !password) return toast(I18N.t('t_login_fill'), 'error');
     const btn = $('login-form button[type=submit]');
-    setBusy(btn, true, '⏳ جارٍ الدخول...');
+    setBusy(btn, true, I18N.t('busy_login'));
     DB.auth.signInWithPassword({ email, password }).then(({ error }) => {
-      setBusy(btn, false, 'دخول');
+      setBusy(btn, false, I18N.t('login_btn'));
       if (error) {
         const msg =
           error.message === 'Invalid login credentials'
-            ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
-            : 'فشل الدخول: ' + error.message;
+            ? I18N.t('t_login_invalid')
+            : I18N.t('t_login_fail', { msg: error.message });
         toast(msg, 'error', 5000);
       }
     });
