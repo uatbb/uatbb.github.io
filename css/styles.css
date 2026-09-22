@@ -101,7 +101,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     position: absolute;
     top: 0; left: 0; right: 0;
     width: 210mm;
-    min-height: 297mm;
+    height: 297mm;
+    min-height: 0;
+    overflow: hidden;
     margin: 0;
     box-shadow: none !important;
   }
