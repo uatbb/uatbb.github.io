@@ -382,7 +382,7 @@
 
       qr_title: 'Carte QR — à remettre à l’opérateur',
       qr_office: 'Bureau des marchés — Bon de téléchargement du cahier des charges',
-      qr_count: 'N° : ',
+      qr_count: 'N° ',
       qr_dur_l: 'Durée',
       qr_op_l: 'Ouverture',
       qr_note: "Scannez le code avec la caméra du téléphone pour ouvrir la page de téléchargement. Le lien temporaire est valable 10 minutes et les coordonnées de votre organisme sont enregistrées à chaque téléchargement.",
