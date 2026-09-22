@@ -314,8 +314,9 @@
       '</div>' +
       '</div>' +
       '<div class="mt-3 grid grid-cols-2 gap-2">' +
-      '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
-      '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' +
+       '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
+       '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' +
+       (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
       (isPub && canOpen()
         ? '<button data-act="replace" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_replace') + '</button>' +
           (new Date(tt.opening_date).getTime() <= Date.now()
@@ -343,6 +344,7 @@
       if (error || !data) return toast(t('t_fetch_fail'), 'error');
       if (btn.dataset.act === 'qr') A.showQR(data);
       else if (btn.dataset.act === 'downloads') A.showDownloads(data);
+      else if (btn.dataset.act === 'direct') directDownload(data);
       else if (btn.dataset.act === 'open') askOpen(data);
       else if (btn.dataset.act === 'replace') askReplace(data);
       else if (btn.dataset.act === 'delete') askDelete(data);
@@ -395,6 +397,7 @@
         '</div>' +
         '</div>' +
         '<div class="mt-3 grid grid-cols-2 gap-2">' +
+        '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' +
         '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('op_btn_dl', { n: dl(tt) }) + '</button>' +
         (isReady && canOpen()
           ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
@@ -577,6 +580,28 @@
     if (!w) return toast(t('t_popup'), 'error');
     w.document.write(html);
     w.document.close();
+  }
+
+  /* ---------- تحميل مباشر (لجنة الفتح — دون QR) ---------- */
+
+  function directDownload(tt) {
+    if (!tt || tt.status !== 'published') {
+      return toast(t('t_direct_fail'), 'error', 5000);
+    }
+    toast(t('t_direct_start'), 'info', 2500);
+    DB.functions.invoke('get-download', {
+      body: {
+        tender_id: tt.id,
+        company: t('t_direct_as'),
+        phone: '000000000',
+        email: 'committee@uatbb.dz',
+      },
+    })
+      .then(({ data, error }) => {
+        if (error || !data || !data.url) return toast(t('t_direct_fail'), 'error', 5000);
+        window.open(data.url, '_blank');
+      })
+      .catch(() => toast(t('t_direct_fail'), 'error', 5000));
   }
 
   /* ---------- فتح الأظرفة ---------- */
