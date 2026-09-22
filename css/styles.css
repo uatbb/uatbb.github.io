@@ -96,12 +96,17 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     padding: 0 !important;
     display: block !important;
   }
+  #qr-modal > div {
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
   #qr-card, #qr-card * { visibility: visible !important; }
   #qr-card {
     position: absolute;
     top: 0; left: 0; right: 0;
     width: 210mm;
-    height: 297mm;
+    height: 283mm;
     min-height: 0;
     overflow: hidden;
     margin: 0;
