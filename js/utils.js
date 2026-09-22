@@ -15,8 +15,12 @@
     if (!iso) return '—';
     const d = new Date(iso);
     if (isNaN(d)) return '—';
-    const loc = (window.I18N && I18N.lang === 'fr') ? 'fr-FR' : AR_LOCALE;
-    return new Intl.DateTimeFormat(loc, {
+    if (window.I18N && I18N.lang === 'fr') {
+      const p = (n) => String(n).padStart(2, '0');
+      const base = p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+      return withTime ? base + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) : base;
+    }
+    return new Intl.DateTimeFormat(AR_LOCALE, {
       dateStyle: 'medium',
       ...(withTime ? { timeStyle: 'short' } : {}),
     }).format(d);
