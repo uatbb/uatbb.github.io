@@ -29,16 +29,16 @@
 
   <!-- ===== شريط الإعداد (يظهر إذا لم يُملا config) ===== -->
   <div id="setup-banner" class="hidden max-w-xl mx-auto mt-10 mx-4 bg-amber-50 border border-amber-300 rounded-2xl p-5 shadow-sm">
-    <h2 class="font-black text-amber-800 mb-3">⚙️ التطبيق غير موصول بقاعدة البيانات</h2>
+    <h2 class="font-black text-amber-800 mb-3" data-i18n="setup_title">⚙️ التطبيق غير موصول بقاعدة البيانات</h2>
     <ol class="text-sm text-amber-800 space-y-2 list-decimal pr-5 leading-relaxed">
-      <li>أنشئ مشروعًا مجانيًا على <span dir="ltr">supabase.com</span></li>
-      <li>افتح <b>SQL Editor</b> وشغّل محتوى الملف
+      <li data-i18n-html="setup_s1">أنشئ مشروعًا مجانيًا على <span dir="ltr">supabase.com</span></li>
+      <li data-i18n-html="setup_s2">افتح <b>SQL Editor</b> وشغّل محتوى الملف
         <code class="text-xs bg-amber-100 px-1.5 py-0.5 rounded" dir="ltr">supabase/migrations/001_initial_schema.sql</code></li>
-      <li>من <b>Project Settings → API</b> انسخ <b>Project URL</b> و <b>anon key</b> إلى الملف
+      <li data-i18n-html="setup_s3">من <b>Project Settings → API</b> انسخ <b>Project URL</b> و <b>anon key</b> إلى الملف
         <code class="text-xs bg-amber-100 px-1.5 py-0.5 rounded" dir="ltr">js/config.js</code></li>
-      <li>حدّث هذه الصفحة</li>
+      <li data-i18n="setup_s4">حدّث هذه الصفحة</li>
     </ol>
-    <p class="text-xs text-amber-600 mt-3">💡 للتجربة المحلية: شغّل <code dir="ltr">npx serve</code> داخل مجلد المشروع وافتح <code dir="ltr">http://localhost:3000</code></p>
+    <p class="text-xs text-amber-600 mt-3" data-i18n-html="setup_tip">💡 للتجربة المحلية: شغّل <code dir="ltr">npx serve</code> داخل مجلد المشروع وافتح <code dir="ltr">http://localhost:3000</code></p>
   </div>
 
   <!-- ============================================================ -->
@@ -46,7 +46,7 @@
   <!-- ============================================================ -->
   <div id="page-download" class="hidden">
     <div id="download-root" class="max-w-lg mx-auto px-4 py-8"></div>
-    <footer class="text-center text-[11px] text-slate-400 pb-6">جامعة عين تموشنت بلحاج بوشعيب — بوابة مكتب الصفقات</footer>
+    <footer class="text-center text-[11px] text-slate-400 pb-6"><span data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</span> — <span data-i18n="app_name">بوابة مكتب الصفقات</span></footer>
   </div>
 
   <!-- ============================================================ -->
@@ -59,22 +59,22 @@
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 w-full max-w-sm">
         <div class="text-center mb-5">
           <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 object-contain mb-2">
-          <h2 class="font-black text-slate-800">جامعة عين تموشنت بلحاج بوشعيب</h2>
-          <p class="text-xs text-slate-500 mt-0.5">بوابة مكتب الصفقات — دخول موظف المكتب فقط</p>
+          <h2 class="font-black text-slate-800" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</h2>
+          <p class="text-xs text-slate-500 mt-0.5" data-i18n="login_sub">بوابة مكتب الصفقات — دخول موظف المكتب فقط</p>
         </div>
         <form id="login-form" class="space-y-3">
           <div>
-            <label class="lbl" for="login-email">البريد الإلكتروني</label>
+            <label class="lbl" for="login-email" data-i18n="login_email">البريد الإلكتروني</label>
             <input id="login-email" class="inp" type="email" dir="ltr" required autocomplete="username">
           </div>
           <div>
-            <label class="lbl" for="login-password">كلمة المرور</label>
+            <label class="lbl" for="login-password" data-i18n="login_pass">كلمة المرور</label>
             <input id="login-password" class="inp" type="password" dir="ltr" required autocomplete="current-password">
           </div>
-          <button type="submit" class="btn-primary w-full">دخول</button>
+          <button type="submit" class="btn-primary w-full" data-i18n="login_btn">دخول</button>
         </form>
         <div class="mt-4 text-center">
-          <p class="text-[11px] text-slate-400 leading-relaxed">لا تملك حسابًا؟ اطلب من مسؤول المكتب إضافتك من تبويب «الحسابات».</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed" data-i18n="login_noacc">لا تملك حسابًا؟ اطلب من مسؤول المكتب إضافتك من تبويب «الحسابات».</p>
         </div>
       </div>
     </div>
@@ -86,20 +86,21 @@
         <div class="flex items-center gap-2.5">
           <img src="img/logo.png" alt="شعار الجامعة" class="h-10 w-10 object-contain bg-white rounded-lg p-0.5 shrink-0">
           <div>
-            <h1 class="font-black text-lg leading-tight">بوابة مكتب الصفقات</h1>
-            <p class="text-[11px] text-teal-100">جامعة عين تموشنت بلحاج بوشعيب</p>
+            <h1 class="font-black text-lg leading-tight" data-i18n="app_name">بوابة مكتب الصفقات</h1>
+            <p class="text-[11px] text-teal-100" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <span id="role-badge" class="hidden text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
           <span id="user-name" class="text-[11px] text-teal-100" dir="ltr"></span>
-          <button id="logout-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-3 py-1 font-semibold">تسجيل الخروج</button>
+          <button id="lang-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
+          <button id="logout-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
         </div>
       </div>
     </header>
 
     <!-- ===== تنبيه: قاعدة البيانات غير محدثة ===== -->
-    <div id="schema-banner" class="hidden max-w-3xl mx-auto mt-3 mx-4 bg-red-50 border border-red-300 rounded-xl p-3 text-sm text-red-800 leading-relaxed">
+    <div id="schema-banner" class="hidden max-w-3xl mx-auto mt-3 mx-4 bg-red-50 border border-red-300 rounded-xl p-3 text-sm text-red-800 leading-relaxed" data-i18n-html="schema_banner">
       ⚠️ <b>قاعدة البيانات غير محدثة</b> — إنشاء/حذف الاستشارات سيفشل. افتح Supabase ← <b>SQL Editor</b> وشغّل محتوى الملف
       <code class="bg-red-100 px-1.5 py-0.5 rounded text-xs" dir="ltr">supabase\migrations\006_full_update.sql</code>
       ثم حدّث هذه الصفحة (F5).
@@ -110,41 +111,41 @@
       <!-- ===== تبويب: إنشاء استشارة ===== -->
       <section id="tab-create">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h2 class="font-black text-slate-800 mb-1">📝 إنشاء استشارة / طلب عروض</h2>
-          <p class="text-xs text-slate-400 mb-4">بعد النشر مباشرةً ستظهر بطاقة QR الجاهزة للطباعة والتسليم للمتعامل.</p>
+          <h2 class="font-black text-slate-800 mb-1" data-i18n="create_title">📝 إنشاء استشارة / طلب عروض</h2>
+          <p class="text-xs text-slate-400 mb-4" data-i18n="create_sub">بعد النشر مباشرةً ستظهر بطاقة QR الجاهزة للطباعة والتسليم للمتعامل.</p>
           <form id="create-form" class="space-y-4">
             <div>
-              <label class="lbl">نوع الصفقة *</label>
+              <label class="lbl" data-i18n="f_kind">نوع الصفقة *</label>
               <div class="grid grid-cols-2 gap-2">
-                <label class="kind-opt"><input type="radio" name="f-kind" value="consultation" class="sr-only" checked>📄 استشارة</label>
-                <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only">📋 طلب عروض</label>
+                <label class="kind-opt"><input type="radio" name="f-kind" value="consultation" class="sr-only" checked><span data-i18n="kind_consultation">📄 استشارة</span></label>
+                <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="lbl" for="f-reference">رقم الاستشارة *</label>
+                <label class="lbl" for="f-reference" data-i18n="f_reference">رقم الاستشارة *</label>
                 <input id="f-reference" class="inp" placeholder="045/2026" required>
               </div>
               <div>
-                <label class="lbl" for="f-duration">مدة الاستشارة</label>
-                <input id="f-duration" class="inp" placeholder="60 يومًا">
+                <label class="lbl" for="f-duration" data-i18n="f_duration">مدة الاستشارة</label>
+                <input id="f-duration" class="inp" data-i18n-ph="f_duration_ph" placeholder="60 يومًا">
               </div>
             </div>
             <div>
-              <label class="lbl" for="f-title">عنوان الاستشارة *</label>
-              <input id="f-title" class="inp" placeholder="استشارة — توريد تجهيزات مخبرية" required>
+              <label class="lbl" for="f-title" data-i18n="f_title">عنوان الاستشارة *</label>
+              <input id="f-title" class="inp" data-i18n-ph="f_title_ph" placeholder="استشارة — توريد تجهيزات مخبرية" required>
             </div>
             <div>
-              <label class="lbl" for="f-opening">تاريخ فتح الأظرفة *</label>
+              <label class="lbl" for="f-opening" data-i18n="f_opening">تاريخ فتح الأظرفة *</label>
               <input id="f-opening" class="inp" type="datetime-local" required>
             </div>
             <div>
-              <label class="lbl" for="f-file">دفتر الشروط (PDF — بحد أقصى 50MB) *</label>
+              <label class="lbl" for="f-file" data-i18n="f_file">دفتر الشروط (PDF — بحد أقصى 50MB) *</label>
               <input id="f-file" type="file" accept="application/pdf" required
                 class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 file:font-semibold file:cursor-pointer cursor-pointer">
               <p id="file-info" class="text-xs text-slate-400 mt-1"></p>
             </div>
-            <button id="create-btn" type="submit" class="btn-primary w-full">🚀 نشر وتوليد QR</button>
+            <button id="create-btn" type="submit" class="btn-primary w-full" data-i18n="create_btn">🚀 نشر وتوليد QR</button>
           </form>
         </div>
       </section>
@@ -152,8 +153,8 @@
       <!-- ===== تبويب: الاستشارات ===== -->
       <section id="tab-tenders" class="hidden">
         <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="font-black text-slate-800">📥 الاستشارات / طلبات العروض</h2>
-          <input id="tender-search" class="inp !w-44 sm:!w-56" placeholder="🔍 بحث بالرقم أو العنوان">
+          <h2 class="font-black text-slate-800" data-i18n="tenders_title">📥 الاستشارات / طلبات العروض</h2>
+          <input id="tender-search" class="inp !w-44 sm:!w-56" data-i18n-ph="tenders_search_ph" placeholder="🔍 بحث بالرقم أو العنوان">
         </div>
         <div id="tenders-list" class="space-y-3"></div>
         <div id="tenders-pager"></div>
@@ -162,8 +163,8 @@
       <!-- ===== تبويب: لجنة فتح الأظرفة ===== -->
       <section id="tab-opening" class="hidden">
         <div class="mb-3">
-          <h2 class="font-black text-slate-800">🔓 لجنة فتح الأظرفة</h2>
-          <p class="text-xs text-slate-400">ما حان موعد فتحه، المتعاملون الذين حمّلوا، وسجل ما فُتح</p>
+          <h2 class="font-black text-slate-800" data-i18n="opening_title">🔓 لجنة فتح الأظرفة</h2>
+          <p class="text-xs text-slate-400" data-i18n="opening_sub">ما حان موعد فتحه، المتعاملون الذين حمّلوا، وسجل ما فُتح</p>
         </div>
         <div id="opening-list" class="space-y-3"></div>
       </section>
@@ -171,25 +172,25 @@
       <!-- ===== تبويب: الحسابات ===== -->
       <section id="tab-accounts" class="hidden">
         <div class="mb-3">
-          <h2 class="font-black text-slate-800">👥 الحسابات</h2>
-          <p class="text-xs text-slate-400">كل الحسابات تحصل على صلاحيات كاملة (إنشاء، سجل التحميلات، فتح الأظرفة)</p>
+          <h2 class="font-black text-slate-800" data-i18n="accounts_title">👥 الحسابات</h2>
+          <p class="text-xs text-slate-400" data-i18n="accounts_sub">كل الحسابات تحصل على صلاحيات كاملة (إنشاء، سجل التحميلات، فتح الأظرفة)</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-3">
-          <h3 class="font-bold text-slate-700 text-sm mb-3">إضافة حساب جديد</h3>
+          <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="acc_add_title">إضافة حساب جديد</h3>
           <form id="account-form" class="space-y-3">
-            <input id="a-name" class="inp" type="text" placeholder="الاسم الكامل" required>
+            <input id="a-name" class="inp" type="text" data-i18n-ph="acc_name_ph" placeholder="الاسم الكامل" required>
             <input id="a-email" class="inp" type="email" dir="ltr" placeholder="email@univ.dz" required>
-            <input id="a-pass" class="inp" type="password" dir="ltr" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
+            <input id="a-pass" class="inp" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
             <div>
-              <label class="lbl">نوع الحساب</label>
+              <label class="lbl" data-i18n="acc_role">نوع الحساب</label>
               <div class="grid grid-cols-3 gap-2">
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="admin" class="sr-only" checked>🔑 كامل</label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="committee" class="sr-only">👁️ لجنة عرض</label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="opener" class="sr-only">🔓 لجنة فتح</label>
+                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="admin" class="sr-only" checked><span data-i18n="acc_role_full">🔑 كامل</span></label>
+                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="committee" class="sr-only"><span data-i18n="acc_role_view">👁️ لجنة عرض</span></label>
+                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open">🔓 لجنة فتح</span></label>
               </div>
-              <p class="text-[11px] text-slate-400 mt-1">عرض: مشاهدة فقط — فتح: مشاهدة + فتح الأظرفة — كامل: كل الصلاحيات</p>
+              <p class="text-[11px] text-slate-400 mt-1" data-i18n="acc_role_desc">عرض: مشاهدة فقط — فتح: مشاهدة + فتح الأظرفة — كامل: كل الصلاحيات</p>
             </div>
-            <button type="submit" class="btn-primary w-full">➕ إضافة الحساب</button>
+            <button type="submit" class="btn-primary w-full" data-i18n="acc_add_btn">➕ إضافة الحساب</button>
           </form>
         </div>
         <div id="accounts-list" class="space-y-2"></div>
@@ -201,16 +202,16 @@
     <nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,.05)]">
       <div class="max-w-3xl mx-auto grid grid-cols-4">
         <button class="nav-btn py-2.5 text-center text-xs font-semibold text-white bg-primary-800" data-tab="tab-create">
-          <span class="block text-lg leading-none mb-1">📝</span>إنشاء
+          <span class="block text-lg leading-none mb-1">📝</span><span data-i18n="nav_create">إنشاء</span>
         </button>
         <button class="nav-btn py-2.5 text-center text-xs font-semibold text-slate-500" data-tab="tab-tenders">
-          <span class="block text-lg leading-none mb-1">📥</span>الاستشارات
+          <span class="block text-lg leading-none mb-1">📥</span><span data-i18n="nav_tenders">الاستشارات</span>
         </button>
         <button class="nav-btn py-2.5 text-center text-xs font-semibold text-slate-500" data-tab="tab-opening">
-          <span class="block text-lg leading-none mb-1">🔓</span>الفتح
+          <span class="block text-lg leading-none mb-1">🔓</span><span data-i18n="nav_opening">الفتح</span>
         </button>
         <button class="nav-btn py-2.5 text-center text-xs font-semibold text-slate-500" data-tab="tab-accounts">
-          <span class="block text-lg leading-none mb-1">👥</span>الحسابات
+          <span class="block text-lg leading-none mb-1">👥</span><span data-i18n="nav_accounts">الحسابات</span>
         </button>
       </div>
     </nav>
@@ -221,26 +222,26 @@
   <div id="qr-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between px-4 py-3 bg-primary-700 text-white no-print sticky top-0">
-        <span class="font-bold text-sm">بطاقة QR — تُسلَّم للمتعامل</span>
+        <span class="font-bold text-sm" data-i18n="qr_title">بطاقة QR — تُسلَّم للمتعامل</span>
         <button data-close="qr-modal" class="text-xl leading-none opacity-80">✕</button>
       </div>
       <div id="qr-card" class="p-6 text-center">
         <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 object-contain mb-2">
-        <div class="font-black text-slate-800 text-sm leading-snug mb-0.5">جامعة عين تموشنت بلحاج بوشعيب</div>
-        <div class="text-xs font-bold text-slate-400 mb-4">مكتب الصفقات — قسيمة تحميل دفتر الشروط</div>
-        <div class="font-black text-slate-800 text-lg"><span id="qr-kind">استشارة</span> عدد: <span id="qr-reference"></span></div>
+        <div class="font-black text-slate-800 text-sm leading-snug mb-0.5" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</div>
+        <div class="text-xs font-bold text-slate-400 mb-4" data-i18n="qr_office">مكتب الصفقات — قسيمة تحميل دفتر الشروط</div>
+        <div class="font-black text-slate-800 text-lg"><span id="qr-kind">استشارة</span> <span data-i18n="qr_count">عدد: </span><span id="qr-reference"></span></div>
         <div id="qr-title" class="text-sm text-slate-600 mt-1 mb-4"></div>
         <canvas id="qr-canvas" class="mx-auto rounded-lg border border-slate-200 bg-white"></canvas>
         <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-4">
-          <div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-400">المدة:</span> <span id="qr-duration"></span></div>
-          <div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-400">فتح الأظرفة:</span> <span id="qr-opening"></span></div>
+          <div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-400" data-i18n="qr_dur_l">المدة:</span> <span id="qr-duration"></span></div>
+          <div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-400" data-i18n="qr_op_l">فتح الأظرفة:</span> <span id="qr-opening"></span></div>
         </div>
-        <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">امسح الرمز بكاميرا الهاتف لفتح صفحة تحميل دفتر الشروط. الرابط المؤقت صالح 10 دقائق، وتُسجَّل بيانات مؤسستك عند كل تحميل.</p>
+        <p class="text-[11px] text-slate-400 mt-4 leading-relaxed" data-i18n="qr_note">امسح الرمز بكاميرا الهاتف لفتح صفحة تحميل دفتر الشروط. الرابط المؤقت صالح 10 دقائق، وتُسجَّل بيانات مؤسستك عند كل تحميل.</p>
         <div class="text-[10px] text-slate-300 mt-2 break-all" dir="ltr" id="qr-url"></div>
       </div>
       <div class="px-4 pb-4 flex gap-2 no-print">
-        <button id="print-qr-btn" class="btn-primary flex-1">🖨️ طباعة البطاقة</button>
-        <button data-close="qr-modal" class="btn-secondary">إغلاق</button>
+        <button id="print-qr-btn" class="btn-primary flex-1" data-i18n="print_btn">🖨️ طباعة البطاقة</button>
+        <button data-close="qr-modal" class="btn-secondary" data-i18n="close">إغلاق</button>
       </div>
     </div>
   </div>
@@ -251,7 +252,7 @@
       <div class="flex items-center justify-between px-4 py-3 bg-slate-800 text-white">
         <span id="dl-title" class="font-bold text-sm"></span>
         <div class="flex items-center gap-2">
-          <button id="dl-csv" class="text-xs bg-slate-700 hover:bg-slate-600 rounded-lg px-3 py-1">⬇️ تصدير CSV</button>
+          <button id="dl-csv" class="text-xs bg-slate-700 hover:bg-slate-600 rounded-lg px-3 py-1">⬇️ CSV</button>
           <button id="dl-pdf" class="text-xs bg-slate-700 hover:bg-slate-600 rounded-lg px-3 py-1">📄 PDF</button>
           <button data-close="downloads-modal" class="text-xl leading-none opacity-80">✕</button>
         </div>
@@ -265,15 +266,15 @@
   <div id="open-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
       <div class="px-5 py-4 bg-red-600 text-white">
-        <h3 class="font-black">⚠️ فتح الأظرفة</h3>
-        <p class="text-xs mt-1 text-red-100 leading-relaxed">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
+        <h3 class="font-black" data-i18n="open_m_title">⚠️ فتح الأظرفة</h3>
+        <p class="text-xs mt-1 text-red-100 leading-relaxed" data-i18n="open_m_text">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
       </div>
       <div class="p-5">
         <div id="open-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <label class="lbl" for="open-ref-input">اكتب رقم الاستشارة للتأكيد</label>
+        <label class="lbl" for="open-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
         <input id="open-ref-input" class="inp" autocomplete="off">
-        <button id="open-confirm-btn" class="btn-danger w-full mt-4">🔓 تأكيد الفتح والحذف النهائي</button>
-        <button data-close="open-modal" class="btn-secondary w-full mt-2">تراجع</button>
+        <button id="open-confirm-btn" class="btn-danger w-full mt-4" data-i18n="open_m_btn">🔓 تأكيد الفتح والحذف النهائي</button>
+        <button data-close="open-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
@@ -282,16 +283,16 @@
   <div id="replace-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
       <div class="px-5 py-4 bg-primary-700 text-white">
-        <h3 class="font-black">📄 تغيير دفتر الشروط</h3>
-        <p class="text-xs mt-1 text-teal-100 leading-relaxed">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
+        <h3 class="font-black" data-i18n="rep_m_title">📄 تغيير دفتر الشروط</h3>
+        <p class="text-xs mt-1 text-teal-100 leading-relaxed" data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
       </div>
       <div class="p-5">
         <div id="replace-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
         <input id="replace-file" type="file" accept="application/pdf"
           class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 file:font-semibold file:cursor-pointer cursor-pointer">
         <p id="replace-file-info" class="text-xs text-slate-400 mt-1"></p>
-        <button id="replace-confirm-btn" class="btn-primary w-full mt-4">📤 استبدال الملف</button>
-        <button data-close="replace-modal" class="btn-secondary w-full mt-2">تراجع</button>
+        <button id="replace-confirm-btn" class="btn-primary w-full mt-4" data-i18n="rep_m_btn">📤 استبدال الملف</button>
+        <button data-close="replace-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
@@ -300,15 +301,15 @@
   <div id="delete-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
       <div class="px-5 py-4 bg-red-600 text-white">
-        <h3 class="font-black">🗑️ حذف الاستشارة</h3>
-        <p class="text-xs mt-1 text-red-100 leading-relaxed">سيُحذف ملف دفتر الشروط (إن وُجد) مع الاستشارة وجميع سجل تحميلاتها. لا يمكن التراجع.</p>
+        <h3 class="font-black" data-i18n="del_m_title">🗑️ حذف الاستشارة</h3>
+        <p class="text-xs mt-1 text-red-100 leading-relaxed" data-i18n="del_m_text">سيُحذف ملف دفتر الشروط (إن وُجد) مع الاستشارة وجميع سجل تحميلاتها. لا يمكن التراجع.</p>
       </div>
       <div class="p-5">
         <div id="delete-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <label class="lbl" for="delete-ref-input">اكتب رقم الاستشارة للتأكيد</label>
+        <label class="lbl" for="delete-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
         <input id="delete-ref-input" class="inp" autocomplete="off">
-        <button id="delete-confirm-btn" class="btn-danger w-full mt-4">🗑️ تأكيد الحذف النهائي</button>
-        <button data-close="delete-modal" class="btn-secondary w-full mt-2">تراجع</button>
+        <button id="delete-confirm-btn" class="btn-danger w-full mt-4" data-i18n="del_m_btn">🗑️ تأكيد الحذف النهائي</button>
+        <button data-close="delete-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
@@ -319,6 +320,7 @@
   <!-- ===== السكربتات ===== -->
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/download.js"></script>
