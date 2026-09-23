@@ -43,7 +43,8 @@
     let role = 'admin';
     try {
       const { data: { user } } = await DB.auth.getUser();
-      const r = user && user.user_metadata && user.user_metadata.role;
+      // الدور من app_metadata (لا يكتبه المستخدم) — user_metadata احتياط انتقالي
+      const r = user && ((user.app_metadata && user.app_metadata.role) || (user.user_metadata && user.user_metadata.role));
       if (r === 'committee' || r === 'opener') role = r;
     } catch (e) { /* الافتراض: كامل */ }
     A.role = role;
@@ -134,6 +135,10 @@
       if (!ref.trim() || !title.trim() || !opening || !file) return toast(t('t_fill_all'), 'error');
       if (file.type !== 'application/pdf') return toast(t('t_pdf_only'), 'error');
       if (file.size > 50 * 1024 * 1024) return toast(t('t_too_big'), 'error');
+      if (ref.trim().length > 50) return toast(t('t_ref_long'), 'error');
+      if (title.trim().length > 200) return toast(t('t_title_long'), 'error');
+      if (duration.length > 100) return toast(t('t_duration_long'), 'error');
+      if (isNaN(new Date(opening).getTime())) return toast(t('t_bad_date'), 'error');
 
       // التحقق من أن الرقم غير مستخدم
       const dup = await DB.from('tenders').select('id').eq('reference', ref.trim()).maybeSingle();

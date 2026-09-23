@@ -8,7 +8,8 @@
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
+      .replaceAll("'", '&#39;')
+      .replaceAll('`', '&#96;');
   };
 
   window.fmtDate = function (iso, withTime) {

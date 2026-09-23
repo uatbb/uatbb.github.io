@@ -7,6 +7,23 @@
   A.onSignedOut = null;
   let wasAuthed = false;
 
+  // مهلة خمول: خروج تلقائي بعد 30 دقيقة بلا نشاط
+  const IDLE_MS = 30 * 60 * 1000;
+  let idleTimer = null;
+  function armIdle() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      try { toast(I18N.t('t_idle'), 'warn', 6000); } catch (e) {}
+      DB.auth.signOut();
+    }, IDLE_MS);
+  }
+  function disarmIdle() {
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  }
+  ['click', 'keydown', 'scroll', 'touchstart'].forEach((ev) => {
+    document.addEventListener(ev, () => { if (wasAuthed) armIdle(); }, { passive: true });
+  });
+
   A.init = function () {
     updateUI(false);
     DB.auth.getSession().then(({ data }) => {
@@ -26,14 +43,18 @@
     $('login-card').classList.toggle('hidden', authed);
     $('authed-app').classList.toggle('hidden', !authed);
     if (authed) {
+      armIdle();
       DB.auth.getUser().then(({ data }) => {
         const nameEl = $('user-name');
         if (nameEl && data && data.user) nameEl.textContent = data.user.email || '';
       });
       if (A.onAuthed) A.onAuthed();
-    } else if (wasAuthed && A.onSignedOut) {
-      // انتقال فعلي من دخول إلى خروج (لا عند إقلاع الصفحة)
-      A.onSignedOut();
+    } else {
+      disarmIdle();
+      if (wasAuthed && A.onSignedOut) {
+        // انتقال فعلي من دخول إلى خروج (لا عند إقلاع الصفحة)
+        A.onSignedOut();
+      }
     }
     wasAuthed = authed;
   }
@@ -43,6 +64,7 @@
     const email = $('login-email').value.trim();
     const password = $('login-password').value;
     if (!email || !password) return toast(I18N.t('t_login_fill'), 'error');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast(I18N.t('t_bad_email'), 'error');
     const btn = $('login-form button[type=submit]');
     setBusy(btn, true, I18N.t('busy_login'));
     DB.auth.signInWithPassword({ email, password }).then(({ error }) => {
