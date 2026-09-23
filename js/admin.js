@@ -34,19 +34,24 @@
   A.checkOpeningReminder = async function () {
     try {
       const s0 = new Date(); s0.setHours(0, 0, 0, 0);
-      const e1 = new Date(); e1.setDate(e1.getDate() + 1); e1.setHours(23, 59, 59, 999);
+      const e1 = new Date(); e1.setDate(e1.getDate() + 7); e1.setHours(23, 59, 59, 999);
       const { data, error } = await DB.from('tenders')
         .select('id, reference, title, opening_date')
         .eq('status', 'published')
         .gte('opening_date', s0.toISOString())
         .lte('opening_date', e1.toISOString())
         .order('opening_date', { ascending: true })
-        .limit(8);
+        .limit(12);
       if (error) return;
       reminderData = data || [];
       renderReminder();
       if (!reminderTimer) reminderTimer = setInterval(A.checkOpeningReminder, 5 * 60 * 1000);
     } catch (e) { /* غير حرج */ }
+  };
+
+  const DAY_NAMES = {
+    ar: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+    fr: ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
   };
 
   function renderReminder() {
@@ -56,18 +61,21 @@
     const tmr = new Date(now.getTime() + 86400000);
     const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
     const p = (n) => String(n).padStart(2, '0');
+    const lang = (window.I18N && I18N.lang) || 'ar';
+    const days = DAY_NAMES[lang] || DAY_NAMES.ar;
     const rows = [];
     (reminderData || []).forEach((r) => {
       const d = new Date(r.opening_date);
       if (isNaN(d)) return;
       const isToday = sameDay(d, now);
       const isTmr = !isToday && sameDay(d, tmr);
-      if (!isToday && !isTmr) return;
+      const when = isToday ? t('rm_today') : isTmr ? t('rm_tomorrow') : (days[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1));
+      const cls = isToday ? 'bg-amber-100 text-amber-900' : isTmr ? 'bg-sky-50 text-slate-700' : 'bg-slate-50 text-slate-500';
       const title = r.title || '';
       rows.push(
-        '<div class="max-w-3xl mx-auto px-4 py-2 text-sm flex items-start gap-2 ' + (isToday ? 'bg-amber-100 text-amber-900' : 'bg-sky-50 text-slate-700') + '">' +
+        '<div class="max-w-3xl mx-auto px-4 py-2 text-sm flex items-start gap-2 ' + cls + '">' +
         '<span class="mt-0.5">⏰</span>' +
-        '<span><b>' + esc(isToday ? t('rm_today') : t('rm_tomorrow')) + ':</b> ' + t('rm_open_word') +
+        '<span><b>' + esc(when) + ':</b> ' + t('rm_open_word') +
         ' <b dir="auto">' + esc(r.reference) + '</b>' +
         (title ? ' — ' + esc(title.length > 60 ? title.slice(0, 60) + '…' : title) : '') +
         ' <b class="tabular-nums">(' + p(d.getHours()) + ':' + p(d.getMinutes()) + ')</b></span>' +
