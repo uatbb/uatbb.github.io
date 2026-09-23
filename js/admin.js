@@ -18,12 +18,76 @@
     bindCreate();
     bindStaticButtons();
     bindAccounts();
+    bindReminderClose();
     const s = $('tender-search');
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
     A.page = 1;
     checkSchema();
-    initRole().then(() => A.loadTenders());
+    initRole().then(() => { A.loadTenders(); A.checkOpeningReminder(); });
   };
+
+  /* ---------- تذكير بمواعيد الفتح (اليوم / غدًا) ---------- */
+
+  let reminderData = [];
+  let reminderTimer = null;
+
+  A.checkOpeningReminder = async function () {
+    try {
+      const s0 = new Date(); s0.setHours(0, 0, 0, 0);
+      const e1 = new Date(); e1.setDate(e1.getDate() + 1); e1.setHours(23, 59, 59, 999);
+      const { data, error } = await DB.from('tenders')
+        .select('id, reference, title, opening_date')
+        .eq('status', 'published')
+        .gte('opening_date', s0.toISOString())
+        .lte('opening_date', e1.toISOString())
+        .order('opening_date', { ascending: true })
+        .limit(8);
+      if (error) return;
+      reminderData = data || [];
+      renderReminder();
+      if (!reminderTimer) reminderTimer = setInterval(A.checkOpeningReminder, 5 * 60 * 1000);
+    } catch (e) { /* غير حرج */ }
+  };
+
+  function renderReminder() {
+    const box = $('opening-reminder');
+    if (!box) return;
+    const now = new Date();
+    const tmr = new Date(now.getTime() + 86400000);
+    const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const p = (n) => String(n).padStart(2, '0');
+    const rows = [];
+    (reminderData || []).forEach((r) => {
+      const d = new Date(r.opening_date);
+      if (isNaN(d)) return;
+      const isToday = sameDay(d, now);
+      const isTmr = !isToday && sameDay(d, tmr);
+      if (!isToday && !isTmr) return;
+      const title = r.title || '';
+      rows.push(
+        '<div class="max-w-3xl mx-auto px-4 py-2 text-sm flex items-start gap-2 ' + (isToday ? 'bg-amber-100 text-amber-900' : 'bg-sky-50 text-slate-700') + '">' +
+        '<span class="mt-0.5">⏰</span>' +
+        '<span><b>' + esc(isToday ? t('rm_today') : t('rm_tomorrow')) + ':</b> ' + t('rm_open_word') +
+        ' <b dir="auto">' + esc(r.reference) + '</b>' +
+        (title ? ' — ' + esc(title.length > 60 ? title.slice(0, 60) + '…' : title) : '') +
+        ' <b class="tabular-nums">(' + p(d.getHours()) + ':' + p(d.getMinutes()) + ')</b></span>' +
+        '</div>'
+      );
+    });
+    box.innerHTML = rows.length
+      ? rows.join('') +
+        '<div class="max-w-3xl mx-auto px-4 py-1 text-right"><button data-rm-close class="text-[11px] text-slate-400 hover:text-slate-600">' + t('rm_hide') + '</button></div>'
+      : '';
+  }
+
+  function bindReminderClose() {
+    const box = $('opening-reminder');
+    if (!box || box.dataset.bound) return;
+    box.dataset.bound = '1';
+    box.addEventListener('click', (e) => {
+      if (e.target.closest('[data-rm-close]')) box.innerHTML = '';
+    });
+  }
 
   // استعادة شريط التنقل لحالته الكاملة (قبل تطبيق قيود الدور)
   function restoreNav() {

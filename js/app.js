@@ -94,6 +94,7 @@
         if (A.refreshTenders) A.refreshTenders();
         if (A.loadOpening) A.loadOpening();
         if (A.refreshAccounts) A.refreshAccounts();
+        if (A.checkOpeningReminder) A.checkOpeningReminder();
       }
     });
   }
