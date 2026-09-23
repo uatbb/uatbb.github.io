@@ -592,6 +592,7 @@
     DB.functions.invoke('get-download', {
       body: {
         tender_id: tt.id,
+        no_log: true,
         company: t('t_direct_as'),
         phone: '000000000',
         email: 'committee@uatbb.dz',
