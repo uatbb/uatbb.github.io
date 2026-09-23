@@ -85,15 +85,15 @@
     <header class="sticky top-0 z-40 bg-primary-700 text-white shadow-md">
       <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-          <img src="img/logo.png" alt="شعار الجامعة" class="h-10 w-10 object-contain bg-white rounded-lg p-0.5 shrink-0">
-          <div>
-            <h1 class="font-black text-lg leading-tight" data-i18n="app_name">بوابة مكتب الصفقات</h1>
-            <p class="text-[11px] text-teal-100" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
+          <img src="img/logo.png" alt="شعار الجامعة" class="h-9 w-9 sm:h-10 sm:w-10 object-contain bg-white rounded-lg p-0.5 shrink-0">
+          <div class="min-w-0">
+            <h1 class="font-black text-base sm:text-lg leading-tight" data-i18n="app_name">بوابة مكتب الصفقات</h1>
+            <p class="text-[11px] text-teal-100 hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <span id="role-badge" class="hidden text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
-          <span id="user-name" class="text-[11px] text-teal-100" dir="ltr"></span>
+          <span id="user-name" class="text-[11px] text-teal-100 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
           <button id="lang-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
           <button id="logout-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
         </div>
@@ -122,7 +122,7 @@
                 <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="lbl" for="f-reference" data-i18n="f_reference">الرقم *</label>
                 <input id="f-reference" class="inp" placeholder="06/UAT/2026" required>
@@ -202,17 +202,17 @@
     <!-- شريط التنقل السفلي -->
     <nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,.05)]">
       <div class="max-w-3xl mx-auto grid grid-cols-4">
-        <button class="nav-btn py-2.5 text-center text-xs font-semibold text-white bg-primary-800" data-tab="tab-create">
-          <span class="block text-lg leading-none mb-1">📝</span><span data-i18n="nav_create">إنشاء</span>
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-white bg-primary-800" data-tab="tab-create">
+          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📝</span><span data-i18n="nav_create">إنشاء</span>
         </button>
-        <button class="nav-btn py-2.5 text-center text-xs font-semibold text-slate-500" data-tab="tab-tenders">
-          <span class="block text-lg leading-none mb-1">📥</span><span data-i18n="nav_tenders" class="leading-tight">الاستشارات / طلبات العروض</span>
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-tenders">
+          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📥</span><span data-i18n="nav_tenders" class="leading-tight">الاستشارات / طلبات العروض</span>
         </button>
-        <button class="nav-btn py-2.5 text-center text-xs font-semibold text-slate-500" data-tab="tab-opening">
-          <span class="block text-lg leading-none mb-1">🔓</span><span data-i18n="nav_opening">الفتح</span>
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-opening">
+          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">🔓</span><span data-i18n="nav_opening">الفتح</span>
         </button>
-        <button class="nav-btn py-2.5 text-center text-xs font-semibold text-slate-500" data-tab="tab-accounts">
-          <span class="block text-lg leading-none mb-1">👥</span><span data-i18n="nav_accounts">الحسابات</span>
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-accounts">
+          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">👥</span><span data-i18n="nav_accounts">الحسابات</span>
         </button>
       </div>
     </nav>
@@ -226,27 +226,27 @@
         <span class="font-bold text-sm" data-i18n="qr_title">بطاقة QR — تُسلَّم للمتعامل</span>
         <button data-close="qr-modal" class="text-xl leading-none opacity-80">✕</button>
       </div>
-      <div id="qr-card" class="p-8 text-center bg-white w-[210mm] max-w-full min-h-[297mm] mx-auto flex flex-col">
-        <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-20 w-20 object-contain mb-3">
-        <div class="font-black text-slate-900 text-3xl leading-snug mb-2" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</div>
-        <div class="text-lg font-bold text-slate-500 mb-6" data-i18n="qr_office">مكتب الصفقات — قسيمة تحميل دفتر الشروط</div>
-        <div class="border-2 border-dashed border-slate-300 rounded-2xl p-5 bg-slate-50/60 mb-6">
-          <div dir="auto" class="font-black text-slate-900 text-3xl mb-3"><span id="qr-kind">استشارة</span> <span data-i18n="qr_count">عدد: </span><span id="qr-reference"></span></div>
-          <div id="qr-title" dir="auto" class="text-xl text-slate-700 font-semibold leading-relaxed mb-5"></div>
-          <canvas id="qr-canvas" class="mx-auto rounded-lg border border-slate-200 bg-white p-2"></canvas>
+      <div id="qr-card" class="p-5 sm:p-8 text-center bg-white w-[210mm] max-w-full min-h-[297mm] mx-auto flex flex-col">
+        <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 sm:h-20 sm:w-20 object-contain mb-3">
+        <div class="font-black text-slate-900 text-2xl sm:text-3xl leading-snug mb-2" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</div>
+        <div class="text-sm sm:text-lg font-bold text-slate-500 mb-6" data-i18n="qr_office">مكتب الصفقات — قسيمة تحميل دفتر الشروط</div>
+        <div class="border-2 border-dashed border-slate-300 rounded-2xl p-4 sm:p-5 bg-slate-50/60 mb-6">
+          <div dir="auto" class="font-black text-slate-900 text-xl sm:text-3xl mb-3"><span id="qr-kind">استشارة</span> <span data-i18n="qr_count">عدد: </span><span id="qr-reference"></span></div>
+          <div id="qr-title" dir="auto" class="text-base sm:text-xl text-slate-700 font-semibold leading-relaxed mb-5"></div>
+          <canvas id="qr-canvas" class="mx-auto rounded-lg border border-slate-200 bg-white p-2 max-w-full h-auto"></canvas>
         </div>
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-            <div class="text-slate-400 text-base mb-2" data-i18n="qr_dur_l">المدة:</div>
-            <div class="text-slate-900 font-black text-2xl" id="qr-duration"></div>
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+          <div class="bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200">
+            <div class="text-slate-400 text-sm sm:text-base mb-2" data-i18n="qr_dur_l">المدة:</div>
+            <div class="text-slate-900 font-black text-lg sm:text-2xl break-words" id="qr-duration"></div>
           </div>
-          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-            <div class="text-slate-400 text-base mb-2" data-i18n="qr_op_l">فتح الأظرفة:</div>
-            <div class="text-slate-900 font-black text-2xl" id="qr-opening"></div>
+          <div class="bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200">
+            <div class="text-slate-400 text-sm sm:text-base mb-2" data-i18n="qr_op_l">فتح الأظرفة:</div>
+            <div class="text-slate-900 font-black text-lg sm:text-2xl break-words" id="qr-opening"></div>
           </div>
         </div>
-        <p class="text-base text-slate-600 leading-loose mb-4 px-4" data-i18n="qr_note">امسح الرمز بكاميرا الهاتف لفتح صفحة تحميل دفتر الشروط. الرابط المؤقت صالح 10 دقائق، وتُسجَّل بيانات مؤسستك عند كل تحميل.</p>
-        <div class="text-base text-slate-600 font-semibold break-all mt-auto border-t border-slate-200 pt-3" dir="ltr" id="qr-url"></div>
+        <p class="text-sm sm:text-base text-slate-600 leading-loose mb-4 px-2 sm:px-4" data-i18n="qr_note">امسح الرمز بكاميرا الهاتف لفتح صفحة تحميل دفتر الشروط. الرابط المؤقت صالح 10 دقائق، وتُسجَّل بيانات مؤسستك عند كل تحميل.</p>
+        <div class="text-sm sm:text-base text-slate-600 font-semibold break-all mt-auto border-t border-slate-200 pt-3" dir="ltr" id="qr-url"></div>
       </div>
       <div class="px-4 pb-4 flex gap-2 no-print">
         <button id="print-qr-btn" class="btn-primary flex-1" data-i18n="print_btn">🖨️ طباعة البطاقة</button>
