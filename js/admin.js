@@ -30,7 +30,7 @@
 
   let reminderData = [];
   let reminderTimer = null;
-  let reminderOpen = true;
+  let reminderOpen = false;
 
   A.checkOpeningReminder = async function () {
     try {
@@ -56,8 +56,10 @@
   };
 
   function renderReminder() {
-    const box = $('opening-reminder');
-    if (!box) return;
+    const badge = $('remind-badge');
+    const panel = $('remind-panel');
+    const ico = $('remind-ico');
+    if (!badge || !panel) return;
     const now = new Date();
     const tmr = new Date(now.getTime() + 86400000);
     const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -73,42 +75,73 @@
       const when = isToday ? t('rm_today') : isTmr ? t('rm_tomorrow') : (days[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1));
       items.push({ d, isToday, isTmr, when, r });
     });
-    if (!items.length) { box.innerHTML = ''; return; }
-    const hasToday = items.some((i) => i.isToday);
+
+    // شارة العدد على الجرس
+    if (!items.length) {
+      badge.classList.add('hidden');
+      badge.classList.remove('flex');
+      if (ico) ico.classList.remove('animate-pulse');
+      return;
+    }
+    badge.textContent = items.length;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+    if (ico) ico.classList.toggle('animate-pulse', items.some((i) => i.isToday));
+
+    // محتوى اللوحة (تُحدَّث فقط وهي مفتوحة)
+    if (!reminderOpen) return;
     const trunc = (s) => (s && s.length > 60 ? s.slice(0, 60) + '…' : s);
     const rowHtml = (i) =>
-      '<div class="px-3 py-2 text-sm flex items-start gap-2 ' +
-      (i.isToday ? 'bg-amber-50 text-amber-900' : i.isTmr ? 'bg-sky-50/70 text-slate-700' : 'text-slate-600') + '">' +
-      '<span class="mt-0.5">🔔</span>' +
-      '<span><b>' + esc(i.when) + '</b> — ' + t('rm_open_word') +
-      ' <b dir="auto">' + esc(i.r.reference) + '</b>' +
-      (i.r.title ? ' — ' + esc(trunc(i.r.title)) : '') +
-      ' <b class="tabular-nums">(' + p(i.d.getHours()) + ':' + p(i.d.getMinutes()) + ')</b></span>' +
-      '</div>';
-    box.innerHTML =
-      '<div class="max-w-3xl mx-auto my-2 rounded-xl border ' + (hasToday ? 'border-amber-300' : 'border-slate-200') + ' shadow-sm overflow-hidden bg-white">' +
-      '<div data-rm-toggle class="w-full flex items-center gap-2 px-3 py-2 cursor-pointer ' + (hasToday ? 'bg-amber-50' : 'bg-slate-50') + '">' +
-      '<span class="text-base ' + (hasToday ? 'animate-pulse' : '') + '">🔔</span>' +
-      '<span class="text-sm font-bold text-slate-700">' + t('rm_title') + '</span>' +
-      '<span class="text-[11px] font-black text-white bg-amber-500 rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">' + items.length + '</span>' +
-      (hasToday ? '<span class="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5">' + t('rm_today') + '</span>' : '') +
-      '<span class="ms-auto flex items-center gap-1.5">' +
-      '<button data-rm-close class="text-slate-400 hover:text-red-500 text-xs px-1" aria-label="close">✕</button>' +
-      '<span class="text-slate-400 text-xs transition-transform ' + (reminderOpen ? 'rotate-180' : '') + '">▾</span>' +
-      '</span>' +
+      '<div class="px-4 py-3 flex items-start gap-2.5 ' +
+      (i.isToday ? 'bg-amber-50' : i.isTmr ? 'bg-sky-50/70' : '') + '">' +
+      '<span class="mt-0.5 text-base">' + (i.isToday ? '🔴' : i.isTmr ? '🔵' : '⚪') + '</span>' +
+      '<div class="min-w-0">' +
+      '<div class="text-sm font-bold text-slate-800" dir="auto">' + esc(i.r.reference) + '</div>' +
+      (i.r.title ? '<div class="text-xs text-slate-500 leading-snug">' + esc(trunc(i.r.title)) + '</div>' : '') +
+      '<div class="text-[11px] font-semibold mt-1 ' + (i.isToday ? 'text-amber-700' : i.isTmr ? 'text-sky-700' : 'text-slate-400') + '">' +
+      esc(i.when) + ' — ' + t('rm_open_word') + ' <span class="tabular-nums">(' + p(i.d.getHours()) + ':' + p(i.d.getMinutes()) + ')</span></div>' +
       '</div>' +
-      (reminderOpen ? '<div class="divide-y divide-slate-100 border-t border-slate-100">' + items.map(rowHtml).join('') + '</div>' : '') +
       '</div>';
+    panel.innerHTML =
+      '<div class="px-4 py-3 bg-gradient-to-l from-amber-50 via-white to-white border-b border-amber-100 flex items-center gap-2">' +
+      '<span class="text-lg">🔔</span>' +
+      '<span class="text-sm font-black text-slate-800">' + t('rm_title') + '</span>' +
+      '<span class="text-[11px] font-black text-white bg-amber-500 rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">' + items.length + '</span>' +
+      '</div>' +
+      (items.length
+        ? '<div class="max-h-[55vh] overflow-y-auto divide-y divide-slate-100">' + items.map(rowHtml).join('') + '</div>'
+        : '<div class="py-10 text-center text-sm text-slate-400">' + t('rm_empty') + '</div>') +
+      '<div class="px-4 py-2 text-[10px] text-slate-400 border-t border-slate-100 text-center">🔄 ' + t('rm_auto') + '</div>';
   }
 
+  A.toggleReminder = function () {
+    reminderOpen = !reminderOpen;
+    const panel = $('remind-panel');
+    if (!panel) return;
+    if (reminderOpen) {
+      renderReminder();
+      panel.classList.remove('hidden', 'remind-pop');
+      void panel.offsetWidth; // إعادة تشغيل الحركة
+      panel.classList.add('remind-pop');
+    } else {
+      panel.classList.add('hidden');
+    }
+  };
+
   function bindReminderClose() {
-    const box = $('opening-reminder');
-    if (!box || box.dataset.bound) return;
-    box.dataset.bound = '1';
-    box.addEventListener('click', (e) => {
-      if (e.target.closest('[data-rm-close]')) { box.innerHTML = ''; return; }
-      if (e.target.closest('[data-rm-toggle]')) { reminderOpen = !reminderOpen; renderReminder(); }
-    });
+    const btn = $('remind-btn');
+    if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); A.toggleReminder(); });
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = '1';
+      document.addEventListener('click', (e) => {
+        const panel = $('remind-panel');
+        if (!panel || !reminderOpen) return;
+        if (!e.target.closest('#remind-panel') && !e.target.closest('#remind-btn')) {
+          reminderOpen = false;
+          panel.classList.add('hidden');
+        }
+      });
+    }
   }
 
   // استعادة شريط التنقل لحالته الكاملة (قبل تطبيق قيود الدور)

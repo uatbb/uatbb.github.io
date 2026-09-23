@@ -171,6 +171,8 @@
       rm_tomorrow: 'غدًا',
       rm_open_word: 'فتح الاستشارة',
       rm_title: 'مواعيد الفتح',
+      rm_empty: 'لا توجد مواعيد فتح هذا الأسبوع',
+      rm_auto: 'يتحدّث تلقائيًا كل 5 دقائق',
       rm_hide: '✕ إخفاء',
       t_pdf_only: 'الملف يجب أن يكون PDF',
       t_too_big: 'حجم الملف يتجاوز 50MB',
@@ -434,6 +436,8 @@
       rm_tomorrow: 'Demain',
       rm_open_word: 'Ouverture de l’avis',
       rm_title: 'Calendrier d’ouverture',
+      rm_empty: 'Aucune ouverture prévue cette semaine',
+      rm_auto: 'Actualisation automatique toutes les 5 min',
       rm_hide: '✕ Masquer',
       t_pdf_only: 'Le fichier doit être un PDF',
       t_too_big: 'Le fichier dépasse 50 Mo',
@@ -565,6 +569,9 @@
     });
     document.querySelectorAll('[data-i18n-html]').forEach((el) => {
       el.innerHTML = t(el.dataset.i18nHtml);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+      el.title = t(el.dataset.i18nTitle);
     });
     document.title = t('app_title');
   }

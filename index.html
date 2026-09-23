@@ -81,7 +81,6 @@
 
     <!-- ===== تطبيق المدير (بعد تسجيل الدخول) ===== -->
     <div id="authed-app" class="hidden">
-    <div id="opening-reminder"></div>
     <header class="sticky top-0 z-40 bg-primary-700 text-white shadow-md">
       <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
@@ -91,9 +90,16 @@
             <p class="text-[11px] text-teal-100 hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2">
           <span id="role-badge" class="hidden text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
           <span id="user-name" class="text-[11px] text-teal-100 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
+          <div class="relative">
+            <button id="remind-btn" type="button" class="relative text-lg leading-none hover:bg-white/10 rounded-lg p-1.5" data-i18n-title="rm_title">
+              <span id="remind-ico">🔔</span>
+              <span id="remind-badge" class="hidden absolute -top-1 -left-1 text-[9px] font-black bg-amber-400 text-amber-950 rounded-full min-w-[16px] h-4 px-1 items-center justify-center">0</span>
+            </button>
+            <div id="remind-panel" class="hidden fixed z-[70] inset-x-3 top-[76px] sm:inset-x-auto sm:left-3 sm:top-[68px] sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800"></div>
+          </div>
           <button id="lang-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
           <button id="logout-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
         </div>
