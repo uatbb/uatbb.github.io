@@ -161,13 +161,15 @@
   // تحديد دور المستخدم: admin (كامل) | committee (لجنة عرض) | opener (لجنة فتح)
   async function initRole() {
     restoreNav();
-    let role = 'admin';
+    // مغلق افتراضيًا: لا دور (أو فشل القراءة) = لجنة عرض فقط —
+    // يتطابق مع قاعدة البيانات (014) حيث لا دور = لا صلاحيات
+    let role = 'committee';
     try {
       const { data: { user } } = await DB.auth.getUser();
-      // الدور من app_metadata (لا يكتبه المستخدم) — user_metadata احتياط انتقالي
-      const r = user && ((user.app_metadata && user.app_metadata.role) || (user.user_metadata && user.user_metadata.role));
-      if (r === 'committee' || r === 'opener') role = r;
-    } catch (e) { /* الافتراض: كامل */ }
+      // الدور من app_metadata فقط (لا يكتبه المستخدم)
+      const r = user && user.app_metadata && user.app_metadata.role;
+      if (r === 'admin' || r === 'opener') role = r;
+    } catch (e) { /* يبقى: عرض فقط */ }
     A.role = role;
     if (role !== 'admin') applyRestrictedMode();
   }
