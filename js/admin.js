@@ -23,7 +23,7 @@
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
     A.page = 1;
     checkSchema();
-    initRole().then(() => { A.loadTenders(); A.checkOpeningReminder(); });
+    initRole().then(async () => { await autoOpenDue(); A.loadTenders(); A.checkOpeningReminder(); });
   };
 
   /* ---------- تذكير بمواعيد الفتح (اليوم / غدًا) ---------- */
@@ -199,6 +199,43 @@
       badge.textContent = A.role === 'opener' ? t('role_opener_badge') : t('role_committee_badge');
     }
   };
+
+  /* ---------- فتح تلقائي من اللوحة: كل منشورة حلّ موعدها تُفتح
+     ويُحذف ملفها (ضمان إضافي بجانب مهمة pg_cron) ---------- */
+  async function autoOpenDue() {
+    if (A.role === 'committee') return;
+    let rows = [];
+    try {
+      const { data, error } = await DB.from('tenders')
+        .select('id, reference, pdf_path')
+        .eq('status', 'published')
+        .lte('opening_date', new Date().toISOString());
+      if (error || !data || !data.length) return;
+      rows = data;
+    } catch (e) { return; }
+    let uid = null;
+    try { uid = ((await DB.auth.getUser()).data.user || {}).id || null; } catch (e) { /* تجاهل */ }
+    let n = 0;
+    for (const tt of rows) {
+      let data = null, uErr = null;
+      try {
+        ({ data, error: uErr } = await DB.from('tenders')
+          .update({ status: 'opened', opened_at: new Date().toISOString(), opened_by: uid })
+          .eq('id', tt.id)
+          .eq('status', 'published')
+          .select('id'));
+      } catch (e) { continue; }
+      if (uErr || !data || !data.length) continue;
+      n++;
+      if (tt.pdf_path) {
+        try { await DB.storage.from('tenders').remove([tt.pdf_path]); } catch (e) { console.warn('حذف الملف:', e && e.message || e); }
+      }
+    }
+    if (n) {
+      toast(t('t_auto_opened', { n }), 'info', 6000);
+      if (A.refreshTenders) A.refreshTenders();
+    }
+  }
 
   function isAdmin() { return A.role !== 'committee' && A.role !== 'opener'; }
   function canOpen() { return isAdmin() || A.role === 'opener'; }
@@ -724,7 +761,13 @@
       },
     })
       .then(({ data, error }) => {
-        if (error || !data || !data.url) return toast(t('t_direct_fail'), 'error', 5000);
+        if (error || !data || !data.url) {
+          const msg = error ? String(error.message || error) : '';
+          if (msg.includes('link_failed') || msg.includes('no_file')) {
+            return toast(t('t_direct_nofile'), 'error', 5000);
+          }
+          return toast(t('t_direct_fail'), 'error', 5000);
+        }
         window.open(data.url, '_blank');
       })
       .catch(() => toast(t('t_direct_fail'), 'error', 5000));
