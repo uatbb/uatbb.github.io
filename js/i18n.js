@@ -75,6 +75,7 @@
       btn_open: '🔓 فتح الأظرفة',
       btn_open_locked: '🔒 بانتظار موعد الفتح',
       btn_delete: '🗑️ حذف الاستشارة',
+      btn_edit: '✏️ تعديل',
       st_published: 'منشورة',
       st_opened: 'تم فتح الأظرفة',
 
@@ -159,6 +160,13 @@
       del_m_btn: '🗑️ تأكيد الحذف النهائي',
       del_info_pub: 'الاستشارة منشورة — سيُحذف الملف وكل سجل التحميلات.',
       del_info_open: 'فُتحت مسبقًا — سيُحذف كل شيء (الملف محذوف أصلًا).',
+      edit_m_title: '✏️ تعديل الاستشارة / طلب العروض',
+      edit_m_text: 'يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.',
+      edit_ref_note: 'الرقم محجوب — لأنه يحدد الرمز QR (يبقى نفسه).',
+      edit_m_btn: '💾 حفظ التعديلات',
+      t_edit_saved: '✓ تم حفظ التعديلات',
+      t_edit_fail: 'تعذر حفظ التعديلات',
+      busy_edit: 'جارٍ الحفظ…',
 
       // رسائل
       t_admin_only_create: 'الإنشاء متاح للإداري فقط',
@@ -363,6 +371,7 @@
       btn_open: '🔓 Ouvrir les plis',
       btn_open_locked: '🔒 En attente de la date d’ouverture',
       btn_delete: "🗑️ Supprimer l'avis",
+      btn_edit: '✏️ Modifier',
       st_published: 'Publié',
       st_opened: 'Plis ouverts',
 
@@ -441,6 +450,13 @@
       del_m_btn: '🗑️ Confirmer la suppression',
       del_info_pub: 'Avis publié — le fichier et tous les enregistrements seront supprimés.',
       del_info_open: 'Déjà ouvert — tout sera supprimé (fichier déjà supprimé).',
+      edit_m_title: "✏️ Modifier l'avis / appel d'offres",
+      edit_m_text: 'Les modifications sont enregistrées directement. Le numéro et le code QR ne changent pas.',
+      edit_ref_note: 'Numéro verrouillé — il définit le code QR (il reste identique).',
+      edit_m_btn: '💾 Enregistrer les modifications',
+      t_edit_saved: '✓ Modifications enregistrées',
+      t_edit_fail: "Échec de l'enregistrement des modifications",
+      busy_edit: 'Enregistrement…',
 
       t_admin_only_create: 'La création est réservée à l’administrateur',
       t_fill_all: 'Remplissez tous les champs requis',

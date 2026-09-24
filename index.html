@@ -329,6 +329,46 @@
     </div>
   </div>
 
+  <!-- ===== نافذة: تعديل الاستشارة ===== -->
+  <div id="edit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+      <div class="px-5 py-4 bg-primary-700 text-white">
+        <h3 class="font-black" data-i18n="edit_m_title">✏️ تعديل الاستشارة / طلب العروض</h3>
+        <p class="text-xs mt-1 text-teal-100 leading-relaxed" data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
+      </div>
+      <div class="p-5">
+        <div id="edit-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
+        <form id="edit-form" class="space-y-4">
+          <input type="hidden" id="e-id">
+          <div>
+            <label class="lbl" data-i18n="f_kind">نوع الصفقة *</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="kind-opt"><input type="radio" name="e-kind" value="consultation" class="sr-only"><span data-i18n="kind_consultation">📄 استشارة</span></label>
+              <label class="kind-opt"><input type="radio" name="e-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
+            </div>
+          </div>
+          <div>
+            <label class="lbl" for="e-title" data-i18n="f_title">العنوان *</label>
+            <input id="e-title" class="inp" required>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="lbl" for="e-duration" data-i18n="f_duration">المدة</label>
+              <input id="e-duration" class="inp">
+            </div>
+            <div>
+              <label class="lbl" for="e-opening" data-i18n="f_opening">تاريخ فتح الأظرفة *</label>
+              <input id="e-opening" class="inp" type="datetime-local" required>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed" data-i18n="edit_ref_note">الرقم محجوب — لأنه يحدد الرمز QR (يبقى نفسه).</p>
+          <button id="edit-btn" type="submit" class="btn-primary w-full" data-i18n="edit_m_btn">💾 حفظ التعديلات</button>
+          <button data-close="edit-modal" type="button" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== التنبيهات ===== -->
   <div id="toasts" class="fixed top-4 inset-x-0 z-[60] flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
 

@@ -204,12 +204,18 @@
      ويُحذف ملفها (ضمان إضافي بجانب مهمة pg_cron) ---------- */
   async function autoOpenDue() {
     if (A.role === 'committee') return;
+    // وقت الخادم بدل ساعة الجهاز (قد تكون خاطئة — مثل ساعة زائدة)
+    let limitIso = new Date().toISOString();
+    try {
+      const { data: nowData } = await DB.rpc('server_now');
+      if (nowData) limitIso = new Date(nowData).toISOString();
+    } catch (e) { /* احتياط: وقت الجهاز */ }
     let rows = [];
     try {
       const { data, error } = await DB.from('tenders')
         .select('id, reference, pdf_path')
         .eq('status', 'published')
-        .lte('opening_date', new Date().toISOString());
+        .lte('opening_date', limitIso);
       if (error || !data || !data.length) return;
       rows = data;
     } catch (e) { return; }
@@ -416,6 +422,60 @@
       const f = e.target.files[0];
       $('replace-file-info').textContent = f ? f.name + ' — ' + (f.size / 1024 / 1024).toFixed(2) + ' MB' : '';
     });
+    bindEditForm();
+  }
+
+  /* ---------- تعديل الاستشارة (الرقم والـ QR لا يتغيران) ---------- */
+
+  function openEdit(tt) {
+    $('e-id').value = tt.id;
+    $('edit-tender-info').innerHTML =
+      '<b>' + esc(tt.reference) + '</b> — ' + kindLabel(tt.kind) +
+      '<div class="text-xs text-slate-400 mt-1">' + t('edit_ref_note') + '</div>';
+    const kindInput = document.querySelector('input[name="e-kind"][value="' + (tt.kind === 'tender' ? 'tender' : 'consultation') + '"]');
+    if (kindInput) kindInput.checked = true;
+    $('e-title').value = tt.title || '';
+    $('e-duration').value = tt.duration || '';
+    const d = new Date(tt.opening_date);
+    const p2 = (n) => String(n).padStart(2, '0');
+    $('e-opening').value = isNaN(d.getTime()) ? '' :
+      d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + 'T' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    openModal('edit-modal');
+  }
+
+  function bindEditForm() {
+    const form = $('edit-form');
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!canOpen()) return;
+      const id = $('e-id').value;
+      const title = val('e-title').trim();
+      const duration = val('e-duration').trim();
+      const opening = val('e-opening');
+      const kindEl = document.querySelector('input[name="e-kind"]:checked');
+      const kind = kindEl ? kindEl.value : 'consultation';
+      if (!id || !title || !opening) return toast(t('t_fill_all'), 'error');
+      if (title.length > 200) return toast(t('t_title_long'), 'error');
+      if (duration.length > 100) return toast(t('t_duration_long'), 'error');
+      if (isNaN(new Date(opening).getTime())) return toast(t('t_bad_date'), 'error');
+      const btn = $('edit-btn');
+      setBusy(btn, true, t('busy_edit'));
+      try {
+        const { error } = await DB.from('tenders')
+          .update({ kind, title, duration, opening_date: new Date(opening).toISOString() })
+          .eq('id', id);
+        if (error) throw error;
+        toast(t('t_edit_saved'), 'success');
+        closeModal('edit-modal');
+        A.refreshTenders();
+      } catch (err) {
+        console.error(err);
+        toast(t('t_edit_fail') + ' — ' + ((err && err.message) || ''), 'error', 6000);
+      } finally {
+        setBusy(btn, false, t('edit_m_btn'));
+      }
+    });
   }
 
   /* ---------- قائمة الاستشارات ---------- */
@@ -475,8 +535,9 @@
       '</div>' +
       '</div>' +
       '<div class="mt-3 grid grid-cols-2 gap-2">' +
-       '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
-       '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' +
+        '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
+        (canOpen() ? '<button data-act="edit" data-id="' + tt.id + '" class="w-full btn-secondary !text-indigo-600">' + t('btn_edit') + '</button>' : '') +
+        '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' +
        (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
       (isPub && canOpen()
         ? '<button data-act="replace" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_replace') + '</button>' +
@@ -500,6 +561,7 @@
     const ol = $('opening-list');
     if (!((tl && tl.contains(btn)) || (ol && ol.contains(btn)))) return;
     if (btn.dataset.act === 'open' && !canOpen()) return;
+    if (btn.dataset.act === 'edit' && !canOpen()) return;
     if ((btn.dataset.act === 'replace' || btn.dataset.act === 'delete') && !isAdmin()) return;
     DB.from('tenders').select('*').eq('id', btn.dataset.id).maybeSingle().then(({ data, error }) => {
       if (error || !data) return toast(t('t_fetch_fail'), 'error');
@@ -507,6 +569,7 @@
       else if (btn.dataset.act === 'downloads') A.showDownloads(data);
       else if (btn.dataset.act === 'direct') directDownload(data);
       else if (btn.dataset.act === 'open') askOpen(data);
+      else if (btn.dataset.act === 'edit') openEdit(data);
       else if (btn.dataset.act === 'replace') askReplace(data);
       else if (btn.dataset.act === 'delete') askDelete(data);
     });
