@@ -38,6 +38,47 @@
     }).format(d);
   };
 
+  // أجزاء التاريخ/الوقت بمنطقة المكتب الثابتة (الجزائر) — لا تتأثر بمنطقة زمنية الجهاز
+  const WD_IDX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  function officeParts(v) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: OFFICE_TZ,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', weekday: 'short',
+      hourCycle: 'h23',
+    }).formatToParts(v);
+    const g = (ty) => { const e = parts.find((x) => x.type === ty); return e ? e.value : ''; };
+    const wd = g('weekday');
+    return { y: g('year'), mo: g('month'), da: g('day'), h: g('hour'), mi: g('minute'), wd: WD_IDX[wd] != null ? WD_IDX[wd] : 0 };
+  }
+
+  // ISO → وقت جزائري (شكل YYYY-MM-DDTHH:MM) لحقول datetime-local
+  window.isoToOfficeWall = function (iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const o = officeParts(d);
+    return o.y + '-' + o.mo + '-' + o.da + 'T' + o.h + ':' + o.mi;
+  };
+
+  // وقت جزائري (YYYY-MM-DDTHH:MM) → ISO — أي وقت كتبه الموظف يُفهم كتوقيت الجزائر
+  window.officeWallToISO = function (wall) {
+    if (!wall) return null;
+    const asLocal = new Date(wall);
+    if (isNaN(asLocal.getTime())) return null;
+    const o = officeParts(asLocal);
+    const asOffice = new Date(o.y + '-' + o.mo + '-' + o.da + 'T' + o.h + ':' + o.mi);
+    const diff = asOffice.getTime() - asLocal.getTime();
+    return new Date(asLocal.getTime() - diff).toISOString();
+  };
+
+  // أجزاء التاريخ/الوقت بتوقيت الجزائر لأي قيمة (ISO أو Date)
+  window.officePartsDate = function (v) {
+    const d = v instanceof Date ? v : new Date(v);
+    if (isNaN(d.getTime())) return null;
+    return officeParts(d);
+  };
+
   window.countdownMs = function (iso) {
     return new Date(iso).getTime() - Date.now();
   };

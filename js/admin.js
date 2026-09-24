@@ -61,19 +61,21 @@
     const ico = $('remind-ico');
     if (!badge || !panel) return;
     const now = new Date();
-    const tmr = new Date(now.getTime() + 86400000);
-    const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const today = officePartsDate(now);
+    const tmr = officePartsDate(new Date(now.getTime() + 86400000));
     const p = (n) => String(n).padStart(2, '0');
     const lang = (window.I18N && I18N.lang) || 'ar';
     const days = DAY_NAMES[lang] || DAY_NAMES.ar;
+    const sameOfficeDay = (o, ref) => !!(o && ref && o.y === ref.y && o.mo === ref.mo && o.da === ref.da);
     const items = [];
     (reminderData || []).forEach((r) => {
       const d = new Date(r.opening_date);
       if (isNaN(d)) return;
-      const isToday = sameDay(d, now);
-      const isTmr = !isToday && sameDay(d, tmr);
-      const when = isToday ? t('rm_today') : isTmr ? t('rm_tomorrow') : (days[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1));
-      items.push({ d, isToday, isTmr, when, r });
+      const o = officePartsDate(d);
+      const isToday = sameOfficeDay(o, today);
+      const isTmr = !isToday && sameOfficeDay(o, tmr);
+      const when = isToday ? t('rm_today') : isTmr ? t('rm_tomorrow') : (days[o.wd] + ' ' + o.da + '/' + o.mo);
+      items.push({ d, o, isToday, isTmr, when, r });
     });
 
     // شارة العدد على الجرس
@@ -99,7 +101,7 @@
       '<div class="text-sm font-bold text-slate-800" dir="auto">' + esc(i.r.reference) + '</div>' +
       (i.r.title ? '<div class="text-xs text-slate-500 leading-snug">' + esc(trunc(i.r.title)) + '</div>' : '') +
       '<div class="text-[11px] font-semibold mt-1 ' + (i.isToday ? 'text-amber-700' : i.isTmr ? 'text-sky-700' : 'text-slate-400') + '">' +
-      esc(i.when) + ' — ' + t('rm_open_word') + ' <span class="tabular-nums">(' + p(i.d.getHours()) + ':' + p(i.d.getMinutes()) + ')</span></div>' +
+      esc(i.when) + ' — ' + t('rm_open_word') + ' <span class="tabular-nums">(' + i.o.h + ':' + i.o.mi + ')</span></div>' +
       '</div>' +
       '</div>';
     panel.innerHTML =
@@ -334,7 +336,7 @@
               reference: ref.trim(),
               title: title.trim(),
               duration: duration.trim(),
-              opening_date: new Date(opening).toISOString(),
+              opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
             },
           });
           if (fin.error) throw fin.error;
@@ -437,9 +439,8 @@
     $('e-title').value = tt.title || '';
     $('e-duration').value = tt.duration || '';
     const d = new Date(tt.opening_date);
-    const p2 = (n) => String(n).padStart(2, '0');
-    $('e-opening').value = isNaN(d.getTime()) ? '' :
-      d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + 'T' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    if (isNaN(d.getTime())) $('e-opening').value = '';
+    else $('e-opening').value = isoToOfficeWall(tt.opening_date);
     openModal('edit-modal');
   }
 
@@ -463,7 +464,7 @@
       setBusy(btn, true, t('busy_edit'));
       try {
         const { error } = await DB.from('tenders')
-          .update({ kind, title, duration, opening_date: new Date(opening).toISOString() })
+          .update({ kind, title, duration, opening_date: officeWallToISO(opening) || new Date(opening).toISOString() })
           .eq('id', id);
         if (error) throw error;
         toast(t('t_edit_saved'), 'success');
