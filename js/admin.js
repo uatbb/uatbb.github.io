@@ -18,6 +18,7 @@
     bindCreate();
     bindStaticButtons();
     bindAccounts();
+    bindBackup();
     bindReminderClose();
     const s = $('tender-search');
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
@@ -1055,6 +1056,54 @@
         toast(t('t_fail', { msg: (err && err.message) || err }), 'error', 5000);
       } finally {
         setBusy(btn, false, t('acc_add_btn'));
+      }
+    });
+  }
+
+  /* ---------- نسخة احتياطية يدوية (إداري) ---------- */
+
+  function bindBackup() {
+    const b = $('backup-btn');
+    if (!b) return;
+    if (!isAdmin()) return;
+    b.addEventListener('click', async () => {
+      if (!isAdmin()) return;
+      setBusy(b, true, t('busy_backup'));
+      try {
+        const [tRes, dRes, uRes] = await Promise.all([
+          DB.from('tenders').select('*'),
+          DB.from('downloads').select('*'),
+          DB.functions.invoke('manage-users', { body: { action: 'list' } }),
+        ]);
+        if (tRes.error) throw tRes.error;
+        if (dRes.error) throw dRes.error;
+        const stamp = new Date().toISOString().slice(0, 10);
+        const csvRows = (rows, cols) =>
+          cols.join(',') + '\n' +
+          rows.map((r) =>
+            cols.map((c) => '"' + String(r[c] == null ? '' : r[c]).replaceAll('"', '""') + '"').join(',')
+          ).join('\n');
+        const users = (uRes.data && uRes.data.users) || [];
+        downloadBlob(new Blob([JSON.stringify(tRes.data, null, 2)], { type: 'application/json' }),
+          'backup_tenders_' + stamp + '.json');
+        setTimeout(() => {
+          downloadBlob(new Blob(['\uFEFF' + csvRows(dRes.data || [],
+            ['id', 'tender_id', 'company', 'phone', 'email', 'ip_address', 'user_agent', 'downloaded_at'])],
+            { type: 'text/csv;charset=utf-8' }), 'backup_downloads_' + stamp + '.csv');
+          setTimeout(() => {
+            downloadBlob(new Blob(['\uFEFF' + csvRows(users,
+              ['id', 'email', 'full_name', 'role', 'created_at'])], { type: 'text/csv;charset=utf-8' }),
+              'backup_users_' + stamp + '.csv');
+            setTimeout(() => {
+              toast(t('t_backup_done'), 'success', 6000);
+              setBusy(b, false, t('bk_btn'));
+            }, 700);
+          }, 700);
+        }, 700);
+      } catch (err) {
+        console.error(err);
+        toast(t('t_backup_fail') + ' — ' + ((err && err.message) || ''), 'error', 6000);
+        setBusy(b, false, t('bk_btn'));
       }
     });
   }

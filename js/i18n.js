@@ -167,6 +167,12 @@
       t_edit_saved: '✓ تم حفظ التعديلات',
       t_edit_fail: 'تعذر حفظ التعديلات',
       busy_edit: 'جارٍ الحفظ…',
+      bk_title: '💾 النسخ الاحتياطي',
+      bk_sub: 'حمّل كل البيانات (الاستشارات + سجل التحميلات + الحسابات) إلى حاسوبك — ثلاث ملفات',
+      bk_btn: '⬇️ تحميل النسخة الاحتياطية',
+      busy_backup: '⏳ جارٍ تجهيز الملفات…',
+      t_backup_done: '✓ تم تنزيل ملفات النسخة الاحتياطية (3 ملفات)',
+      t_backup_fail: 'تعذر إنشاء النسخة الاحتياطية',
 
       // رسائل
       t_admin_only_create: 'الإنشاء متاح للإداري فقط',
@@ -457,6 +463,12 @@
       t_edit_saved: '✓ Modifications enregistrées',
       t_edit_fail: "Échec de l'enregistrement des modifications",
       busy_edit: 'Enregistrement…',
+      bk_title: '💾 Sauvegarde',
+      bk_sub: "Téléchargez toutes les données (avis + journal des téléchargements + comptes) — trois fichiers",
+      bk_btn: '⬇️ Télécharger la sauvegarde',
+      busy_backup: '⏳ Préparation…',
+      t_backup_done: '✓ Fichiers de sauvegarde téléchargés (3 fichiers)',
+      t_backup_fail: 'Échec de la sauvegarde',
 
       t_admin_only_create: 'La création est réservée à l’administrateur',
       t_fill_all: 'Remplissez tous les champs requis',
