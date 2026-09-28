@@ -19,6 +19,7 @@
     bindStaticButtons();
     bindAccounts();
     bindBackup();
+    bindRestore();
     bindReminderClose();
     const s = $('tender-search');
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
@@ -1062,6 +1063,41 @@
 
   /* ---------- نسخة احتياطية يدوية (إداري) ---------- */
 
+  const T_COLS = ['id', 'kind', 'reference', 'title', 'duration', 'opening_date', 'pdf_path', 'pdf_source', 'status', 'opened_at', 'opened_by', 'created_at'];
+  const D_COLS = ['id', 'tender_id', 'company', 'phone', 'email', 'ip_address', 'user_agent', 'downloaded_at'];
+  const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
+
+  function csvRows(rows, cols) {
+    return cols.join(',') + '\n' +
+      rows.map((r) =>
+        cols.map((c) => '"' + String(r[c] == null ? '' : r[c]).replaceAll('"', '""') + '"').join(',')
+      ).join('\n');
+  }
+
+  // تنزيل لقطة من الحالة الحالية (3 ملفات) — يُستخدم في النسخ وفي الاستعادة (نسخة أمان)
+  async function snapshotFiles() {
+    const [tRes, dRes, uRes] = await Promise.all([
+      DB.from('tenders').select('*'),
+      DB.from('downloads').select('*'),
+      DB.functions.invoke('manage-users', { body: { action: 'list' } }),
+    ]);
+    if (tRes.error) throw tRes.error;
+    if (dRes.error) throw dRes.error;
+    const stamp = new Date().toISOString().slice(0, 10);
+    const users = (uRes.data && uRes.data.users) || [];
+    downloadBlob(new Blob([JSON.stringify(tRes.data, null, 2)], { type: 'application/json' }),
+      'backup_tenders_' + stamp + '.json');
+    setTimeout(() => {
+      downloadBlob(new Blob(['\uFEFF' + csvRows(dRes.data || [], D_COLS)],
+        { type: 'text/csv;charset=utf-8' }), 'backup_downloads_' + stamp + '.csv');
+      setTimeout(() => {
+        downloadBlob(new Blob(['\uFEFF' + csvRows(users,
+          ['id', 'email', 'full_name', 'role', 'created_at'])], { type: 'text/csv;charset=utf-8' }),
+          'backup_users_' + stamp + '.csv');
+      }, 700);
+    }, 700);
+  }
+
   function bindBackup() {
     const b = $('backup-btn');
     if (!b) return;
@@ -1070,42 +1106,143 @@
       if (!isAdmin()) return;
       setBusy(b, true, t('busy_backup'));
       try {
-        const [tRes, dRes, uRes] = await Promise.all([
-          DB.from('tenders').select('*'),
-          DB.from('downloads').select('*'),
-          DB.functions.invoke('manage-users', { body: { action: 'list' } }),
-        ]);
-        if (tRes.error) throw tRes.error;
-        if (dRes.error) throw dRes.error;
-        const stamp = new Date().toISOString().slice(0, 10);
-        const csvRows = (rows, cols) =>
-          cols.join(',') + '\n' +
-          rows.map((r) =>
-            cols.map((c) => '"' + String(r[c] == null ? '' : r[c]).replaceAll('"', '""') + '"').join(',')
-          ).join('\n');
-        const users = (uRes.data && uRes.data.users) || [];
-        downloadBlob(new Blob([JSON.stringify(tRes.data, null, 2)], { type: 'application/json' }),
-          'backup_tenders_' + stamp + '.json');
+        await snapshotFiles();
         setTimeout(() => {
-          downloadBlob(new Blob(['\uFEFF' + csvRows(dRes.data || [],
-            ['id', 'tender_id', 'company', 'phone', 'email', 'ip_address', 'user_agent', 'downloaded_at'])],
-            { type: 'text/csv;charset=utf-8' }), 'backup_downloads_' + stamp + '.csv');
-          setTimeout(() => {
-            downloadBlob(new Blob(['\uFEFF' + csvRows(users,
-              ['id', 'email', 'full_name', 'role', 'created_at'])], { type: 'text/csv;charset=utf-8' }),
-              'backup_users_' + stamp + '.csv');
-            setTimeout(() => {
-              toast(t('t_backup_done'), 'success', 6000);
-              setBusy(b, false, t('bk_btn'));
-            }, 700);
-          }, 700);
-        }, 700);
+          toast(t('t_backup_done'), 'success', 6000);
+          setBusy(b, false, t('bk_btn'));
+        }, 1500);
       } catch (err) {
         console.error(err);
         toast(t('t_backup_fail') + ' — ' + ((err && err.message) || ''), 'error', 6000);
         setBusy(b, false, t('bk_btn'));
       }
     });
+  }
+
+  /* ---------- استعادة من ملفات نسخة (إداري) ---------- */
+
+  let restoreData = null;
+
+  // محلل CSV (يدعم علامات الاقتباس والفواصل داخل الحقول)
+  function parseCsv(text) {
+    const rows = [];
+    let row = [], cur = '', inQ = false;
+    const s = String(text).replace(/^\uFEFF/, '');
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (inQ) {
+        if (ch === '"') { if (s[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+        else cur += ch;
+      } else if (ch === '"') inQ = true;
+      else if (ch === ',') { row.push(cur); cur = ''; }
+      else if (ch === '\n') { row.push(cur); cur = ''; if (row.length > 1 || row[0] !== '') rows.push(row); row = []; }
+      else if (ch !== '\r') cur += ch;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  async function handleRestoreFiles(e) {
+    const box = $('restore-summary');
+    const files = Array.from((e.target.files) || []);
+    let tenders = null, downloads = null;
+    for (const f of files) {
+      let text;
+      try { text = await f.text(); } catch { continue; }
+      if (f.name.toLowerCase().endsWith('.json')) {
+        try {
+          const arr = JSON.parse(text);
+          if (Array.isArray(arr) && arr.length && arr[0] && arr[0].id && arr[0].reference) tenders = arr;
+        } catch { /* ليس ملف نسخ صالح */ }
+      } else if (f.name.toLowerCase().endsWith('.csv')) {
+        const rows = parseCsv(text);
+        if (!rows.length) continue;
+        const hdr = {};
+        rows[0].forEach((h, i) => { hdr[h] = i; });
+        if (hdr.tender_id !== undefined) {
+          downloads = rows.slice(1).map((r) => {
+            const o = {};
+            for (const c of D_COLS) o[c] = (r[hdr[c]] || '').trim() === '' ? null : r[hdr[c]];
+            return o;
+          }).filter((o) => o.id && o.tender_id);
+        }
+      }
+    }
+    e.target.value = '';
+    if (!tenders) {
+      restoreData = null;
+      box.classList.remove('hidden');
+      box.innerHTML = '<span class="text-red-600 font-semibold">' + t('rs_found_none') + '</span>';
+      return;
+    }
+    restoreData = { tenders, downloads: downloads || [] };
+    box.classList.remove('hidden');
+    box.innerHTML =
+      '<span class="inline-block bg-slate-100 text-slate-700 rounded-full px-3 py-1 font-semibold">' +
+      t('rs_found_t') + ': ' + tenders.length + '</span> ' +
+      '<span class="inline-block bg-slate-100 text-slate-700 rounded-full px-3 py-1 font-semibold">' +
+      t('rs_found_d') + ': ' + downloads.length + '</span>';
+  }
+
+  function bindRestore() {
+    const inp = $('restore-files');
+    const b = $('restore-btn');
+    if (!inp || !b) return;
+    if (!isAdmin()) return;
+    inp.addEventListener('change', handleRestoreFiles);
+    b.addEventListener('click', () => {
+      if (!isAdmin()) return;
+      if (!restoreData) return toast(t('rs_found_none'), 'warn', 5000);
+      const info = $('restore-modal-info');
+      info.innerHTML =
+        '<div class="font-bold text-slate-800 mb-1">' + t('rs_found_t') + ': ' + restoreData.tenders.length + '</div>' +
+        '<div class="mb-2">' + t('rs_found_d') + ': ' + (restoreData.downloads.length || t('rs_info_dl_none')) + '</div>' +
+        '<div class="text-xs text-slate-400 leading-relaxed">' + t('rs_note_pdf') + '</div>';
+      openModal('restore-modal');
+    });
+    const cb = $('restore-confirm-btn');
+    if (cb) cb.addEventListener('click', confirmRestore);
+  }
+
+  async function confirmRestore() {
+    if (!restoreData) return;
+    const btn = $('restore-confirm-btn');
+    setBusy(btn, true, t('busy_restore'));
+    try {
+      if ($('restore-safety').checked) {
+        try { await snapshotFiles(); } catch (e) { console.warn('snapshot skipped:', e); }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      // 1) مسح السجل ثم الاستشارات (الاستبدال الكامل)
+      const { error: d1 } = await DB.from('downloads').delete().neq('id', ZERO_UUID);
+      if (d1) throw d1;
+      const { error: d2 } = await DB.from('tenders').delete().neq('id', ZERO_UUID);
+      if (d2) throw d2;
+      // 2) إدخال الاستشارات (دفعة واحدة = عملية ذرّية)
+      const clean = restoreData.tenders.map((r) => {
+        const o = {};
+        for (const c of T_COLS) if (r[c] !== undefined) o[c] = r[c];
+        return o;
+      }).filter((o) => o.id && o.reference);
+      if (clean.length) {
+        const { error: i1 } = await DB.from('tenders').insert(clean);
+        if (i1) throw i1;
+      }
+      // 3) إدخال سجل التحميلات
+      if (restoreData.downloads.length) {
+        const { error: i2 } = await DB.from('downloads').insert(restoreData.downloads);
+        if (i2) throw i2;
+      }
+      toast(t('t_restore_done', { n: clean.length }), 'success', 6000);
+      restoreData = null;
+      $('restore-summary').classList.add('hidden');
+      closeModal('restore-modal');
+      A.refreshTenders();
+    } catch (err) {
+      console.error(err);
+      toast(t('t_restore_fail') + ' — ' + ((err && err.message) || ''), 'error', 8000);
+      setBusy(btn, false, t('rs_m_btn'));
+    }
   }
 
   A.refreshAccounts = async function () {

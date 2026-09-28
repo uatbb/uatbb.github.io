@@ -205,6 +205,14 @@
           <h3 class="font-bold text-slate-700 text-sm mb-1" data-i18n="bk_title">💾 النسخ الاحتياطي</h3>
           <p class="text-xs text-slate-400 mb-3" data-i18n="bk_sub">حمّل كل البيانات (الاستشارات + سجل التحميلات + الحسابات) إلى حاسوبك — ثلاث ملفات</p>
           <button id="backup-btn" class="btn-secondary w-full" data-i18n="bk_btn">⬇️ تحميل النسخة الاحتياطية</button>
+          <div class="border-t border-slate-100 mt-4 pt-4">
+            <h3 class="font-bold text-slate-700 text-sm mb-1" data-i18n="rs_title">♻️ الاستعادة</h3>
+            <p class="text-xs text-slate-400 mb-3" data-i18n="rs_sub">استرجاع البيانات من ملفات نسخة سابقة — سيُستبدل محتوى الموقع بما في الملفات</p>
+            <input id="restore-files" type="file" multiple accept=".json,.csv"
+              class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-50 file:text-red-700 file:font-semibold file:cursor-pointer cursor-pointer">
+            <div id="restore-summary" class="hidden text-xs mt-2"></div>
+            <button id="restore-btn" class="btn-danger w-full mt-3" data-i18n="rs_btn">♻️ استعادة من الملف</button>
+          </div>
         </div>
       </section>
 
@@ -370,6 +378,25 @@
           <button id="edit-btn" type="submit" class="btn-primary w-full" data-i18n="edit_m_btn">💾 حفظ التعديلات</button>
           <button data-close="edit-modal" type="button" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== نافذة: تأكيد الاستعادة ===== -->
+  <div id="restore-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+      <div class="px-5 py-4 bg-red-600 text-white">
+        <h3 class="font-black" data-i18n="rs_m_title">⚠️ تأكيد الاستعادة</h3>
+        <p class="text-xs mt-1 text-red-100 leading-relaxed" data-i18n="rs_m_text">سيُحذف المحتوى الحالي ويستبدل بما في ملفات النسخة. لا يمكن التراجع.</p>
+      </div>
+      <div class="p-5">
+        <div id="restore-modal-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
+        <label class="flex items-center gap-2 text-sm text-slate-600 mb-4 cursor-pointer">
+          <input type="checkbox" id="restore-safety" checked class="w-4 h-4">
+          <span data-i18n="rs_safety">تحميل نسخة أمان من الحالة الحالية أولًا (موصى به)</span>
+        </label>
+        <button id="restore-confirm-btn" class="btn-danger w-full" data-i18n="rs_m_btn">✅ تأكيد الاستعادة</button>
+        <button data-close="restore-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
