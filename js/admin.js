@@ -2,12 +2,59 @@
 (function () {
   const PAGE_SIZE = 20;
   const A = (window.Admin = {});
-  A.role = '';          // super_admin | faculty_admin | committee | opener | viewer
+  A.me = null;          // ملفي: { role (قالب), perms: {scope, actions}, is_active, pending, full_name }
+  A.role = '';          // تسمية القالب (للعرض) — يُشتق من A.me
   A.facultyId = null;   // كليتي (null = مركزي)
   A.faculties = [];     // كل الكليات (id, code, name_ar, name_fr, color, icon, is_central)
   A.facultyById = {};
   A.stats = null;
+  A.users = [];         // آخر قائمة مستخدمين (للمحرر)
+  A.disabled = false;
+  A.pending = false;
   let tenderFilter = null; // فلتر نشط: {status} أو {facultyId}
+
+  // الصلاحيات الدقيقة: { scope: all|own|none, actions: {create,edit,delete,open,logs,accounts} }
+  const ACTIONS = ['create', 'edit', 'delete', 'open', 'logs', 'accounts'];
+  const PRESETS = {
+    super_admin: { scope: 'all', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true } },
+    faculty_admin: { scope: 'own', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true } },
+    committee: { scope: 'own', actions: { logs: true } },
+    opener: { scope: 'own', actions: { open: true, logs: true } },
+    viewer: { scope: 'own', actions: {} },
+  };
+  const ROLE_LABELS = {
+    super_admin: 'badge_super',
+    faculty_admin: 'badge_fadmin',
+    committee: 'badge_view',
+    opener: 'badge_open',
+    viewer: 'badge_viewer',
+    custom: 'badge_custom',
+  };
+  const ROLE_BADGE_CLS = {
+    super_admin: 'bg-rose-50 text-rose-700',
+    faculty_admin: 'bg-blue-50 text-blue-700',
+    committee: 'bg-indigo-50 text-indigo-700',
+    opener: 'bg-amber-50 text-amber-700',
+    viewer: 'bg-slate-100 text-slate-600',
+    custom: 'bg-teal-50 text-teal-700',
+  };
+
+  // هل أملك صلاحية معينة؟ (مغلقة افتراضيًا)
+  A.can = function (act) {
+    return !!(A.me && A.me.is_active && A.me.perms && A.me.perms.scope !== 'none'
+      && A.me.perms.actions && A.me.perms.actions[act] === true);
+  };
+  A.scopeOf = function () {
+    return (A.me && A.me.perms && A.me.perms.scope) || 'none';
+  };
+  // هل هذا النطاق (كلية) ضمن صلاحياتي؟
+  A.inScopeOf = function (fid) {
+    if (!A.me || !A.me.is_active) return false;
+    const s = A.scopeOf();
+    if (s === 'all') return true;
+    if (s === 'own') return (fid == null) ? (A.facultyId == null) : (fid === A.facultyId);
+    return false;
+  };
   let dlTender = null;
   let dlPage = 1;
   let dlTotal = 0;
@@ -199,36 +246,54 @@
     if (badge) badge.classList.add('hidden');
   }
 
-  // تحديد دور المستخدم من الملف الشخصي الحي (016/017):
-  // super_admin | faculty_admin | committee | opener | viewer
+  // تحديد صلاحياتي من الملف الشخصي الحي (018): permissions + pending
+  // مغلق افتراضيًا: فشل القراءة = لا صلاحيات
   async function initRole() {
     restoreNav();
-    // مغلق افتراضيًا: فشل القراءة = viewer (لا صلاحيات)
-    let role = 'viewer';
-    let facultyId = null;
-    let disabled = false;
+    A.me = null;
+    A.role = '';
+    A.facultyId = null;
+    A.disabled = false;
+    A.pending = false;
     try {
       const { data: { user } } = await DB.auth.getUser();
       if (user) {
-        const VALID = ['super_admin', 'faculty_admin', 'committee', 'opener', 'viewer'];
+        const VALID = ['super_admin', 'faculty_admin', 'committee', 'opener', 'viewer', 'custom'];
         const { data: prof } = await DB.from('profiles')
-          .select('role, faculty_id, is_active, full_name')
+          .select('role, faculty_id, is_active, pending, permissions, full_name')
           .eq('id', user.id).maybeSingle();
         if (prof) {
-          disabled = !prof.is_active;
-          role = VALID.includes(prof.role) ? prof.role : (prof.role === 'admin' ? 'super_admin' : 'viewer');
-          facultyId = prof.faculty_id || null;
+          const perms = prof.permissions || {};
+          A.me = {
+            role: VALID.includes(prof.role) ? prof.role : (prof.role === 'admin' ? 'super_admin' : 'custom'),
+            perms: {
+              scope: ['all', 'own', 'none'].includes(perms.scope) ? perms.scope : 'none',
+              actions: perms.actions || {},
+            },
+            is_active: !!prof.is_active,
+            pending: !!prof.pending,
+            full_name: prof.full_name || '',
+          };
+          A.role = A.me.role;
+          A.facultyId = prof.faculty_id || null;
+          A.disabled = !prof.is_active;
+          A.pending = !!prof.pending;
           if (prof.full_name && $('user-name')) $('user-name').textContent = prof.full_name;
         } else {
           // بدون ملف شخصي (حالة قديمة): app_metadata احتياطًا
           const r = user.app_metadata && user.app_metadata.role;
-          role = r === 'admin' ? 'super_admin' : (r === 'opener' ? 'opener' : 'viewer');
+          const preset = r === 'admin' ? PRESETS.super_admin : (r === 'opener' ? PRESETS.opener : PRESETS.viewer);
+          A.me = {
+            role: r === 'admin' ? 'super_admin' : (r === 'opener' ? 'opener' : 'viewer'),
+            perms: { scope: preset.scope, actions: Object.assign({}, preset.actions) },
+            is_active: true,
+            pending: false,
+            full_name: '',
+          };
+          A.role = A.me.role;
         }
       }
-    } catch (e) { /* يبقى: عرض فقط */ }
-    A.role = role;
-    A.facultyId = facultyId;
-    A.disabled = disabled;
+    } catch (e) { /* يبقى: بدون صلاحيات */ }
     applyRoleUI();
   }
 
@@ -239,109 +304,152 @@
       navGrid.classList.remove('grid-cols-4', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3');
       navGrid.classList.add('grid-cols-' + n);
     };
+    const badge = $('role-badge');
+    const app = $('authed-app');
+    const pendCard = $('pending-card');
+
+    // حساب معلّق: شاشة انتظار فقط
+    if (A.pending) {
+      if (badge) { badge.classList.remove('hidden'); badge.textContent = t('role_pending_badge'); }
+      if (app) app.classList.add('hidden');
+      if (pendCard) pendCard.classList.remove('hidden');
+      return;
+    }
+    if (pendCard) pendCard.classList.add('hidden');
+    if (app) app.classList.remove('hidden');
 
     if (A.disabled) {
       // حساب موقوف: شاشة القائمة فقط + شارة واضحة
       document.querySelectorAll('.nav-btn').forEach((b) => b.classList.add('hidden'));
       document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.classList.remove('hidden'));
       setGrid(1);
-      const badge = $('role-badge');
       if (badge) { badge.classList.remove('hidden'); badge.textContent = t('role_disabled_badge'); }
-      const bak = $('backup-restore-box');
-      if (bak) bak.classList.add('hidden');
-      const afb = $('a-faculty-box');
-      if (afb) afb.classList.add('hidden');
+      const bak2 = $('backup-restore-box');
+      if (bak2) bak2.classList.add('hidden');
       if (window.switchTo) window.switchTo('tab-tenders');
       toast(t('t_disabled'), 'warn', 8000);
       return;
     }
 
-    const manager = A.role === 'super_admin' || A.role === 'faculty_admin';
-    // الإنشاء والحسابات: الإداري الجامعي + إداري الكلية
-    document.querySelectorAll('.nav-btn[data-tab="tab-create"], .nav-btn[data-tab="tab-accounts"]')
-      .forEach((b) => b.classList.toggle('hidden', !manager));
-    // لجنة الفتح: تبويب الفتح فقط
+    // الصلاحيات الدقيقة: كل تبويب يظهر حسب صلاحياتي الفعلية
+    const canCreate = A.can('create');
+    const canAccounts = A.can('accounts');
+    const canView = A.scopeOf() !== 'none';
+    document.querySelectorAll('.nav-btn[data-tab="tab-create"]')
+      .forEach((b) => b.classList.toggle('hidden', !canCreate));
+    document.querySelectorAll('.nav-btn[data-tab="tab-accounts"]')
+      .forEach((b) => b.classList.toggle('hidden', !canAccounts));
     document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]')
-      .forEach((b) => b.classList.toggle('hidden', A.role === 'opener'));
-    const n = manager ? 4 : (A.role === 'opener' ? 1 : 2);
-    setGrid(n);
-    // النسخ الاحتياطي/الاستعادة والإعدادات المركزية: الجامعي فقط
+      .forEach((b) => b.classList.toggle('hidden', !canView));
+    document.querySelectorAll('.nav-btn[data-tab="tab-opening"]')
+      .forEach((b) => b.classList.toggle('hidden', !canView));
+    let n = 0;
+    if (canCreate) n++;
+    if (canView) n += 2;
+    if (canAccounts) n++;
+    setGrid(Math.max(1, n));
+    // النسخ الاحتياطي/الاستعادة: نطاق كامل + حذف + إنشاء فقط
     const bak = $('backup-restore-box');
-    if (bak) bak.classList.toggle('hidden', A.role !== 'super_admin');
+    if (bak) bak.classList.toggle('hidden', !canBackup());
+    // قائمة كلية الحساب: تُظهر للجميع مَن يدير حسابات (تُقيَّد خياراتها بالنطاق)
     const afb = $('a-faculty-box');
-    if (afb) afb.classList.toggle('hidden', A.role !== 'super_admin');
+    if (afb) afb.classList.toggle('hidden', !canAccounts);
     updateBadge();
-    if (window.switchTo) window.switchTo(A.role === 'opener' ? 'tab-opening' : 'tab-tenders');
+    if (window.switchTo) {
+      // لجنة فتح خالصة (فتح+سجل فقط) تفتح تبويب الفتح — غير ذلك القائمة
+      const openerOnly = canView && !canCreate && !canAccounts && A.can('open') && !A.can('edit') && !A.can('delete');
+      window.switchTo(openerOnly ? 'tab-opening' : (canView ? 'tab-tenders' : 'tab-opening'));
+    }
   }
 
   function updateBadge() {
     const badge = $('role-badge');
     if (!badge) return;
-    if (A.disabled) badge.textContent = t('role_disabled_badge');
-    else if (A.role === 'super_admin') badge.textContent = t('role_super_badge');
-    else if (A.role === 'faculty_admin') {
+    if (A.pending) badge.textContent = t('role_pending_badge');
+    else if (A.disabled) badge.textContent = t('role_disabled_badge');
+    else {
+      const labelKey = ROLE_LABELS[A.role] || 'badge_custom';
+      let suffix = '';
       const f = A.facultyById[A.facultyId];
-      badge.textContent = f ? f.icon + ' ' + facName(f) : t('role_fadmin_badge');
-    } else if (A.role === 'opener') badge.textContent = t('role_opener_badge');
-    else badge.textContent = t('role_committee_badge');
+      if (A.scopeOf() === 'own') {
+        suffix = f ? ' — ' + f.icon + ' ' + facName(f) : ' — ' + t('fac_central_label');
+      } else if (A.scopeOf() === 'all') {
+        suffix = ' — ' + t('scope_all_short');
+      }
+      badge.textContent = t(labelKey) + suffix;
+    }
     badge.classList.remove('hidden');
   }
 
   // إعادة ترجمة شارة الدور عند تبديل اللغة
   A.updateRoleBadge = function () {
-    if (A.role || A.disabled) updateBadge();
+    if (A.me || A.disabled || A.pending) updateBadge();
   };
+
+  // خيارات الكلية ضمن نطاق صلاحياتي فقط
+  function scopeFaculties() {
+    return A.scopeOf() === 'all' ? A.faculties : A.faculties.filter((f) => f.id === A.facultyId);
+  }
 
   // تعبئة قوائم الكليات (إنشاء استشارة / حساب / تعديل)
   function populateFacultySelects() {
+    const fill = (sel, opts) => {
+      sel.innerHTML = opts.map((f) =>
+        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
+    };
     const fsel = $('f-faculty');
     if (fsel) {
       const cur = fsel.value;
-      fsel.innerHTML = A.faculties.map((f) =>
-        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
-      if (A.role === 'faculty_admin' && A.facultyId) {
-        fsel.value = A.facultyId;
+      const opts = scopeFaculties();
+      if (!opts.length) {
+        fsel.innerHTML = '';
         fsel.disabled = true;
-      } else if (cur && A.faculties.some((f) => f.id === cur)) {
-        fsel.value = cur;
       } else {
-        const central = A.faculties.find((f) => f.is_central);
-        fsel.value = (central && central.id) || (A.faculties[0] && A.faculties[0].id) || '';
+        fill(fsel, opts);
+        if (opts.length === 1) fsel.disabled = true;
+        else fsel.disabled = false;
+        if (cur && opts.some((f) => f.id === cur)) fsel.value = cur;
+        else {
+          const central = opts.find((f) => f.is_central);
+          fsel.value = (central && central.id) || opts[0].id;
+        }
       }
     }
     const asel = $('a-faculty');
     if (asel) {
       const cur = asel.value;
-      asel.innerHTML = A.faculties.map((f) =>
-        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
-      if (A.role !== 'super_admin') {
-        if (A.facultyId) asel.value = A.facultyId;
+      const opts = scopeFaculties();
+      if (!opts.length) {
+        asel.innerHTML = '';
         asel.disabled = true;
-      } else if (cur && A.faculties.some((f) => f.id === cur)) {
-        asel.value = cur;
+      } else {
+        fill(asel, opts);
+        asel.disabled = opts.length <= 1;
+        if (cur && opts.some((f) => f.id === cur)) asel.value = cur;
+        else {
+          const central = opts.find((f) => f.is_central);
+          asel.value = (central && central.id) || opts[0].id;
+        }
       }
     }
     const esel = $('e-faculty');
     if (esel) {
       const cur = esel.value;
-      esel.innerHTML = A.faculties.map((f) =>
-        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
-      esel.disabled = A.role !== 'super_admin';
+      fill(esel, A.faculties);
+      esel.disabled = A.scopeOf() !== 'all'; // تغيير كلية الاستشارة: نطاق كامل فقط
       if (!esel.disabled && cur && A.faculties.some((f) => f.id === cur)) esel.value = cur;
     }
   }
 
-  // هل الاستشارة ضمن نطاقي؟ (جامعي = الكل، إداري كلية مركزي = الكل، وإلا كليته)
+  // هل الاستشارة ضمن نطاقي؟ (نطاق كامل = الكل، وإلا كليتي)
   function inScope(tt) {
-    if (isSuper()) return true;
-    if (A.role === 'faculty_admin' && !A.facultyId) return true;
-    return !!(tt && tt.faculty_id === A.facultyId);
+    return A.inScopeOf(tt ? tt.faculty_id : null);
   }
 
   /* ---------- فتح تلقائي من اللوحة: كل منشورة حلّ موعدها تُفتح
      ويُحذف ملفها (ضمان إضافي بجانب مهمة pg_cron) ---------- */
   async function autoOpenDue() {
-    if (!A.role || !canOpen() || A.disabled) return;
+    if (!A.me || A.disabled || !A.can('open')) return;
     // وقت الخادم بدل ساعة الجهاز (قد تكون خاطئة — مثل ساعة زائدة)
     let limitIso = new Date().toISOString();
     try {
@@ -381,11 +489,14 @@
     }
   }
 
-  // ملاحظة: قبل تحديد الدور (أثناء الربط) تُعتبر الصلاحيات مفعّلة لأن الخادم يفرضها فعلًا
-  function isAdmin() { return !A.role ? true : (A.role === 'super_admin' || A.role === 'faculty_admin'); }
-  function isSuper() { return A.role === 'super_admin'; }
-  function canOpen() { return !A.role ? true : (isAdmin() || A.role === 'opener'); }
-  function isCommittee() { return A.role === 'committee' || A.role === 'viewer'; }
+  // ملاحظة: قبل تحديد الصلاحيات (أثناء الربط) تُعتبر مفعّلة لأن الخادم يفرضها فعلًا
+  function hasCreate() { return !A.me ? true : A.can('create'); }
+  function hasEdit() { return !A.me ? true : A.can('edit'); }
+  function hasDelete() { return !A.me ? true : A.can('delete'); }
+  function hasOpen() { return !A.me ? true : A.can('open'); }
+  function hasLogs() { return !A.me ? true : A.can('logs'); }
+  function hasAccounts() { return !A.me ? true : A.can('accounts'); }
+  function canBackup() { return !A.me ? true : (A.scopeOf() === 'all' && A.can('delete') && A.can('create')); }
 
   // التحقق من أن قاعدة البيانات محدثة (الأعمدة الجديدة موجودة)
   async function checkSchema() {
@@ -416,7 +527,6 @@
   function bindCreate() {
     const form = $('create-form');
     if (!form) return;
-    if (!isAdmin()) return;
 
     $('f-file').addEventListener('change', (e) => {
       const f = e.target.files[0];
@@ -425,7 +535,7 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!isAdmin()) return toast(t('t_admin_only_create'), 'error');
+      if (!A.me || !hasCreate()) return toast(t('t_perm_denied'), 'error');
       const ref = val('f-reference');
       const title = val('f-title');
       const duration = val('f-duration');
@@ -585,7 +695,7 @@
     const ef = $('e-faculty');
     if (ef) {
       ef.value = tt.faculty_id || (A.faculties.find((f) => f.is_central) || {}).id || '';
-      ef.disabled = !isSuper(); // تغيير كلية الاستشارة للإداري الجامعي فقط
+      ef.disabled = A.scopeOf() !== 'all'; // تغيير كلية الاستشارة: نطاق كامل فقط
     }
     const d = new Date(tt.opening_date);
     if (isNaN(d.getTime())) $('e-opening').value = '';
@@ -598,7 +708,7 @@
     if (!form) return;
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!canOpen()) return;
+      if (!A.me || !hasEdit()) return toast(t('t_perm_denied'), 'error');
       const id = $('e-id').value;
       const title = val('e-title').trim();
       const duration = val('e-duration').trim();
@@ -616,7 +726,7 @@
           .update({
             kind, title, duration,
             opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
-            faculty_id: isSuper() ? (val('e-faculty') || null) : (A.facultyId || null),
+            faculty_id: A.scopeOf() === 'all' ? (val('e-faculty') || null) : (A.facultyId || null),
           })
           .eq('id', id);
         if (error) throw error;
@@ -694,7 +804,7 @@
       return q.then((r) => r.count || 0);
     };
     try {
-      const showFacChips = isSuper() || (A.role === 'faculty_admin' && !A.facultyId);
+      const showFacChips = A.scopeOf() === 'all';
       const [total, pub, opened] = await Promise.all([
         countQ({}),
         countQ({ status: 'published' }),
@@ -755,21 +865,23 @@
       '<div class="text-slate-700 font-bold">' + dl + '</div>' +
       '</div>' +
       '</div>' +
-      '<div class="mt-3 grid grid-cols-2 gap-2">' +
-        '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
-        (canOpen() && inScope(tt) ? '<button data-act="edit" data-id="' + tt.id + '" class="w-full btn-secondary !text-indigo-600">' + t('btn_edit') + '</button>' : '') +
-        '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' +
-       (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
-      (isPub && canOpen() && inScope(tt)
-        ? '<button data-act="replace" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_replace') + '</button>' +
-          (new Date(tt.opening_date).getTime() <= Date.now()
-            ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
-            : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center" title="' + t('t_open_early', { d: fmtDate(tt.opening_date, true) }) + '">' + t('btn_open_locked') + '</span>')
-        : '') +
-      (isAdmin() && inScope(tt)
-        ? '<button data-act="delete" data-id="' + tt.id + '" class="w-full btn-secondary !text-red-600">' + t('btn_delete') + '</button>'
-        : '') +
-      '</div>' +
+       '<div class="mt-3 grid grid-cols-2 gap-2">' +
+         '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
+         (hasEdit() && inScope(tt) ? '<button data-act="edit" data-id="' + tt.id + '" class="w-full btn-secondary !text-indigo-600">' + t('btn_edit') + '</button>' : '') +
+         (hasLogs() && inScope(tt) ? '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' : '') +
+        (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
+       (isPub && hasEdit() && inScope(tt)
+         ? '<button data-act="replace" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_replace') + '</button>'
+         : '') +
+       (isPub && hasOpen() && inScope(tt)
+         ? (new Date(tt.opening_date).getTime() <= Date.now()
+             ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
+             : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center" title="' + t('t_open_early', { d: fmtDate(tt.opening_date, true) }) + '">' + t('btn_open_locked') + '</span>')
+         : '') +
+       (hasDelete() && inScope(tt)
+         ? '<button data-act="delete" data-id="' + tt.id + '" class="w-full btn-secondary !text-red-600">' + t('btn_delete') + '</button>'
+         : '') +
+       '</div>' +
       '</div>'
     );
   }
@@ -781,9 +893,10 @@
     const tl = $('tenders-list');
     const ol = $('opening-list');
     if (!((tl && tl.contains(btn)) || (ol && ol.contains(btn)))) return;
-    if (btn.dataset.act === 'open' && !canOpen()) return;
-    if (btn.dataset.act === 'edit' && !canOpen()) return;
-    if ((btn.dataset.act === 'replace' || btn.dataset.act === 'delete') && !isAdmin()) return;
+    if (btn.dataset.act === 'open' && !hasOpen()) return;
+    if (btn.dataset.act === 'edit' && !hasEdit()) return;
+    if (btn.dataset.act === 'replace' && !hasEdit()) return;
+    if (btn.dataset.act === 'delete' && !hasDelete()) return;
     DB.from('tenders').select('*').eq('id', btn.dataset.id).maybeSingle().then(({ data, error }) => {
       if (error || !data) return toast(t('t_fetch_fail'), 'error');
       if (btn.dataset.act === 'qr') A.showQR(data);
@@ -845,9 +958,9 @@
         '<div class="mt-3 grid grid-cols-2 gap-2">' +
         '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' +
         '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('op_btn_dl', { n: dl(tt) }) + '</button>' +
-        (isReady && canOpen()
-          ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
-          : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center">' + t('op_btn_wait') + '</span>') +
+         (isReady && hasOpen()
+           ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
+           : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center">' + t('op_btn_wait') + '</span>') +
         '</div>' +
         '</div>'
       );
@@ -1092,7 +1205,7 @@
   async function confirmOpen() {
     const tt = openTender;
     if (!tt) return;
-    if (!canOpen()) return toast(t('t_open_perm'), 'error');
+    if (!A.me || !hasOpen()) return toast(t('t_open_perm'), 'error');
     if (new Date(tt.opening_date).getTime() > Date.now()) {
       return toast(t('t_open_early', { d: fmtDate(tt.opening_date, true) }), 'error', 6000);
     }
@@ -1148,7 +1261,7 @@
   async function confirmReplace() {
     const tt = replaceTender;
     if (!tt) return;
-    if (!isAdmin()) return toast(t('t_replace_perm'), 'error');
+    if (!A.me || !hasEdit()) return toast(t('t_replace_perm'), 'error');
     const f = $('replace-file').files[0];
     if (!f) return toast(t('t_choose_pdf'), 'error');
     if (f.type !== 'application/pdf') return toast(t('t_pdf_only'), 'error');
@@ -1219,7 +1332,7 @@
   async function confirmDelete() {
     const tt = deleteTender;
     if (!tt) return;
-    if (!isAdmin()) return toast(t('t_delete_perm'), 'error');
+    if (!A.me || !hasDelete()) return toast(t('t_delete_perm'), 'error');
     if (val('delete-ref-input') !== tt.reference) return toast(t('t_ref_mismatch'), 'error');
 
     const btn = $('delete-confirm-btn');
@@ -1260,16 +1373,15 @@
   function bindAccounts() {
     const form = $('account-form');
     if (!form) return;
-    if (!isAdmin()) return;
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!isAdmin()) return toast(t('t_acc_perm'), 'error');
+      if (!A.me || !hasAccounts()) return toast(t('t_perm_denied'), 'error');
       const full_name = $('a-name').value.trim();
       const email = $('a-email').value.trim();
       const password = $('a-pass').value;
       const roleEl = document.querySelector('input[name="a-role"]:checked');
       const role = roleEl ? roleEl.value : 'viewer';
-      const faculty_id = isSuper() ? (val('a-faculty') || null) : (A.facultyId || null);
+      const faculty_id = val('a-faculty') || null;
       if (!full_name || !email || !password) return toast(t('t_fill'), 'error');
       if (password.length < 8) return toast(t('t_pass_short'), 'error');
       const btn = form.querySelector('button[type=submit]');
@@ -1339,7 +1451,7 @@
     const b = $('backup-btn');
     if (!b) return;
     b.addEventListener('click', async () => {
-      if (!isSuper()) return toast(t('t_acc_perm'), 'error');
+      if (!A.me || !canBackup()) return toast(t('t_perm_denied'), 'error');
       setBusy(b, true, t('busy_backup'));
       try {
         await snapshotFiles();
@@ -1379,7 +1491,7 @@
   }
 
   async function handleRestoreFiles(e) {
-    if (!isSuper()) return;
+    if (!A.me || !canBackup()) return;
     const box = $('restore-summary');
     const files = Array.from((e.target.files) || []);
     let tenders = null, downloads = null;
@@ -1427,7 +1539,7 @@
     if (!inp || !b) return;
     inp.addEventListener('change', handleRestoreFiles);
     b.addEventListener('click', () => {
-      if (!isSuper()) return toast(t('t_acc_perm'), 'error');
+      if (!A.me || !canBackup()) return toast(t('t_perm_denied'), 'error');
       if (!restoreData) return toast(t('rs_found_none'), 'warn', 5000);
       const info = $('restore-modal-info');
       info.innerHTML =
@@ -1483,80 +1595,164 @@
 
   A.refreshAccounts = async function () {
     const list = $('accounts-list');
+    const pend = $('pending-list');
     if (!list) return;
+    if (A.me && !A.can('accounts')) return;
     list.innerHTML = '<div class="text-center text-slate-400 text-sm py-6">' + t('loading') + '</div>';
+    if (pend) pend.innerHTML = '';
     try {
       const { data, error } = await DB.functions.invoke('manage-users', { body: { action: 'list' } });
       if (error) throw error;
       if (!data || !data.users) throw new Error((data && data.error) || t('t_fetch_users'));
-      if (!data.users.length) {
+      const users = data.users;
+      A.users = users;
+      const pendingUsers = users.filter((u) => u.pending);
+      const activeUsers = users.filter((u) => !u.pending);
+
+      // طلبات بانتظار الموافقة
+      if (pend) {
+        pend.innerHTML = pendingUsers.length
+          ? '<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">' +
+            '<div class="font-bold text-amber-800 text-sm mb-2">🕓 ' + t('acc_pending_title') + ' (' + pendingUsers.length + ')</div>' +
+            '<div class="space-y-2">' + pendingUsers.map(pendingCard).join('') + '</div>' +
+            '</div>'
+          : '';
+        bindPendingControls(pend);
+      }
+
+      if (!activeUsers.length) {
         list.innerHTML = emptyState(t('empty_accounts_t'), '');
         return;
       }
-      list.innerHTML = data.users.map(accountCard).join('');
-      list.querySelectorAll('[data-del]').forEach((b) =>
-        b.addEventListener('click', () => deleteAccount(b.dataset.del, b.dataset.email))
-      );
-      list.querySelectorAll('[data-role-select]').forEach((sel) =>
-        sel.addEventListener('change', () => changeRole(sel.dataset.roleSelect, sel.value, sel))
-      );
-      list.querySelectorAll('[data-fac-select]').forEach((sel) =>
-        sel.addEventListener('change', () => changeUserField(sel.dataset.facSelect, { faculty_id: sel.value }, t('t_fac_confirm')))
-      );
-      list.querySelectorAll('[data-toggle]').forEach((b) =>
-        b.addEventListener('click', () => toggleUser(b))
-      );
+      list.innerHTML = activeUsers.map(accountCard).join('');
+      bindAccountControls(list);
     } catch (err) {
       console.error(err);
       list.innerHTML = errorState(err);
     }
   };
 
-  const ROLE_BADGES = {
-    super_admin: 'bg-rose-50 text-rose-700',
-    faculty_admin: 'bg-blue-50 text-blue-700',
-    committee: 'bg-indigo-50 text-indigo-700',
-    opener: 'bg-amber-50 text-amber-700',
-    viewer: 'bg-slate-100 text-slate-600',
-  };
-  const ROLE_LABELS = {
-    super_admin: 'badge_super',
-    faculty_admin: 'badge_fadmin',
-    committee: 'badge_view',
-    opener: 'badge_open',
-    viewer: 'badge_viewer',
-  };
-  const ROLE_SEL_LABELS = {
-    super_admin: 'sel_super',
-    faculty_admin: 'sel_fadmin',
-    committee: 'sel_view',
-    opener: 'sel_open',
-    viewer: 'sel_viewer',
-  };
+  // محرر الصلاحيات الدقيقة (نطاق + أفعال + قوالب + كلية)
+  function permEditorHtml(u) {
+    const p = u.permissions || { scope: 'own', actions: {} };
+    const allOk = A.scopeOf() === 'all';
+    const scopes = allOk ? ['all', 'own', 'none'] : ['own', 'none'];
+    const scopeHtml = scopes.map((s) =>
+      '<label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer">' +
+      '<input type="radio" name="perm-scope" value="' + s + '"' + (p.scope === s ? ' checked' : '') + ' class="w-3.5 h-3.5">' +
+      '<span>' + t('scope_' + s) + '</span></label>'
+    ).join('');
+    const actHtml = ACTIONS.map((a) =>
+      '<label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer bg-slate-50 rounded-lg px-2 py-1.5">' +
+      '<input type="checkbox" data-act-chk="' + a + '"' + (p.actions[a] ? ' checked' : '') + ' class="w-3.5 h-3.5">' +
+      '<span>' + t('act_' + a) + '</span></label>'
+    ).join('');
+    const presetHtml = Object.keys(PRESETS).map((k) =>
+      '<button type="button" data-preset="' + k + '" class="text-[10px] font-bold rounded-full border border-slate-200 hover:border-teal-400 hover:text-teal-700 px-2.5 py-1 whitespace-nowrap">' + t('preset_' + k) + '</button>'
+    ).join('');
+    const facOpts = scopeFaculties().map((f) =>
+      '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
+    ).join('');
+    return (
+      '<div class="space-y-2.5">' +
+      '<div class="flex flex-wrap gap-3">' + scopeHtml + '</div>' +
+      '<div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">' + actHtml + '</div>' +
+      '<div class="flex flex-wrap items-center gap-1.5">' +
+      '<span class="text-[10px] font-bold text-slate-400">' + t('presets_label') + '</span>' + presetHtml +
+      '</div>' +
+      (facOpts ? '<div><label class="lbl">' + t('acc_faculty') + '</label>' +
+        '<select data-perm-fac class="inp !text-xs !py-1.5">' + facOpts + '</select></div>' : '') +
+      '<button type="button" data-perm-save="' + u.id + '" class="btn-primary w-full !py-2 !text-xs">' + t('perm_save') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function bindPermEditor(box) {
+    box.querySelectorAll('[data-preset]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const k = b.dataset.preset;
+        const p = PRESETS[k];
+        const r = box.querySelector('input[name="perm-scope"][value="' + p.scope + '"]');
+        if (r) r.checked = true;
+        ACTIONS.forEach((a) => {
+          const c = box.querySelector('[data-act-chk="' + a + '"]');
+          if (c) c.checked = !!p.actions[a];
+        });
+      })
+    );
+    box.querySelectorAll('[data-perm-save]').forEach((b) =>
+      b.addEventListener('click', () => savePerms(b.dataset.permSave))
+    );
+  }
+
+  function savePerms(uid) {
+    const box = $('perm-' + uid);
+    if (!box) return;
+    const u = (A.users || []).find((x) => x.id === uid);
+    if (!u) return;
+    const scopeEl = box.querySelector('input[name="perm-scope"]:checked');
+    const scope = scopeEl ? scopeEl.value : 'own';
+    const actions = {};
+    ACTIONS.forEach((a) => {
+      const c = box.querySelector('[data-act-chk="' + a + '"]');
+      actions[a] = !!(c && c.checked);
+    });
+    const facEl = box.querySelector('[data-perm-fac]');
+    const body = { action: u.pending ? 'approve' : 'update', id: uid, permissions: { scope, actions } };
+    if (facEl) body.faculty_id = facEl.value || null;
+    const btn = box.querySelector('[data-perm-save]');
+    if (btn) btn.disabled = true;
+    DB.functions.invoke('manage-users', { body }).then(({ data, error }) => {
+      if (error) return toast(t('t_role_change_fail', { msg: error.message || error }), 'error', 5000);
+      if (data && data.error === 'cannot_change_self') return toast(t('t_role_cannot_self'), 'error');
+      if (data && data.error) return toast(t('t_fail', { msg: data.error }), 'error', 5000);
+      toast(t(u.pending ? 't_acc_approved' : 't_acc_updated'), 'success');
+      A.refreshAccounts();
+    });
+  }
+
+  function pendingCard(u) {
+    const fac = u.faculty_id ? A.facultyById[u.faculty_id] : null;
+    return (
+      '<div class="bg-white rounded-xl border border-amber-200 p-3">' +
+      '<div class="flex items-center justify-between gap-2">' +
+      '<div class="min-w-0">' +
+      '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
+      (fac ? facChip(fac) : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">🏛️ ' + t('fac_central_label') + '</span>') +
+      '</div>' +
+      '<div class="text-xs text-slate-400" dir="ltr">' + esc(u.email) + '</div>' +
+      '</div>' +
+      '<div class="flex items-center gap-1.5 shrink-0">' +
+      '<button data-approve="' + u.id + '" class="text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg px-3 py-1.5 whitespace-nowrap">✅ ' + t('btn_approve') + '</button>' +
+      '<button data-reject="' + u.id + '" data-email="' + esc(u.email) + '" class="text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg px-3 py-1.5 whitespace-nowrap">🗑️ ' + t('btn_reject') + '</button>' +
+      '</div>' +
+      '</div>' +
+      '<div id="perm-' + u.id + '" class="hidden mt-3 border-t border-amber-100 pt-3">' + permEditorHtml(u) + '</div>' +
+      '</div>'
+    );
+  }
+
+  function bindPendingControls(root) {
+    root.querySelectorAll('[data-approve]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const box = $('perm-' + b.dataset.approve);
+        if (box) box.classList.toggle('hidden');
+      })
+    );
+    root.querySelectorAll('[data-reject]').forEach((b) =>
+      b.addEventListener('click', () => rejectUser(b.dataset.reject, b.dataset.email))
+    );
+    root.querySelectorAll('[id^="perm-"]').forEach((box) => bindPermEditor(box));
+  }
 
   function accountCard(u) {
     const active = u.is_active !== false;
-    const badgeKey = ROLE_LABELS[u.role] || 'badge_viewer';
-    const badgeCls = ROLE_BADGES[u.role] || ROLE_BADGES.viewer;
+    const badgeKey = ROLE_LABELS[u.role] || 'badge_custom';
+    const badgeCls = ROLE_BADGE_CLS[u.role] || ROLE_BADGE_CLS.custom;
     const fac = u.faculty_id ? A.facultyById[u.faculty_id] : null;
-    const roleOptions = (isSuper()
-      ? ['super_admin', 'faculty_admin', 'committee', 'opener', 'viewer']
-      : ['faculty_admin', 'committee', 'opener', 'viewer']
-    ).map((r) =>
-      '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + t(ROLE_SEL_LABELS[r]) + '</option>'
-    ).join('');
-    const roleSelect = (
-      '<select data-role-select="' + u.id + '" ' + (u.is_you ? 'disabled title="' + t('cant_change_self') + '"' : '') +
-      ' class="text-[11px] border border-slate-200 rounded-lg px-1.5 py-1 bg-white max-w-[150px]">' + roleOptions + '</select>'
-    );
-    const facSelect = isSuper() ? (
-      '<select data-fac-select="' + u.id + '" ' + (u.is_you ? 'disabled' : '') + ' class="text-[11px] border border-slate-200 rounded-lg px-1.5 py-1 bg-white max-w-[150px]">' +
-      A.faculties.map((f) =>
-        '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
-      ).join('') + '</select>'
-    ) : '';
     return (
-      '<div class="bg-white rounded-xl border p-3 flex items-center justify-between gap-2 ' + (active ? 'border-slate-200' : 'border-slate-200 opacity-60') + '">' +
+      '<div class="bg-white rounded-xl border p-3 ' + (active ? 'border-slate-200' : 'border-slate-200 opacity-60') + '">' +
+      '<div class="flex items-center justify-between gap-2">' +
       '<div class="min-w-0">' +
       '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
       '<span class="text-[10px] font-bold rounded px-1.5 py-0.5 ' + badgeCls + '">' + t(badgeKey) + '</span>' +
@@ -1568,30 +1764,36 @@
       '</div>' +
       (u.is_you
         ? ''
-        : '<div class="flex flex-col items-end gap-1.5 shrink-0">' +
-          roleSelect +
-          facSelect +
-          '<div class="flex items-center gap-1.5">' +
+        : '<div class="flex items-center gap-1.5 shrink-0 flex-wrap">' +
+          '<button data-perm-toggle="' + u.id + '" class="text-xs font-bold rounded-lg px-2.5 py-1 text-teal-700 hover:bg-teal-50 whitespace-nowrap">🛡️ ' + t('btn_perm') + '</button>' +
           '<button data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="text-xs font-bold rounded-lg px-2.5 py-1 whitespace-nowrap ' +
             (active ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50') + '">' +
             (active ? '⏸️ ' + t('btn_suspend') : '▶️ ' + t('btn_activate')) + '</button>' +
           '<button data-del="' + u.id + '" data-email="' + esc(u.email) + '" class="text-xs text-red-600 font-bold hover:bg-red-50 rounded-lg px-2.5 py-1 whitespace-nowrap">' + t('btn_delete_word') + '</button>' +
-          '</div>' +
           '</div>') +
+      '</div>' +
+      (u.is_you ? '' : '<div id="perm-' + u.id + '" class="hidden mt-3 border-t border-slate-100 pt-3">' + permEditorHtml(u) + '</div>') +
       '</div>'
     );
   }
 
-  function changeRole(id, role, sel) {
-    const label = t(ROLE_SEL_LABELS[role] || 'sel_view');
-    if (!confirm(t('t_role_confirm', { label }))) {
-      A.refreshAccounts();
-      return;
-    }
-    changeUserField(id, { role }, null);
+  function bindAccountControls(root) {
+    root.querySelectorAll('[data-perm-toggle]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const box = $('perm-' + b.dataset.permToggle);
+        if (box) box.classList.toggle('hidden');
+      })
+    );
+    root.querySelectorAll('[data-toggle]').forEach((b) =>
+      b.addEventListener('click', () => toggleUser(b))
+    );
+    root.querySelectorAll('[data-del]').forEach((b) =>
+      b.addEventListener('click', () => deleteAccount(b.dataset.del, b.dataset.email))
+    );
+    root.querySelectorAll('[id^="perm-"]').forEach((box) => bindPermEditor(box));
   }
 
-  // تحديث عام لحقل من حقول الحساب (دور / كلية / حالة)
+  // تحديث عام لحقل من حقول الحساب (حالة)
   function changeUserField(id, patch, confirmMsg) {
     if (confirmMsg && !confirm(confirmMsg)) { A.refreshAccounts(); return; }
     DB.functions.invoke('manage-users', { body: Object.assign({ action: 'update', id }, patch) }).then(({ data, error }) => {
@@ -1609,6 +1811,17 @@
       active ? t('t_suspend_confirm') : t('t_activate_confirm'));
   }
 
+  function rejectUser(id, email) {
+    if (!confirm(t('t_reject_confirm', { email }))) return;
+    DB.functions.invoke('manage-users', { body: { action: 'reject', id } }).then(({ data, error }) => {
+      if (error) return toast(t('t_del_acc_fail', { msg: error.message || error }), 'error', 5000);
+      if (data && data.error === 'cannot_change_self') return toast(t('t_cannot_del_self'), 'error');
+      if (data && data.error) return toast(t('t_fail', { msg: data.error }), 'error', 5000);
+      toast(t('t_acc_rejected'), 'success');
+      A.refreshAccounts();
+    });
+  }
+
   function deleteAccount(id, email) {
     if (!confirm(t('t_del_acc_confirm', { email }))) return;
     DB.functions.invoke('manage-users', { body: { action: 'delete', id } }).then(({ data, error }) => {
@@ -1622,9 +1835,10 @@
   /* ---------- تبديل اللغة: إعادة رسم قوائم الكليات والإحصائيات ---------- */
 
   document.addEventListener('langchange', () => {
-    if (!A.role) return;
+    if (!A.me) return;
     populateFacultySelects();
     A.loadStats();
+    if (A.users && A.users.length && A.can('accounts')) A.refreshAccounts();
   });
 
   /* ---------- ترقيم الصفحات ---------- */

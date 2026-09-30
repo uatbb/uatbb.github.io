@@ -37,7 +37,50 @@
     if (form) form.addEventListener('submit', onLogin);
     const lo = $('logout-btn');
     if (lo) lo.addEventListener('click', () => DB.auth.signOut());
+    const plo = $('pending-logout');
+    if (plo) plo.addEventListener('click', () => DB.auth.signOut());
+    bindSelfRegister();
   };
+
+  /* ---------- طلب حساب جديد (تسجيل ذاتي → موافقة الإدارة) ---------- */
+
+  function bindSelfRegister() {
+    const btn = $('req-acc-btn');
+    if (btn) btn.addEventListener('click', () => $('req-acc-box').classList.toggle('hidden'));
+    const reqForm = $('req-acc-form');
+    if (!reqForm) return;
+    reqForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = $('rq-name').value.trim();
+      const email = $('rq-email').value.trim();
+      const pass = $('rq-pass').value;
+      const msg = $('rq-msg');
+      const show = (txt, ok) => {
+        msg.textContent = txt;
+        msg.className = 'text-[11px] mt-2 leading-relaxed ' + (ok ? 'text-emerald-600 font-bold' : 'text-red-600');
+        msg.classList.remove('hidden');
+      };
+      if (!name || !email || !pass) return show(I18N.t('t_fill'), false);
+      if (pass.length < 8) return show(I18N.t('t_pass_short'), false);
+      const sub = reqForm.querySelector('button[type=submit]');
+      setBusy(sub, true, I18N.t('busy_login'));
+      try {
+        const { data, error } = await DB.functions.invoke('manage-users', {
+          body: { action: 'self-register', full_name: name, email, password: pass },
+        });
+        if (error) return show(I18N.t('t_fail', { msg: error.message || error }), false);
+        if (data && data.error === 'bad_email') return show(I18N.t('t_bad_email'), false);
+        if (data && data.error === 'weak_password') return show(I18N.t('t_pass_short'), false);
+        if (data && data.error) return show(I18N.t('t_fail', { msg: data.error }), false);
+        show(I18N.t('rq_done'), true);
+        reqForm.reset();
+      } catch (err) {
+        show(I18N.t('t_fail', { msg: (err && err.message) || err }), false);
+      } finally {
+        setBusy(sub, false, I18N.t('rq_submit'));
+      }
+    });
+  }
 
   function updateUI(authed) {
     $('login-card').classList.toggle('hidden', authed);

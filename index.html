@@ -74,8 +74,28 @@
           <button type="submit" class="btn-primary w-full" data-i18n="login_btn">دخول</button>
         </form>
         <div class="mt-4 text-center">
-          <p class="text-[11px] text-slate-400 leading-relaxed" data-i18n="login_noacc">لا تملك حسابًا؟ اطلب من مسؤول المكتب إضافتك من تبويب «الحسابات».</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed" data-i18n="login_noacc">لا تملك حسابًا؟ يمكنك تقديم طلب حساب وسيتم تفعيله بعد موافقة الإدارة.</p>
+          <button id="req-acc-btn" type="button" class="text-xs font-bold text-teal-700 hover:underline mt-1.5" data-i18n="login_req_acc">📨 طلب حساب جديد</button>
         </div>
+        <div id="req-acc-box" class="hidden mt-3 border-t border-slate-100 pt-3">
+          <form id="req-acc-form" class="space-y-2">
+            <input id="rq-name" class="inp" data-i18n-ph="rq_name_ph" placeholder="الاسم الكامل" required maxlength="100">
+            <input id="rq-email" class="inp" type="email" dir="ltr" data-i18n-ph="login_email" placeholder="البريد الإلكتروني" required>
+            <input id="rq-pass" class="inp" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
+            <button type="submit" class="btn-primary w-full !py-2 !text-xs" data-i18n="rq_submit">📨 إرسال الطلب</button>
+          </form>
+          <p id="rq-msg" class="hidden text-[11px] mt-2 leading-relaxed"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== شاشة: حساب بانتظار الموافقة ===== -->
+    <div id="pending-card" class="hidden min-h-screen flex items-center justify-center px-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6 w-full max-w-sm text-center">
+        <div class="text-4xl mb-3">🕓</div>
+        <h2 class="font-black text-slate-800 mb-2" data-i18n="pending_t">حسابك بانتظار الموافقة</h2>
+        <p class="text-sm text-slate-500 leading-relaxed" data-i18n="pending_s">تم استلام طلب حسابك وسيتم تفعيله من طرف إدارة الجامعة. بعد الموافقة يمكنك الدخول بنفس البريد وكلمة المرور.</p>
+        <button id="pending-logout" class="btn-secondary w-full mt-4" data-i18n="logout">تسجيل الخروج</button>
       </div>
     </div>
 
@@ -212,6 +232,7 @@
             <button type="submit" class="btn-primary w-full" data-i18n="acc_add_btn">➕ إضافة الحساب</button>
           </form>
         </div>
+        <div id="pending-list"></div>
         <div id="accounts-list" class="space-y-2"></div>
         <div id="backup-restore-box" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-3">
           <h3 class="font-bold text-slate-700 text-sm mb-1" data-i18n="bk_title">💾 النسخ الاحتياطي</h3>
