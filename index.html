@@ -203,11 +203,16 @@
 
       <!-- ===== تبويب: الحسابات ===== -->
       <section id="tab-accounts" class="hidden">
-        <div class="mb-3">
-          <h2 class="font-black text-slate-800" data-i18n="accounts_title">👥 الحسابات</h2>
-          <p class="text-xs text-slate-400" data-i18n="accounts_sub">كل الحسابات تحصل على صلاحيات كاملة (إنشاء، سجل التحميلات، فتح الأظرفة)</p>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="font-black text-slate-800" data-i18n="accounts_title">👥 الحسابات</h2>
+            <p class="text-xs text-slate-400" data-i18n="accounts_sub">صلاحيات دقيقة لكل حساب: نطاق + أفعال — مع طلبات الانتظار</p>
+          </div>
+          <input id="accounts-search" class="inp !w-44 sm:!w-56" data-i18n-ph="acc_search_ph" placeholder="🔍 بحث بالاسم أو البريد">
         </div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-3">
+        <div id="accounts-chips" class="flex flex-wrap gap-1.5 mb-3"></div>
+        <button id="acc-add-toggle" type="button" class="btn-primary w-full mb-3" data-i18n="acc_add_toggle">➕ إضافة حساب جديد</button>
+        <div id="account-form-box" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-3">
           <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="acc_add_title">إضافة حساب جديد</h3>
           <form id="account-form" class="space-y-3">
             <input id="a-name" class="inp" type="text" data-i18n-ph="acc_name_ph" placeholder="الاسم الكامل" required>

@@ -1370,9 +1370,18 @@
 
   /* ---------- إدارة الحسابات ---------- */
 
+  let accFilter = 'all'; // all | active | suspended
+
   function bindAccounts() {
     const form = $('account-form');
     if (!form) return;
+    // زر إضافة قابل للطي
+    const tg = $('acc-add-toggle');
+    const fbox = $('account-form-box');
+    if (tg && fbox) tg.addEventListener('click', () => fbox.classList.toggle('hidden'));
+    // بحث فوري في الحسابات
+    const s = $('accounts-search');
+    if (s) s.addEventListener('input', debounce(() => { if (A.renderAccounts) A.renderAccounts(); }, 250));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!A.me || !hasAccounts()) return toast(t('t_perm_denied'), 'error');
@@ -1400,6 +1409,7 @@
         }
         toast(t('t_acc_added'), 'success');
         form.reset();
+        if (fbox) fbox.classList.add('hidden');
         A.refreshAccounts();
       } catch (err) {
         console.error(err);
@@ -1596,40 +1606,78 @@
   A.refreshAccounts = async function () {
     const list = $('accounts-list');
     const pend = $('pending-list');
+    const chips = $('accounts-chips');
     if (!list) return;
-    if (A.me && !A.can('accounts')) return;
+    if (A.me && !A.can('accounts')) {
+      if (list) list.innerHTML = '';
+      if (pend) pend.innerHTML = '';
+      if (chips) chips.innerHTML = '';
+      return;
+    }
     list.innerHTML = '<div class="text-center text-slate-400 text-sm py-6">' + t('loading') + '</div>';
     if (pend) pend.innerHTML = '';
     try {
       const { data, error } = await DB.functions.invoke('manage-users', { body: { action: 'list' } });
       if (error) throw error;
       if (!data || !data.users) throw new Error((data && data.error) || t('t_fetch_users'));
-      const users = data.users;
-      A.users = users;
-      const pendingUsers = users.filter((u) => u.pending);
-      const activeUsers = users.filter((u) => !u.pending);
-
-      // طلبات بانتظار الموافقة
-      if (pend) {
-        pend.innerHTML = pendingUsers.length
-          ? '<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">' +
-            '<div class="font-bold text-amber-800 text-sm mb-2">🕓 ' + t('acc_pending_title') + ' (' + pendingUsers.length + ')</div>' +
-            '<div class="space-y-2">' + pendingUsers.map(pendingCard).join('') + '</div>' +
-            '</div>'
-          : '';
-        bindPendingControls(pend);
-      }
-
-      if (!activeUsers.length) {
-        list.innerHTML = emptyState(t('empty_accounts_t'), '');
-        return;
-      }
-      list.innerHTML = activeUsers.map(accountCard).join('');
-      bindAccountControls(list);
+      A.users = data.users;
+      A.renderAccounts();
     } catch (err) {
       console.error(err);
       list.innerHTML = errorState(err);
     }
+  };
+
+  // عرض الحسابات: شارات فلترة + طلبات الانتظار + القائمة (بحث/فلتر دون إعادة جلب)
+  A.renderAccounts = function () {
+    const chips = $('accounts-chips');
+    const pend = $('pending-list');
+    const list = $('accounts-list');
+    if (!list) return;
+    const users = A.users || [];
+    const pendingUsers = users.filter((u) => u.pending);
+    const shown = users.filter((u) => !u.pending);
+    const nActive = shown.filter((u) => u.is_active !== false).length;
+    const nSuspended = shown.length - nActive;
+
+    // شارات الفلترة (نفس أسلوب إحصائيات الاستشارات)
+    if (chips) {
+      const chip = (key, label, n) => {
+        const on = accFilter === key;
+        return '<button type="button" data-acc-chip="' + key + '" class="text-[11px] font-bold rounded-full border px-3 py-1.5 transition whitespace-nowrap ' +
+          (on ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400') + '">' +
+          label + ' <span class="tabular-nums">' + n + '</span></button>';
+      };
+      chips.innerHTML =
+        chip('all', t('acc_stats_all'), shown.length) +
+        chip('active', t('acc_stats_active'), nActive) +
+        chip('suspended', t('acc_stats_suspended'), nSuspended);
+      chips.querySelectorAll('[data-acc-chip]').forEach((b) =>
+        b.addEventListener('click', () => { accFilter = b.dataset.accChip; A.renderAccounts(); })
+      );
+    }
+
+    // طلبات بانتظار الموافقة
+    if (pend) {
+      pend.innerHTML = pendingUsers.length
+        ? '<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">' +
+          '<div class="font-bold text-amber-800 text-sm mb-2">🕓 ' + t('acc_pending_title') + ' (' + pendingUsers.length + ')</div>' +
+          '<div class="space-y-2">' + pendingUsers.map(pendingCard).join('') + '</div>' +
+          '</div>'
+        : '';
+      bindPendingControls(pend);
+    }
+
+    // القائمة: فلتر + بحث
+    const term = (val('accounts-search') || '').trim().toLowerCase();
+    let rows = shown.filter((u) =>
+      accFilter === 'all' ? true : (accFilter === 'active' ? u.is_active !== false : u.is_active === false));
+    if (term) rows = rows.filter((u) =>
+      (u.full_name || '').toLowerCase().includes(term) || (u.email || '').toLowerCase().includes(term));
+    list.innerHTML = rows.length
+      ? rows.map(accountCard).join('')
+      : emptyState(term || accFilter !== 'all' ? t('acc_none_found') : t('empty_accounts_t'), '');
+    bindAccountControls(list);
   };
 
   // محرر الصلاحيات الدقيقة (نطاق + أفعال + قوالب + كلية)
@@ -1745,26 +1793,53 @@
     root.querySelectorAll('[id^="perm-"]').forEach((box) => bindPermEditor(box));
   }
 
+  const ACT_ICONS = { create: '📝', edit: '✏️', delete: '🗑️', open: '🔓', logs: '📊', accounts: '👥' };
+
+  // شارات صغيرة: الصلاحيات الممنوحة فعليًا لهذا الحساب
+  function permChips(u) {
+    const acts = (u.permissions && u.permissions.actions) || {};
+    const granted = ACTIONS.filter((a) => acts[a] === true);
+    const scope = (u.permissions && u.permissions.scope) || 'none';
+    const scopeChip = scope === 'all'
+      ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 whitespace-nowrap">🌐 ' + t('scope_all') + '</span>'
+      : scope === 'own'
+        ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 whitespace-nowrap">📍 ' + t('scope_own') + '</span>'
+        : '';
+    const chips = granted.map((a) =>
+      '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">' + ACT_ICONS[a] + ' ' + t('act_' + a) + '</span>'
+    ).join('');
+    return '<div class="flex flex-wrap items-center gap-1 mt-1.5">' + scopeChip + (chips ||
+      '<span class="text-[9px] text-slate-400">— ' + t('scope_none') + ' —</span>') + '</div>';
+  }
+
   function accountCard(u) {
     const active = u.is_active !== false;
     const badgeKey = ROLE_LABELS[u.role] || 'badge_custom';
     const badgeCls = ROLE_BADGE_CLS[u.role] || ROLE_BADGE_CLS.custom;
     const fac = u.faculty_id ? A.facultyById[u.faculty_id] : null;
+    const initial = esc((u.full_name || u.email || '?').trim().charAt(0).toUpperCase());
     return (
       '<div class="bg-white rounded-xl border p-3 ' + (active ? 'border-slate-200' : 'border-slate-200 opacity-60') + '">' +
-      '<div class="flex items-center justify-between gap-2">' +
+      '<div class="flex items-start justify-between gap-2">' +
+      '<div class="flex items-start gap-2.5 min-w-0">' +
+      '<div class="h-9 w-9 rounded-full bg-teal-100 text-teal-700 font-black text-sm flex items-center justify-center shrink-0">' + initial + '</div>' +
       '<div class="min-w-0">' +
       '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
+      (u.is_you ? '<span class="text-[10px] text-teal-600 font-bold">' + t('you_tag') + '</span>' : '') +
+      (!active ? '<span class="text-[10px] font-bold bg-red-50 text-red-600 rounded px-1.5 py-0.5">⛔ ' + t('st_inactive') + '</span>' : '') +
+      '</div>' +
+      '<div class="text-xs text-slate-400 truncate" dir="ltr">' + esc(u.email) +
+      ' <span class="text-[10px]">· ' + t('created_in', { d: fmtDate(u.created_at) }) + '</span></div>' +
+      '<div class="flex flex-wrap items-center gap-1 mt-1">' +
       '<span class="text-[10px] font-bold rounded px-1.5 py-0.5 ' + badgeCls + '">' + t(badgeKey) + '</span>' +
       (fac ? facChip(fac) : '') +
-      (!active ? '<span class="text-[10px] font-bold bg-red-50 text-red-600 rounded px-1.5 py-0.5">⛔ ' + t('st_inactive') + '</span>' : '') +
-      (u.is_you ? ' <span class="text-[10px] text-teal-600 font-bold">' + t('you_tag') + '</span>' : '') + '</div>' +
-      '<div class="text-xs text-slate-400" dir="ltr">' + esc(u.email) + '</div>' +
-      '<div class="text-[10px] text-slate-400 mt-0.5">' + t('created_in', { d: fmtDate(u.created_at) }) + '</div>' +
+      '</div>' +
+      permChips(u) +
+      '</div>' +
       '</div>' +
       (u.is_you
         ? ''
-        : '<div class="flex items-center gap-1.5 shrink-0 flex-wrap">' +
+        : '<div class="flex flex-col items-end gap-1.5 shrink-0">' +
           '<button data-perm-toggle="' + u.id + '" class="text-xs font-bold rounded-lg px-2.5 py-1 text-teal-700 hover:bg-teal-50 whitespace-nowrap">🛡️ ' + t('btn_perm') + '</button>' +
           '<button data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="text-xs font-bold rounded-lg px-2.5 py-1 whitespace-nowrap ' +
             (active ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50') + '">' +
