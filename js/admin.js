@@ -371,6 +371,7 @@
             pdf_path: pdfPath,
             pdf_source: 'supabase',
             status: 'published',
+            secure_link: true,
           });
           if (insErr) throw insErr;
         }
@@ -388,6 +389,7 @@
           title: title.trim(),
           duration: duration.trim() || null,
           opening_date: new Date(opening).toISOString(),
+          secure_link: true,
         });
       } catch (err) {
         console.error(err);
@@ -674,11 +676,18 @@
     $('qr-duration').textContent = t.duration || '—';
     $('qr-opening').textContent = fmtDate(t.opening_date, true);
 
-    // رابط QR: رمز قصير من أرقام المرجع (01/2026 → ?c=012026) — وUUID كامل احتياطًا
+    // رابط QR:
+    //  - مشفّرة (secure_link): ?open=<UUID> — غير قابل للتخمين
+    //  - قديمة: ?c=<أرقام المرجع>
     const configured = (window.TENDER_CONFIG || {}).PUBLIC_BASE_URL;
     const base = (configured || location.href.split('?')[0]).replace(/\/$/, '');
-    const code = (t.reference || '').replace(/\D/g, '');
-    const url = code ? base + '?c=' + code : base + '?open=' + t.id;
+    let url;
+    if (t.secure_link) {
+      url = base + '?open=' + t.id;
+    } else {
+      const code = (t.reference || '').replace(/\D/g, '');
+      url = code ? base + '?c=' + code : base + '?open=' + t.id;
+    }
     const qrUrl = $('qr-url');
     if (qrUrl) qrUrl.textContent = url;
 
