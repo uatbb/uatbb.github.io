@@ -2,6 +2,12 @@
 (function () {
   const PAGE_SIZE = 20;
   const A = (window.Admin = {});
+  A.role = '';          // super_admin | faculty_admin | committee | opener | viewer
+  A.facultyId = null;   // كليتي (null = مركزي)
+  A.faculties = [];     // كل الكليات (id, code, name_ar, name_fr, color, icon, is_central)
+  A.facultyById = {};
+  A.stats = null;
+  let tenderFilter = null; // فلتر نشط: {status} أو {facultyId}
   let dlTender = null;
   let dlPage = 1;
   let dlTotal = 0;
@@ -25,8 +31,41 @@
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
     A.page = 1;
     checkSchema();
-    initRole().then(async () => { await autoOpenDue(); A.loadTenders(); A.checkOpeningReminder(); });
+    loadFaculties().then(() => initRole()).then(async () => {
+      populateFacultySelects();
+      await autoOpenDue();
+      A.loadTenders();
+      A.loadStats();
+      A.checkOpeningReminder();
+    });
   };
+
+  /* ---------- الكليات: تحميل + أسماء + شارات ---------- */
+
+  async function loadFaculties() {
+    try {
+      const { data } = await DB.from('faculties').select('*').order('sort_order');
+      A.faculties = data || [];
+      A.facultyById = {};
+      A.faculties.forEach((f) => { A.facultyById[f.id] = f; });
+    } catch (e) {
+      A.faculties = [];
+      A.facultyById = {};
+    }
+  }
+
+  function facName(f) {
+    if (!f) return '';
+    return (I18N.lang === 'ar' ? f.name_ar : f.name_fr) || f.name_ar || '';
+  }
+
+  // شارة مصغرة للكلية (تُستخدم في بطاقات الاستشارات والحسابات)
+  function facChip(f) {
+    if (!f) {
+      return '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">🏛️ ' + t('fac_none') + '</span>';
+    }
+    return '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap" style="background:' + f.color + '1a;color:' + f.color + '">' + (f.icon || '🎓') + ' ' + esc(facName(f)) + '</span>';
+  }
 
   /* ---------- تذكير بمواعيد الفتح (اليوم / غدًا) ---------- */
 
@@ -160,56 +199,149 @@
     if (badge) badge.classList.add('hidden');
   }
 
-  // تحديد دور المستخدم: admin (كامل) | committee (لجنة عرض) | opener (لجنة فتح)
+  // تحديد دور المستخدم من الملف الشخصي الحي (016/017):
+  // super_admin | faculty_admin | committee | opener | viewer
   async function initRole() {
     restoreNav();
-    // مغلق افتراضيًا: لا دور (أو فشل القراءة) = لجنة عرض فقط —
-    // يتطابق مع قاعدة البيانات (014) حيث لا دور = لا صلاحيات
-    let role = 'committee';
+    // مغلق افتراضيًا: فشل القراءة = viewer (لا صلاحيات)
+    let role = 'viewer';
+    let facultyId = null;
+    let disabled = false;
     try {
       const { data: { user } } = await DB.auth.getUser();
-      // الدور من app_metadata فقط (لا يكتبه المستخدم)
-      const r = user && user.app_metadata && user.app_metadata.role;
-      if (r === 'admin' || r === 'opener') role = r;
+      if (user) {
+        const VALID = ['super_admin', 'faculty_admin', 'committee', 'opener', 'viewer'];
+        const { data: prof } = await DB.from('profiles')
+          .select('role, faculty_id, is_active, full_name')
+          .eq('id', user.id).maybeSingle();
+        if (prof) {
+          disabled = !prof.is_active;
+          role = VALID.includes(prof.role) ? prof.role : (prof.role === 'admin' ? 'super_admin' : 'viewer');
+          facultyId = prof.faculty_id || null;
+          if (prof.full_name && $('user-name')) $('user-name').textContent = prof.full_name;
+        } else {
+          // بدون ملف شخصي (حالة قديمة): app_metadata احتياطًا
+          const r = user.app_metadata && user.app_metadata.role;
+          role = r === 'admin' ? 'super_admin' : (r === 'opener' ? 'opener' : 'viewer');
+        }
+      }
     } catch (e) { /* يبقى: عرض فقط */ }
     A.role = role;
-    if (role !== 'admin') applyRestrictedMode();
+    A.facultyId = facultyId;
+    A.disabled = disabled;
+    applyRoleUI();
   }
 
-  function applyRestrictedMode() {
-    // تبويبا الإنشاء والحسابات للإداري فقط (إخفاء — لا حذف، لتبقى قابلة للاستعادة)
-    document.querySelectorAll('.nav-btn[data-tab="tab-create"], .nav-btn[data-tab="tab-accounts"]').forEach((b) => b.classList.add('hidden'));
-    // لجنة الفتح: تبويب الفتح فقط (تُخفى قائمة الاستشارات أيضًا)
-    if (A.role === 'opener') {
-      document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.classList.add('hidden'));
-    }
+  function applyRoleUI() {
     const navGrid = document.querySelector('.bottom-nav > div');
-    if (navGrid) {
-      navGrid.classList.remove('grid-cols-4', 'grid-cols-1', 'grid-cols-2');
-      navGrid.classList.add(A.role === 'opener' ? 'grid-cols-1' : 'grid-cols-2');
+    const setGrid = (n) => {
+      if (!navGrid) return;
+      navGrid.classList.remove('grid-cols-4', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3');
+      navGrid.classList.add('grid-cols-' + n);
+    };
+
+    if (A.disabled) {
+      // حساب موقوف: شاشة القائمة فقط + شارة واضحة
+      document.querySelectorAll('.nav-btn').forEach((b) => b.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.classList.remove('hidden'));
+      setGrid(1);
+      const badge = $('role-badge');
+      if (badge) { badge.classList.remove('hidden'); badge.textContent = t('role_disabled_badge'); }
+      const bak = $('backup-restore-box');
+      if (bak) bak.classList.add('hidden');
+      const afb = $('a-faculty-box');
+      if (afb) afb.classList.add('hidden');
+      if (window.switchTo) window.switchTo('tab-tenders');
+      toast(t('t_disabled'), 'warn', 8000);
+      return;
     }
-    const badge = $('role-badge');
-    if (badge) {
-      badge.classList.remove('hidden');
-      badge.textContent = A.role === 'opener' ? t('role_opener_badge') : t('role_committee_badge');
-    }
-    // لجنة الفتح تفتح على صفحة الفتح، ولجنة العرض على القائمة
+
+    const manager = A.role === 'super_admin' || A.role === 'faculty_admin';
+    // الإنشاء والحسابات: الإداري الجامعي + إداري الكلية
+    document.querySelectorAll('.nav-btn[data-tab="tab-create"], .nav-btn[data-tab="tab-accounts"]')
+      .forEach((b) => b.classList.toggle('hidden', !manager));
+    // لجنة الفتح: تبويب الفتح فقط
+    document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]')
+      .forEach((b) => b.classList.toggle('hidden', A.role === 'opener'));
+    const n = manager ? 4 : (A.role === 'opener' ? 1 : 2);
+    setGrid(n);
+    // النسخ الاحتياطي/الاستعادة والإعدادات المركزية: الجامعي فقط
+    const bak = $('backup-restore-box');
+    if (bak) bak.classList.toggle('hidden', A.role !== 'super_admin');
+    const afb = $('a-faculty-box');
+    if (afb) afb.classList.toggle('hidden', A.role !== 'super_admin');
+    updateBadge();
     if (window.switchTo) window.switchTo(A.role === 'opener' ? 'tab-opening' : 'tab-tenders');
+  }
+
+  function updateBadge() {
+    const badge = $('role-badge');
+    if (!badge) return;
+    if (A.disabled) badge.textContent = t('role_disabled_badge');
+    else if (A.role === 'super_admin') badge.textContent = t('role_super_badge');
+    else if (A.role === 'faculty_admin') {
+      const f = A.facultyById[A.facultyId];
+      badge.textContent = f ? f.icon + ' ' + facName(f) : t('role_fadmin_badge');
+    } else if (A.role === 'opener') badge.textContent = t('role_opener_badge');
+    else badge.textContent = t('role_committee_badge');
+    badge.classList.remove('hidden');
   }
 
   // إعادة ترجمة شارة الدور عند تبديل اللغة
   A.updateRoleBadge = function () {
-    const badge = $('role-badge');
-    if (!badge) return;
-    if (A.role && A.role !== 'admin') {
-      badge.textContent = A.role === 'opener' ? t('role_opener_badge') : t('role_committee_badge');
-    }
+    if (A.role || A.disabled) updateBadge();
   };
+
+  // تعبئة قوائم الكليات (إنشاء استشارة / حساب / تعديل)
+  function populateFacultySelects() {
+    const fsel = $('f-faculty');
+    if (fsel) {
+      const cur = fsel.value;
+      fsel.innerHTML = A.faculties.map((f) =>
+        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
+      if (A.role === 'faculty_admin' && A.facultyId) {
+        fsel.value = A.facultyId;
+        fsel.disabled = true;
+      } else if (cur && A.faculties.some((f) => f.id === cur)) {
+        fsel.value = cur;
+      } else {
+        const central = A.faculties.find((f) => f.is_central);
+        fsel.value = (central && central.id) || (A.faculties[0] && A.faculties[0].id) || '';
+      }
+    }
+    const asel = $('a-faculty');
+    if (asel) {
+      const cur = asel.value;
+      asel.innerHTML = A.faculties.map((f) =>
+        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
+      if (A.role !== 'super_admin') {
+        if (A.facultyId) asel.value = A.facultyId;
+        asel.disabled = true;
+      } else if (cur && A.faculties.some((f) => f.id === cur)) {
+        asel.value = cur;
+      }
+    }
+    const esel = $('e-faculty');
+    if (esel) {
+      const cur = esel.value;
+      esel.innerHTML = A.faculties.map((f) =>
+        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
+      esel.disabled = A.role !== 'super_admin';
+      if (!esel.disabled && cur && A.faculties.some((f) => f.id === cur)) esel.value = cur;
+    }
+  }
+
+  // هل الاستشارة ضمن نطاقي؟ (جامعي = الكل، إداري كلية مركزي = الكل، وإلا كليته)
+  function inScope(tt) {
+    if (isSuper()) return true;
+    if (A.role === 'faculty_admin' && !A.facultyId) return true;
+    return !!(tt && tt.faculty_id === A.facultyId);
+  }
 
   /* ---------- فتح تلقائي من اللوحة: كل منشورة حلّ موعدها تُفتح
      ويُحذف ملفها (ضمان إضافي بجانب مهمة pg_cron) ---------- */
   async function autoOpenDue() {
-    if (A.role === 'committee') return;
+    if (!A.role || !canOpen() || A.disabled) return;
     // وقت الخادم بدل ساعة الجهاز (قد تكون خاطئة — مثل ساعة زائدة)
     let limitIso = new Date().toISOString();
     try {
@@ -249,9 +381,11 @@
     }
   }
 
-  function isAdmin() { return A.role !== 'committee' && A.role !== 'opener'; }
-  function canOpen() { return isAdmin() || A.role === 'opener'; }
-  function isCommittee() { return A.role === 'committee'; }
+  // ملاحظة: قبل تحديد الدور (أثناء الربط) تُعتبر الصلاحيات مفعّلة لأن الخادم يفرضها فعلًا
+  function isAdmin() { return !A.role ? true : (A.role === 'super_admin' || A.role === 'faculty_admin'); }
+  function isSuper() { return A.role === 'super_admin'; }
+  function canOpen() { return !A.role ? true : (isAdmin() || A.role === 'opener'); }
+  function isCommittee() { return A.role === 'committee' || A.role === 'viewer'; }
 
   // التحقق من أن قاعدة البيانات محدثة (الأعمدة الجديدة موجودة)
   async function checkSchema() {
@@ -299,6 +433,7 @@
       const file = $('f-file').files[0];
       const kindEl = document.querySelector('input[name="f-kind"]:checked');
       const kind = kindEl ? kindEl.value : 'consultation';
+      const facultyId = val('f-faculty') || null;
 
       if (!ref.trim() || !title.trim() || !opening || !file) return toast(t('t_fill_all'), 'error');
       if (file.type !== 'application/pdf') return toast(t('t_pdf_only'), 'error');
@@ -341,6 +476,7 @@
               title: title.trim(),
               duration: duration.trim(),
               opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
+              faculty_id: facultyId,
             },
           });
           if (fin.error) throw fin.error;
@@ -372,6 +508,7 @@
             pdf_source: 'supabase',
             status: 'published',
             secure_link: true,
+            faculty_id: facultyId,
           });
           if (insErr) throw insErr;
         }
@@ -390,6 +527,7 @@
           duration: duration.trim() || null,
           opening_date: new Date(opening).toISOString(),
           secure_link: true,
+          faculty_id: facultyId,
         });
       } catch (err) {
         console.error(err);
@@ -444,6 +582,11 @@
     if (kindInput) kindInput.checked = true;
     $('e-title').value = tt.title || '';
     $('e-duration').value = tt.duration || '';
+    const ef = $('e-faculty');
+    if (ef) {
+      ef.value = tt.faculty_id || (A.faculties.find((f) => f.is_central) || {}).id || '';
+      ef.disabled = !isSuper(); // تغيير كلية الاستشارة للإداري الجامعي فقط
+    }
     const d = new Date(tt.opening_date);
     if (isNaN(d.getTime())) $('e-opening').value = '';
     else $('e-opening').value = isoToOfficeWall(tt.opening_date);
@@ -470,7 +613,11 @@
       setBusy(btn, true, t('busy_edit'));
       try {
         const { error } = await DB.from('tenders')
-          .update({ kind, title, duration, opening_date: officeWallToISO(opening) || new Date(opening).toISOString() })
+          .update({
+            kind, title, duration,
+            opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
+            faculty_id: isSuper() ? (val('e-faculty') || null) : (A.facultyId || null),
+          })
           .eq('id', id);
         if (error) throw error;
         toast(t('t_edit_saved'), 'success');
@@ -492,8 +639,10 @@
     const pager = $('tenders-pager');
     try {
       const term = (val('tender-search') || '').trim().replace(/[(),]/g, '');
-      let q = DB.from('tenders').select('*, downloads(count)', { count: 'exact' });
+      let q = DB.from('tenders').select('*, downloads(count), faculties(*)', { count: 'exact' });
       if (term) q = q.or('reference.ilike.%' + term + '%,title.ilike.%' + term + '%');
+      if (tenderFilter && tenderFilter.status) q = q.eq('status', tenderFilter.status);
+      if (tenderFilter && tenderFilter.facultyId) q = q.eq('faculty_id', tenderFilter.facultyId);
       const from = (A.page - 1) * PAGE_SIZE;
       const { data, error, count } = await q
         .order('created_at', { ascending: false })
@@ -516,6 +665,70 @@
     }
   };
 
+  /* ---------- إحصائيات + فلاتر (شips) أعلى قائمة الاستشارات ---------- */
+
+  function stChipActive(key) {
+    if (!tenderFilter) return key === 'all';
+    if (key === 'all') return false;
+    if (key === 'published') return tenderFilter.status === 'published';
+    if (key === 'opened') return tenderFilter.status === 'opened';
+    if (key.indexOf('fac:') === 0) return tenderFilter.facultyId === key.slice(4);
+    return false;
+  }
+
+  function stChipHtml(key, label, n) {
+    const on = stChipActive(key);
+    const cls = on
+      ? 'bg-slate-800 text-white border-slate-800'
+      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400';
+    return '<button type="button" data-st-chip="' + key + '" class="text-[11px] font-bold rounded-full border px-3 py-1.5 transition whitespace-nowrap ' + cls + '">' +
+      label + ' <span class="tabular-nums">' + n + '</span></button>';
+  }
+
+  A.loadStats = async function () {
+    const box = $('tenders-stats');
+    if (!box || A.disabled) { if (box) box.innerHTML = ''; return; }
+    const countQ = (filters) => {
+      let q = DB.from('tenders').select('id', { count: 'exact', head: true });
+      Object.keys(filters).forEach((k) => { q = q.eq(k, filters[k]); });
+      return q.then((r) => r.count || 0);
+    };
+    try {
+      const showFacChips = isSuper() || (A.role === 'faculty_admin' && !A.facultyId);
+      const [total, pub, opened] = await Promise.all([
+        countQ({}),
+        countQ({ status: 'published' }),
+        countQ({ status: 'opened' }),
+      ]);
+      A.stats = { total, published: pub, opened };
+      let html =
+        stChipHtml('all', t('st_all'), total) +
+        stChipHtml('published', t('st_published'), pub) +
+        stChipHtml('opened', t('st_opened'), opened);
+      if (showFacChips) {
+        const counts = await Promise.all(A.faculties.map((f) => countQ({ faculty_id: f.id })));
+        A.faculties.forEach((f, i) => {
+          html += stChipHtml('fac:' + f.id, (f.icon || '') + ' ' + esc(facName(f)), counts[i]);
+        });
+      }
+      box.innerHTML = html;
+      box.querySelectorAll('[data-st-chip]').forEach((b) => b.addEventListener('click', () => {
+        const k = b.dataset.stChip;
+        let f = null;
+        if (k === 'published') f = { status: 'published' };
+        else if (k === 'opened') f = { status: 'opened' };
+        else if (k.indexOf('fac:') === 0) f = { facultyId: k.slice(4) };
+        const same = JSON.stringify(f) === JSON.stringify(tenderFilter);
+        tenderFilter = same ? null : f;
+        A.page = 1;
+        A.loadTenders();
+        A.loadStats();
+      }));
+    } catch (e) {
+      box.innerHTML = '';
+    }
+  };
+
   function tenderCard(tt) {
     const dl = (tt.downloads && tt.downloads[0] && tt.downloads[0].count) || 0;
     const isPub = tt.status === 'published';
@@ -525,6 +738,7 @@
       '<div class="min-w-0">' +
       '<div class="font-bold text-slate-800 flex items-center gap-2 flex-wrap">' + esc(tt.reference) +
       '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-teal-50 text-teal-700') + '">' + kindLabel(tt.kind) + '</span>' +
+      facChip(tt.faculties) +
       '</div>' +
       '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
       '</div>' +
@@ -543,16 +757,16 @@
       '</div>' +
       '<div class="mt-3 grid grid-cols-2 gap-2">' +
         '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
-        (canOpen() ? '<button data-act="edit" data-id="' + tt.id + '" class="w-full btn-secondary !text-indigo-600">' + t('btn_edit') + '</button>' : '') +
+        (canOpen() && inScope(tt) ? '<button data-act="edit" data-id="' + tt.id + '" class="w-full btn-secondary !text-indigo-600">' + t('btn_edit') + '</button>' : '') +
         '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' +
        (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
-      (isPub && canOpen()
+      (isPub && canOpen() && inScope(tt)
         ? '<button data-act="replace" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_replace') + '</button>' +
           (new Date(tt.opening_date).getTime() <= Date.now()
             ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
             : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center" title="' + t('t_open_early', { d: fmtDate(tt.opening_date, true) }) + '">' + t('btn_open_locked') + '</span>')
         : '') +
-      (isAdmin()
+      (isAdmin() && inScope(tt)
         ? '<button data-act="delete" data-id="' + tt.id + '" class="w-full btn-secondary !text-red-600">' + t('btn_delete') + '</button>'
         : '') +
       '</div>' +
@@ -590,7 +804,7 @@
     list.innerHTML = '<div class="text-center text-slate-400 text-sm py-6">' + t('loading') + '</div>';
     try {
       const [tRes, uRes] = await Promise.all([
-        DB.from('tenders').select('*, downloads(count)').order('opening_date', { ascending: true }),
+        DB.from('tenders').select('*, downloads(count), faculties(*)').order('opening_date', { ascending: true }),
         DB.functions.invoke('manage-users', { body: { action: 'list' } }),
       ]);
       const { data, error } = tRes;
@@ -617,6 +831,7 @@
         '<div class="min-w-0">' +
         '<div class="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(tt.reference) +
         '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-teal-50 text-teal-700') + '">' + kindLabel(tt.kind) + '</span>' +
+        facChip(tt.faculties) +
         '</div>' +
         '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
         '<div class="text-xs text-slate-400 mt-1">' + t('op_time', { d: fmtDate(tt.opening_date, true) }) +
@@ -675,6 +890,18 @@
     $('qr-title').textContent = t.title;
     $('qr-duration').textContent = t.duration || '—';
     $('qr-opening').textContent = fmtDate(t.opening_date, true);
+
+    // الكلية على البطاقة (null = المكتب المركزي)
+    const qf = $('qr-faculty');
+    if (qf) {
+      const fac = (t.faculty_id && A.facultyById[t.faculty_id]) || A.faculties.find((f) => f.is_central);
+      if (fac) {
+        qf.innerHTML = '<span class="inline-flex items-center gap-1 text-sm font-bold rounded-full px-3 py-1" style="background:' + fac.color + '1a;color:' + fac.color + '">' + (fac.icon || '🎓') + ' ' + esc(facName(fac)) + '</span>';
+        qf.classList.remove('hidden');
+      } else {
+        qf.classList.add('hidden');
+      }
+    }
 
     // رابط QR:
     //  - مشفّرة (secure_link): ?open=<UUID> — غير قابل للتخمين
@@ -1041,14 +1268,15 @@
       const email = $('a-email').value.trim();
       const password = $('a-pass').value;
       const roleEl = document.querySelector('input[name="a-role"]:checked');
-      const role = roleEl ? roleEl.value : 'admin';
+      const role = roleEl ? roleEl.value : 'viewer';
+      const faculty_id = isSuper() ? (val('a-faculty') || null) : (A.facultyId || null);
       if (!full_name || !email || !password) return toast(t('t_fill'), 'error');
       if (password.length < 8) return toast(t('t_pass_short'), 'error');
       const btn = form.querySelector('button[type=submit]');
       setBusy(btn, true, t('busy_add'));
       try {
         const { data, error } = await DB.functions.invoke('manage-users', {
-          body: { action: 'create', full_name, email, password, role },
+          body: { action: 'create', full_name, email, password, role, faculty_id },
         });
         if (error) throw error;
         if (!data || data.error) {
@@ -1101,7 +1329,7 @@
         { type: 'text/csv;charset=utf-8' }), 'backup_downloads_' + stamp + '.csv');
       setTimeout(() => {
         downloadBlob(new Blob(['\uFEFF' + csvRows(users,
-          ['id', 'email', 'full_name', 'role', 'created_at'])], { type: 'text/csv;charset=utf-8' }),
+          ['id', 'email', 'full_name', 'role', 'faculty_id', 'is_active', 'created_at'])], { type: 'text/csv;charset=utf-8' }),
           'backup_users_' + stamp + '.csv');
       }, 700);
     }, 700);
@@ -1110,9 +1338,8 @@
   function bindBackup() {
     const b = $('backup-btn');
     if (!b) return;
-    if (!isAdmin()) return;
     b.addEventListener('click', async () => {
-      if (!isAdmin()) return;
+      if (!isSuper()) return toast(t('t_acc_perm'), 'error');
       setBusy(b, true, t('busy_backup'));
       try {
         await snapshotFiles();
@@ -1152,6 +1379,7 @@
   }
 
   async function handleRestoreFiles(e) {
+    if (!isSuper()) return;
     const box = $('restore-summary');
     const files = Array.from((e.target.files) || []);
     let tenders = null, downloads = null;
@@ -1197,10 +1425,9 @@
     const inp = $('restore-files');
     const b = $('restore-btn');
     if (!inp || !b) return;
-    if (!isAdmin()) return;
     inp.addEventListener('change', handleRestoreFiles);
     b.addEventListener('click', () => {
-      if (!isAdmin()) return;
+      if (!isSuper()) return toast(t('t_acc_perm'), 'error');
       if (!restoreData) return toast(t('rs_found_none'), 'warn', 5000);
       const info = $('restore-modal-info');
       info.innerHTML =
@@ -1270,63 +1497,116 @@
       list.querySelectorAll('[data-del]').forEach((b) =>
         b.addEventListener('click', () => deleteAccount(b.dataset.del, b.dataset.email))
       );
-      if (!isCommittee()) {
-        list.querySelectorAll('[data-role-select]').forEach((sel) =>
-          sel.addEventListener('change', () => changeRole(sel.dataset.roleSelect, sel.value, sel))
-        );
-      }
+      list.querySelectorAll('[data-role-select]').forEach((sel) =>
+        sel.addEventListener('change', () => changeRole(sel.dataset.roleSelect, sel.value, sel))
+      );
+      list.querySelectorAll('[data-fac-select]').forEach((sel) =>
+        sel.addEventListener('change', () => changeUserField(sel.dataset.facSelect, { faculty_id: sel.value }, t('t_fac_confirm')))
+      );
+      list.querySelectorAll('[data-toggle]').forEach((b) =>
+        b.addEventListener('click', () => toggleUser(b))
+      );
     } catch (err) {
       console.error(err);
       list.innerHTML = errorState(err);
     }
   };
 
+  const ROLE_BADGES = {
+    super_admin: 'bg-rose-50 text-rose-700',
+    faculty_admin: 'bg-blue-50 text-blue-700',
+    committee: 'bg-indigo-50 text-indigo-700',
+    opener: 'bg-amber-50 text-amber-700',
+    viewer: 'bg-slate-100 text-slate-600',
+  };
+  const ROLE_LABELS = {
+    super_admin: 'badge_super',
+    faculty_admin: 'badge_fadmin',
+    committee: 'badge_view',
+    opener: 'badge_open',
+    viewer: 'badge_viewer',
+  };
+  const ROLE_SEL_LABELS = {
+    super_admin: 'sel_super',
+    faculty_admin: 'sel_fadmin',
+    committee: 'sel_view',
+    opener: 'sel_open',
+    viewer: 'sel_viewer',
+  };
+
   function accountCard(u) {
-    const r = u.role === 'opener' ? 'opener' : u.role === 'committee' ? 'committee' : 'admin';
-    const roleBadge = {
-      admin: '<span class="text-[10px] font-bold bg-teal-50 text-teal-700 rounded px-1.5 py-0.5">' + t('badge_full') + '</span>',
-      committee: '<span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 rounded px-1.5 py-0.5">' + t('badge_view') + '</span>',
-      opener: '<span class="text-[10px] font-bold bg-amber-50 text-amber-700 rounded px-1.5 py-0.5">' + t('badge_open') + '</span>',
-    }[r];
-    const roleSelect = !isAdmin() ? '' : (
+    const active = u.is_active !== false;
+    const badgeKey = ROLE_LABELS[u.role] || 'badge_viewer';
+    const badgeCls = ROLE_BADGES[u.role] || ROLE_BADGES.viewer;
+    const fac = u.faculty_id ? A.facultyById[u.faculty_id] : null;
+    const roleOptions = (isSuper()
+      ? ['super_admin', 'faculty_admin', 'committee', 'opener', 'viewer']
+      : ['faculty_admin', 'committee', 'opener', 'viewer']
+    ).map((r) =>
+      '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + t(ROLE_SEL_LABELS[r]) + '</option>'
+    ).join('');
+    const roleSelect = (
       '<select data-role-select="' + u.id + '" ' + (u.is_you ? 'disabled title="' + t('cant_change_self') + '"' : '') +
-      ' class="text-[11px] border border-slate-200 rounded-lg px-1.5 py-1 bg-white">' +
-      '<option value="admin"' + (r === 'admin' ? ' selected' : '') + '>' + t('sel_full') + '</option>' +
-      '<option value="committee"' + (r === 'committee' ? ' selected' : '') + '>' + t('sel_view') + '</option>' +
-      '<option value="opener"' + (r === 'opener' ? ' selected' : '') + '>' + t('sel_open') + '</option>' +
-      '</select>'
+      ' class="text-[11px] border border-slate-200 rounded-lg px-1.5 py-1 bg-white max-w-[150px]">' + roleOptions + '</select>'
     );
+    const facSelect = isSuper() ? (
+      '<select data-fac-select="' + u.id + '" ' + (u.is_you ? 'disabled' : '') + ' class="text-[11px] border border-slate-200 rounded-lg px-1.5 py-1 bg-white max-w-[150px]">' +
+      A.faculties.map((f) =>
+        '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
+      ).join('') + '</select>'
+    ) : '';
     return (
-      '<div class="bg-white rounded-xl border border-slate-200 p-3 flex items-center justify-between gap-2">' +
+      '<div class="bg-white rounded-xl border p-3 flex items-center justify-between gap-2 ' + (active ? 'border-slate-200' : 'border-slate-200 opacity-60') + '">' +
       '<div class="min-w-0">' +
       '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
-      roleBadge +
+      '<span class="text-[10px] font-bold rounded px-1.5 py-0.5 ' + badgeCls + '">' + t(badgeKey) + '</span>' +
+      (fac ? facChip(fac) : '') +
+      (!active ? '<span class="text-[10px] font-bold bg-red-50 text-red-600 rounded px-1.5 py-0.5">⛔ ' + t('st_inactive') + '</span>' : '') +
       (u.is_you ? ' <span class="text-[10px] text-teal-600 font-bold">' + t('you_tag') + '</span>' : '') + '</div>' +
       '<div class="text-xs text-slate-400" dir="ltr">' + esc(u.email) + '</div>' +
       '<div class="text-[10px] text-slate-400 mt-0.5">' + t('created_in', { d: fmtDate(u.created_at) }) + '</div>' +
       '</div>' +
       (u.is_you
         ? ''
-        : '<div class="flex flex-col items-end gap-1.5">' +
+        : '<div class="flex flex-col items-end gap-1.5 shrink-0">' +
           roleSelect +
-          '<button data-del="' + u.id + '" data-email="' + esc(u.email) + '" class="text-xs text-red-600 font-bold hover:bg-red-50 rounded-lg px-3 py-1 whitespace-nowrap">' + t('btn_delete_word') + '</button>' +
+          facSelect +
+          '<div class="flex items-center gap-1.5">' +
+          '<button data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="text-xs font-bold rounded-lg px-2.5 py-1 whitespace-nowrap ' +
+            (active ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50') + '">' +
+            (active ? '⏸️ ' + t('btn_suspend') : '▶️ ' + t('btn_activate')) + '</button>' +
+          '<button data-del="' + u.id + '" data-email="' + esc(u.email) + '" class="text-xs text-red-600 font-bold hover:bg-red-50 rounded-lg px-2.5 py-1 whitespace-nowrap">' + t('btn_delete_word') + '</button>' +
+          '</div>' +
           '</div>') +
       '</div>'
     );
   }
 
   function changeRole(id, role, sel) {
-    const label = role === 'opener' ? t('sel_open') : role === 'committee' ? t('sel_view') : t('sel_full');
+    const label = t(ROLE_SEL_LABELS[role] || 'sel_view');
     if (!confirm(t('t_role_confirm', { label }))) {
       A.refreshAccounts();
       return;
     }
-    DB.functions.invoke('manage-users', { body: { action: 'update', id, role } }).then(({ data, error }) => {
+    changeUserField(id, { role }, null);
+  }
+
+  // تحديث عام لحقل من حقول الحساب (دور / كلية / حالة)
+  function changeUserField(id, patch, confirmMsg) {
+    if (confirmMsg && !confirm(confirmMsg)) { A.refreshAccounts(); return; }
+    DB.functions.invoke('manage-users', { body: Object.assign({ action: 'update', id }, patch) }).then(({ data, error }) => {
       if (error) return toast(t('t_role_change_fail', { msg: error.message || error }), 'error', 5000);
       if (data && data.error === 'cannot_change_self') return toast(t('t_role_cannot_self'), 'error');
-      toast(t('t_role_changed'), 'success');
+      if (data && data.error) return toast(t('t_fail', { msg: data.error }), 'error', 5000);
+      toast(t('t_acc_updated'), 'success');
       A.refreshAccounts();
     });
+  }
+
+  function toggleUser(b) {
+    const active = b.dataset.active === '1';
+    changeUserField(b.dataset.toggle, { is_active: !active },
+      active ? t('t_suspend_confirm') : t('t_activate_confirm'));
   }
 
   function deleteAccount(id, email) {
@@ -1338,6 +1618,14 @@
       A.refreshAccounts();
     });
   }
+
+  /* ---------- تبديل اللغة: إعادة رسم قوائم الكليات والإحصائيات ---------- */
+
+  document.addEventListener('langchange', () => {
+    if (!A.role) return;
+    populateFacultySelects();
+    A.loadStats();
+  });
 
   /* ---------- ترقيم الصفحات ---------- */
 
