@@ -48,7 +48,7 @@
       '<div class="relative flex flex-col items-center text-center">' +
       '<img src="img/logo.png" alt="" class="h-16 w-16 object-contain mb-3 bg-white rounded-2xl p-2 shadow-lg">' +
       '<h1 class="text-base sm:text-lg font-black leading-snug">' + t('univ') + '</h1>' +
-      '<p class="text-[11px] text-teal-100 mt-1.5 font-semibold">' + t('p_download_sub') + '</p>' +
+      '<p class="text-[11px] text-primary-100 mt-1.5 font-semibold">' + t('p_download_sub') + '</p>' +
       '</div>' +
       '</div>' +
       '<div class="bg-white rounded-2xl shadow-lg border border-slate-200 px-4 sm:px-5 pt-5 pb-5 text-start -mt-7 relative z-20">' + inner + '</div>' +
@@ -117,10 +117,10 @@
         '</div>';
     }
     return '<div class="rounded-2xl bg-gradient-to-l from-primary-800 to-primary-600 text-white p-4 mb-4 shadow-md">' +
-      '<div class="flex items-center justify-center gap-2 text-[12px] font-bold text-teal-100">' +
+      '<div class="flex items-center justify-center gap-2 text-[12px] font-bold text-primary-100">' +
       '<span class="text-xl">🗓️</span>' + t('cd_left_title') + '</div>' +
       countdownGridHtml() +
-      '<div class="text-center text-[11px] text-teal-100/90" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
+      '<div class="text-center text-[11px] text-primary-100/90" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
       '</div>';
   }
 
@@ -343,7 +343,7 @@
         : t('done_new', { c: esc(lastInfo.company) })) +
       '</p>' +
       '<div class="bg-gradient-to-l from-primary-800 to-primary-600 text-white rounded-2xl p-4 mb-4 shadow-md">' +
-      '<div class="text-[11px] text-teal-100 mb-1 font-bold">' + t('expiry_l') + '</div>' +
+      '<div class="text-[11px] text-primary-100 mb-1 font-bold">' + t('expiry_l') + '</div>' +
       '<div id="expiry-cd" class="text-2xl font-black tabular-nums" dir="ltr"></div>' +
       '</div>' +
       '<button id="redownload-btn" type="button" class="btn-secondary w-full">' + t('redownload') + '</button>' +

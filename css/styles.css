@@ -23,13 +23,13 @@ body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
   transition: border-color .15s, box-shadow .15s;
 }
 .inp:focus {
-  border-color: #0f766e;
+  border-color: #047857;
   box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
 }
 
 /* ===== أزرار ===== */
 .btn-primary {
-  background: #0f766e;
+  background: #047857;
   color: #fff;
   font-weight: 700;
   border-radius: 0.75rem;
@@ -37,18 +37,18 @@ body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
   font-size: 0.9rem;
   transition: background .15s;
 }
-.btn-primary:hover { background: #115e59; }
+.btn-primary:hover { background: #065f46; }
 .btn-secondary {
-  background: #f0fdfa;
-  color: #0f766e;
-  border: 1px solid #99f6e4;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
   font-weight: 600;
   border-radius: 0.75rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
   transition: background .15s;
 }
-.btn-secondary:hover { background: #ccfbf1; }
+.btn-secondary:hover { background: #d1fae5; }
 .btn-danger {
   background: #dc2626;
   color: #fff;
@@ -78,8 +78,8 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .spinner {
   width: 2.25rem;
   height: 2.25rem;
-  border: 3px solid #ccfbf1;
-  border-top-color: #0f766e;
+  border: 3px solid #d1fae5;
+  border-top-color: #047857;
   border-radius: 9999px;
   animation: spin .8s linear infinite;
   margin: auto;
@@ -137,9 +137,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   cursor: pointer;
   transition: all .15s ease;
 }
-.kind-opt:hover { border-color: #99f6e4; }
+.kind-opt:hover { border-color: #a7f3d0; }
 .kind-opt:has(input:checked) {
-  border-color: #0f766e;
-  background: #f0fdfa;
-  color: #0f766e;
+  border-color: #047857;
+  background: #ecfdf5;
+  color: #047857;
 }

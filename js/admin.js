@@ -36,7 +36,7 @@
     committee: 'bg-indigo-50 text-indigo-700',
     opener: 'bg-amber-50 text-amber-700',
     viewer: 'bg-slate-100 text-slate-600',
-    custom: 'bg-teal-50 text-teal-700',
+    custom: 'bg-primary-50 text-primary-700',
   };
 
   // هل أملك صلاحية معينة؟ (مغلقة افتراضيًا)
@@ -847,7 +847,7 @@
       '<div class="flex items-start justify-between gap-3">' +
       '<div class="min-w-0">' +
       '<div class="font-bold text-slate-800 flex items-center gap-2 flex-wrap">' + esc(tt.reference) +
-      '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-teal-50 text-teal-700') + '">' + kindLabel(tt.kind) + '</span>' +
+      '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindLabel(tt.kind) + '</span>' +
       facChip(tt.faculties) +
       '</div>' +
       '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
@@ -943,7 +943,7 @@
         '<div class="flex items-start justify-between gap-3">' +
         '<div class="min-w-0">' +
         '<div class="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(tt.reference) +
-        '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-teal-50 text-teal-700') + '">' + kindLabel(tt.kind) + '</span>' +
+        '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindLabel(tt.kind) + '</span>' +
         facChip(tt.faculties) +
         '</div>' +
         '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
@@ -1696,7 +1696,7 @@
       '<span>' + t('act_' + a) + '</span></label>'
     ).join('');
     const presetHtml = Object.keys(PRESETS).map((k) =>
-      '<button type="button" data-preset="' + k + '" class="text-[10px] font-bold rounded-full border border-slate-200 hover:border-teal-400 hover:text-teal-700 px-2.5 py-1 whitespace-nowrap">' + t('preset_' + k) + '</button>'
+      '<button type="button" data-preset="' + k + '" class="text-[10px] font-bold rounded-full border border-slate-200 hover:border-primary-400 hover:text-primary-700 px-2.5 py-1 whitespace-nowrap">' + t('preset_' + k) + '</button>'
     ).join('');
     const facOpts = scopeFaculties().map((f) =>
       '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
@@ -1822,10 +1822,10 @@
       '<div class="bg-white rounded-xl border p-3 ' + (active ? 'border-slate-200' : 'border-slate-200 opacity-60') + '">' +
       '<div class="flex items-start justify-between gap-2">' +
       '<div class="flex items-start gap-2.5 min-w-0">' +
-      '<div class="h-9 w-9 rounded-full bg-teal-100 text-teal-700 font-black text-sm flex items-center justify-center shrink-0">' + initial + '</div>' +
+      '<div class="h-9 w-9 rounded-full bg-primary-100 text-primary-700 font-black text-sm flex items-center justify-center shrink-0">' + initial + '</div>' +
       '<div class="min-w-0">' +
       '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
-      (u.is_you ? '<span class="text-[10px] text-teal-600 font-bold">' + t('you_tag') + '</span>' : '') +
+      (u.is_you ? '<span class="text-[10px] text-primary-600 font-bold">' + t('you_tag') + '</span>' : '') +
       (!active ? '<span class="text-[10px] font-bold bg-red-50 text-red-600 rounded px-1.5 py-0.5">⛔ ' + t('st_inactive') + '</span>' : '') +
       '</div>' +
       '<div class="text-xs text-slate-400 truncate" dir="ltr">' + esc(u.email) +
@@ -1840,7 +1840,7 @@
       (u.is_you
         ? ''
         : '<div class="flex flex-col items-end gap-1.5 shrink-0">' +
-          '<button data-perm-toggle="' + u.id + '" class="text-xs font-bold rounded-lg px-2.5 py-1 text-teal-700 hover:bg-teal-50 whitespace-nowrap">🛡️ ' + t('btn_perm') + '</button>' +
+          '<button data-perm-toggle="' + u.id + '" class="text-xs font-bold rounded-lg px-2.5 py-1 text-primary-700 hover:bg-primary-50 whitespace-nowrap">🛡️ ' + t('btn_perm') + '</button>' +
           '<button data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="text-xs font-bold rounded-lg px-2.5 py-1 whitespace-nowrap ' +
             (active ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50') + '">' +
             (active ? '⏸️ ' + t('btn_suspend') : '▶️ ' + t('btn_activate')) + '</button>' +

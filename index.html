@@ -11,8 +11,8 @@
         extend: {
           colors: {
             primary: {
-              50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4', 400: '#2dd4bf',
-              500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a'
+              50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7', 400: '#34d399',
+              500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b'
             }
           },
           fontFamily: { sans: ['system-ui', 'Segoe UI', 'Tahoma', 'sans-serif'] }
@@ -25,7 +25,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800">
+<body class="bg-slate-50 min-h-screen text-slate-800">
 
   <!-- ===== شريط الإعداد (يظهر إذا لم يُملا config) ===== -->
   <div id="setup-banner" class="hidden max-w-xl mx-auto mt-10 mx-4 bg-amber-50 border border-amber-300 rounded-2xl p-5 shadow-sm">
@@ -75,7 +75,7 @@
         </form>
         <div class="mt-4 text-center">
           <p class="text-[11px] text-slate-400 leading-relaxed" data-i18n="login_noacc">لا تملك حسابًا؟ يمكنك تقديم طلب حساب وسيتم تفعيله بعد موافقة الإدارة.</p>
-          <button id="req-acc-btn" type="button" class="text-xs font-bold text-teal-700 hover:underline mt-1.5" data-i18n="login_req_acc">📨 طلب حساب جديد</button>
+          <button id="req-acc-btn" type="button" class="text-xs font-bold text-primary-700 hover:underline mt-1.5" data-i18n="login_req_acc">📨 طلب حساب جديد</button>
         </div>
         <div id="req-acc-box" class="hidden mt-3 border-t border-slate-100 pt-3">
           <form id="req-acc-form" class="space-y-2">
@@ -101,27 +101,27 @@
 
     <!-- ===== تطبيق المدير (بعد تسجيل الدخول) ===== -->
     <div id="authed-app" class="hidden">
-    <header class="sticky top-0 z-40 bg-primary-700 text-white shadow-md">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
       <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-          <img src="img/logo.png" alt="شعار الجامعة" class="h-9 w-9 sm:h-10 sm:w-10 object-contain bg-white rounded-lg p-0.5 shrink-0">
+          <img src="img/logo.png" alt="شعار الجامعة" class="h-9 w-9 sm:h-10 sm:w-10 object-contain bg-white rounded-lg p-0.5 shrink-0 ring-1 ring-slate-100">
           <div class="min-w-0">
-            <h1 class="font-black text-base sm:text-lg leading-tight" data-i18n="app_name">بوابة مكتب الصفقات</h1>
-            <p class="text-[11px] text-teal-100 hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
+            <h1 class="font-black text-base sm:text-lg leading-tight text-slate-900" data-i18n="app_name">بوابة مكتب الصفقات</h1>
+            <p class="text-[11px] text-primary-700 font-semibold hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
           </div>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2">
           <span id="role-badge" class="hidden text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
-          <span id="user-name" class="text-[11px] text-teal-100 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
+          <span id="user-name" class="text-[11px] text-slate-500 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
           <div class="relative">
-            <button id="remind-btn" type="button" class="relative text-lg leading-none hover:bg-white/10 rounded-lg p-1.5" data-i18n-title="rm_title">
+            <button id="remind-btn" type="button" class="relative text-lg leading-none hover:bg-slate-100 rounded-lg p-1.5" data-i18n-title="rm_title">
               <span id="remind-ico">🔔</span>
               <span id="remind-badge" class="hidden absolute -top-1 -left-1 text-[9px] font-black bg-amber-400 text-amber-950 rounded-full min-w-[16px] h-4 px-1 items-center justify-center">0</span>
             </button>
             <div id="remind-panel" class="hidden fixed z-[70] inset-x-3 top-[76px] sm:inset-x-auto sm:left-3 sm:top-[68px] sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800"></div>
           </div>
-          <button id="lang-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
-          <button id="logout-btn" class="text-xs bg-teal-900/40 hover:bg-teal-900/60 rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
+          <button id="lang-btn" class="text-xs bg-primary-50 hover:bg-primary-100 text-primary-800 rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
+          <button id="logout-btn" class="text-xs bg-primary-50 hover:bg-primary-100 text-primary-800 rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
         </div>
       </div>
     </header>
@@ -177,7 +177,7 @@
             <div>
               <label class="lbl" for="f-file" data-i18n="f_file">دفتر الشروط (PDF — بحد أقصى 50MB) *</label>
               <input id="f-file" type="file" accept="application/pdf" required
-                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 file:font-semibold file:cursor-pointer cursor-pointer">
+                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-semibold file:cursor-pointer cursor-pointer">
               <p id="file-info" class="text-xs text-slate-400 mt-1"></p>
             </div>
             <button id="create-btn" type="submit" class="btn-primary w-full" data-i18n="create_btn">🚀 نشر وتوليد QR</button>
@@ -355,12 +355,12 @@
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
       <div class="px-5 py-4 bg-primary-700 text-white">
         <h3 class="font-black" data-i18n="rep_m_title">📄 تغيير دفتر الشروط</h3>
-        <p class="text-xs mt-1 text-teal-100 leading-relaxed" data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
+        <p class="text-xs mt-1 text-primary-100 leading-relaxed" data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
       </div>
       <div class="p-5">
         <div id="replace-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
         <input id="replace-file" type="file" accept="application/pdf"
-          class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 file:font-semibold file:cursor-pointer cursor-pointer">
+          class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-semibold file:cursor-pointer cursor-pointer">
         <p id="replace-file-info" class="text-xs text-slate-400 mt-1"></p>
         <button id="replace-confirm-btn" class="btn-primary w-full mt-4" data-i18n="rep_m_btn">📤 استبدال الملف</button>
         <button data-close="replace-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
@@ -390,7 +390,7 @@
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
       <div class="px-5 py-4 bg-primary-700 text-white">
         <h3 class="font-black" data-i18n="edit_m_title">✏️ تعديل الاستشارة / طلب العروض</h3>
-        <p class="text-xs mt-1 text-teal-100 leading-relaxed" data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
+        <p class="text-xs mt-1 text-primary-100 leading-relaxed" data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
       </div>
       <div class="p-5">
         <div id="edit-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
