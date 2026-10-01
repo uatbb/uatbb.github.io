@@ -14,8 +14,7 @@
     if (target) target.classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach((b) => {
       const on = b.dataset.tab === id;
-      b.classList.toggle('bg-primary-800', on);
-      b.classList.toggle('text-white', on);
+      b.classList.toggle('nav-active', on);
       b.classList.toggle('text-slate-500', !on);
     });
   };

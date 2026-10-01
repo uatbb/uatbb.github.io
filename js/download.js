@@ -38,7 +38,7 @@
   function shell(inner) {
     return (
       '<div>' +
-      '<div class="bg-gradient-to-b from-primary-800 via-primary-700 to-primary-800 text-white px-5 pt-4 pb-12 rounded-b-3xl shadow-md relative z-10 overflow-hidden">' +
+      '<div class="bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-700 text-white px-5 pt-4 pb-12 rounded-b-3xl shadow-md relative z-10 overflow-hidden">' +
       '<div class="absolute -top-12 -left-12 w-44 h-44 rounded-full bg-white/5 pointer-events-none"></div>' +
       '<div class="absolute -bottom-24 -right-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none"></div>' +
       '<div class="relative flex items-center justify-between mb-5">' +
@@ -116,7 +116,7 @@
         '<div class="text-center text-[11px] text-amber-700/80" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
         '</div>';
     }
-    return '<div class="rounded-2xl bg-gradient-to-l from-primary-800 to-primary-600 text-white p-4 mb-4 shadow-md">' +
+    return '<div class="rounded-2xl bg-gradient-to-l from-emerald-600 to-teal-500 text-white p-4 mb-4 shadow-md">' +
       '<div class="flex items-center justify-center gap-2 text-[12px] font-bold text-primary-100">' +
       '<span class="text-xl">🗓️</span>' + t('cd_left_title') + '</div>' +
       countdownGridHtml() +
@@ -311,7 +311,7 @@
       '<input id="d-email" class="inp" type="email" dir="ltr" required placeholder="you@example.com"></div>' +
       stepLine() +
       stepBlock(3, t('step3')) +
-      '<button type="submit" class="w-full mt-2 bg-gradient-to-l from-primary-700 to-primary-900 text-white font-black rounded-xl py-3 text-sm shadow-md hover:from-primary-800 hover:to-primary-900 active:scale-[.99] transition">' + t('btn_download') + '</button>' +
+      '<button type="submit" class="w-full mt-2 bg-gradient-to-l from-emerald-500 to-teal-600 text-white font-black rounded-xl py-3 text-sm shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 active:scale-[.99] transition">' + t('btn_download') + '</button>' +
       '<p class="text-[11px] text-slate-400 leading-relaxed">' + t('form_note') + '</p>' +
       '</form>'
     );
@@ -342,7 +342,7 @@
         ? t('done_upd', { c: esc(lastInfo.company) })
         : t('done_new', { c: esc(lastInfo.company) })) +
       '</p>' +
-      '<div class="bg-gradient-to-l from-primary-800 to-primary-600 text-white rounded-2xl p-4 mb-4 shadow-md">' +
+      '<div class="bg-gradient-to-l from-emerald-600 to-teal-500 text-white rounded-2xl p-4 mb-4 shadow-md">' +
       '<div class="text-[11px] text-primary-100 mb-1 font-bold">' + t('expiry_l') + '</div>' +
       '<div id="expiry-cd" class="text-2xl font-black tabular-nums" dir="ltr"></div>' +
       '</div>' +

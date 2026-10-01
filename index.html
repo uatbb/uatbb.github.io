@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>جامعة عين تموشنت بلحاج بوشعيب — بوابة مكتب الصفقات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -15,7 +18,7 @@
               500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b'
             }
           },
-          fontFamily: { sans: ['system-ui', 'Segoe UI', 'Tahoma', 'sans-serif'] }
+          fontFamily: { sans: ['Cairo', 'system-ui', 'Segoe UI', 'Tahoma', 'sans-serif'] }
         }
       }
     };
@@ -25,7 +28,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
+<body class="bg-gradient-to-br from-emerald-50 via-white to-teal-50 min-h-screen text-slate-800">
 
   <!-- ===== شريط الإعداد (يظهر إذا لم يُملا config) ===== -->
   <div id="setup-banner" class="hidden max-w-xl mx-auto mt-10 mx-4 bg-amber-50 border border-amber-300 rounded-2xl p-5 shadow-sm">
@@ -56,12 +59,13 @@
 
     <!-- ===== شاشة تسجيل الدخول ===== -->
     <div id="login-card" class="hidden min-h-screen flex items-center justify-center px-4">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 w-full max-w-sm">
-        <div class="text-center mb-5">
-          <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 object-contain mb-2">
-          <h2 class="font-black text-slate-800" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</h2>
-          <p class="text-xs text-slate-500 mt-0.5" data-i18n="login_sub">بوابة مكتب الصفقات — دخول موظف المكتب فقط</p>
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+        <div class="bg-gradient-to-l from-emerald-600 to-teal-500 text-white px-6 py-5 text-center">
+          <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 object-contain mb-2 bg-white rounded-full p-1.5 shadow">
+          <h2 class="font-black" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</h2>
+          <p class="text-[11px] text-white/80 mt-0.5" data-i18n="login_sub">بوابة مكتب الصفقات — دخول موظف المكتب فقط</p>
         </div>
+        <div class="p-6">
         <form id="login-form" class="space-y-3">
           <div>
             <label class="lbl" for="login-email" data-i18n="login_email">البريد الإلكتروني</label>
@@ -86,6 +90,7 @@
           </form>
           <p id="rq-msg" class="hidden text-[11px] mt-2 leading-relaxed"></p>
         </div>
+        </div>
       </div>
     </div>
 
@@ -101,27 +106,27 @@
 
     <!-- ===== تطبيق المدير (بعد تسجيل الدخول) ===== -->
     <div id="authed-app" class="hidden">
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <header class="sticky top-0 z-40 bg-gradient-to-l from-emerald-700 via-teal-600 to-emerald-600 text-white shadow-md">
       <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-          <img src="img/logo.png" alt="شعار الجامعة" class="h-9 w-9 sm:h-10 sm:w-10 object-contain bg-white rounded-lg p-0.5 shrink-0 ring-1 ring-slate-100">
+          <img src="img/logo.png" alt="شعار الجامعة" class="h-9 w-9 sm:h-10 sm:w-10 object-contain bg-white/95 rounded-lg p-0.5 shrink-0 shadow">
           <div class="min-w-0">
-            <h1 class="font-black text-base sm:text-lg leading-tight text-slate-900" data-i18n="app_name">بوابة مكتب الصفقات</h1>
-            <p class="text-[11px] text-primary-700 font-semibold hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
+            <h1 class="font-black text-base sm:text-lg leading-tight" data-i18n="app_name">بوابة مكتب الصفقات</h1>
+            <p class="text-[11px] text-white/75 font-semibold hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
           </div>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2">
-          <span id="role-badge" class="hidden text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
-          <span id="user-name" class="text-[11px] text-slate-500 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
+          <span id="role-badge" class="hidden text-[10px] font-bold bg-white/20 text-white rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
+          <span id="user-name" class="text-[11px] text-white/70 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
           <div class="relative">
-            <button id="remind-btn" type="button" class="relative text-lg leading-none hover:bg-slate-100 rounded-lg p-1.5" data-i18n-title="rm_title">
+            <button id="remind-btn" type="button" class="relative text-lg leading-none hover:bg-white/15 rounded-lg p-1.5" data-i18n-title="rm_title">
               <span id="remind-ico">🔔</span>
               <span id="remind-badge" class="hidden absolute -top-1 -left-1 text-[9px] font-black bg-amber-400 text-amber-950 rounded-full min-w-[16px] h-4 px-1 items-center justify-center">0</span>
             </button>
             <div id="remind-panel" class="hidden fixed z-[70] inset-x-3 top-[76px] sm:inset-x-auto sm:left-3 sm:top-[68px] sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800"></div>
           </div>
-          <button id="lang-btn" class="text-xs bg-primary-50 hover:bg-primary-100 text-primary-800 rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
-          <button id="logout-btn" class="text-xs bg-primary-50 hover:bg-primary-100 text-primary-800 rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
+          <button id="lang-btn" class="text-xs bg-white/15 hover:bg-white/25 text-white rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
+          <button id="logout-btn" class="text-xs bg-white/15 hover:bg-white/25 text-white rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
         </div>
       </div>
     </header>
@@ -262,7 +267,7 @@
     <!-- شريط التنقل السفلي -->
     <nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,.05)]">
       <div class="max-w-3xl mx-auto grid grid-cols-4">
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-white bg-primary-800" data-tab="tab-create">
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-white nav-active" data-tab="tab-create">
           <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📝</span><span data-i18n="nav_create">إنشاء</span>
         </button>
         <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-tenders">
@@ -282,7 +287,7 @@
   <!-- ===== نافذة: بطاقة QR ===== -->
   <div id="qr-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between px-4 py-3 bg-primary-700 text-white no-print sticky top-0 z-10">
+      <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-l from-emerald-600 to-teal-500 text-white no-print sticky top-0 z-10">
         <span class="font-bold text-sm" data-i18n="qr_title">بطاقة QR — تُسلَّم للمتعامل</span>
         <button data-close="qr-modal" class="text-xl leading-none opacity-80">✕</button>
       </div>
@@ -352,7 +357,7 @@
   <!-- ===== نافذة: تغيير دفتر الشروط ===== -->
   <div id="replace-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-primary-700 text-white">
+      <div class="px-5 py-4 bg-gradient-to-l from-emerald-600 to-teal-500 text-white">
         <h3 class="font-black" data-i18n="rep_m_title">📄 تغيير دفتر الشروط</h3>
         <p class="text-xs mt-1 text-primary-100 leading-relaxed" data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
       </div>
@@ -387,7 +392,7 @@
   <!-- ===== نافذة: تعديل الاستشارة ===== -->
   <div id="edit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-primary-700 text-white">
+      <div class="px-5 py-4 bg-gradient-to-l from-emerald-600 to-teal-500 text-white">
         <h3 class="font-black" data-i18n="edit_m_title">✏️ تعديل الاستشارة / طلب العروض</h3>
         <p class="text-xs mt-1 text-primary-100 leading-relaxed" data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
       </div>
