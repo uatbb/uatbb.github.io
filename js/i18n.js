@@ -453,7 +453,7 @@
       card_downloads_l: 'Téléchargements',
       btn_qr: '🔳 Carte QR',
       btn_downloaders: '👥 Téléchargements ({n})',
-      btn_direct_dl: '📄 Télécharger le DT',
+      btn_direct_dl: '📄 Téléchargement du cahier des charges',
       t_direct_start: 'Préparation du lien de téléchargement…',
       t_direct_fail: 'Échec du téléchargement direct — vérifiez que l’avis est publié',
       t_direct_nofile: 'Aucun fichier pour cet avis — téléchargez d’abord le cahier des charges',
