@@ -224,12 +224,11 @@
             <input id="a-pass" class="inp" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
             <div>
               <label class="lbl" data-i18n="acc_role">نوع الحساب</label>
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="super_admin" class="sr-only"><span data-i18n="acc_role_super">👑 إداري جامعي</span></label>
                 <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="faculty_admin" class="sr-only"><span data-i18n="acc_role_fadmin">🎓 إداري كلية</span></label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="committee" class="sr-only" checked><span data-i18n="acc_role_view">👁️ لجنة عرض</span></label>
                 <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open">🔓 لجنة فتح</span></label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="viewer" class="sr-only"><span data-i18n="acc_role_viewer">👤 عرض فقط</span></label>
+                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="viewer" class="sr-only" checked><span data-i18n="acc_role_viewer">👤 عرض فقط</span></label>
               </div>
               <p class="text-[11px] text-slate-400 mt-1" data-i18n="acc_role_desc">جامعي: كل الصلاحيات لكل الكليات — إداري كلية: إنشاء وإدارة في كليته فقط — لجنة عرض/فتح: حسب الدور — عرض فقط: مشاهدة</p>
             </div>
