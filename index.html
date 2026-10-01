@@ -167,8 +167,12 @@
               <input id="f-title" class="inp" data-i18n-ph="f_title_ph" placeholder="استشارة — توريد تجهيزات مخبرية" required>
             </div>
             <div>
-              <label class="lbl" for="f-opening" data-i18n="f_opening">تاريخ فتح الأظرفة *</label>
-              <input id="f-opening" class="inp" type="datetime-local" required>
+              <label class="lbl" data-i18n="f_opening">موعد فتح الأظرفة *</label>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="f-date" class="inp" type="date" required>
+                <input id="f-time" class="inp" type="time" value="10:00" required>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1" data-i18n="f_opening_note">التاريخ ثم الوقت — إن تركت الوقت فارغًا يُعتمد 10:00 صباحًا</p>
             </div>
             <div>
               <label class="lbl" for="f-file" data-i18n="f_file">دفتر الشروط (PDF — بحد أقصى 50MB) *</label>
@@ -414,8 +418,11 @@
               <input id="e-duration" class="inp">
             </div>
             <div>
-              <label class="lbl" for="e-opening" data-i18n="f_opening">تاريخ فتح الأظرفة *</label>
-              <input id="e-opening" class="inp" type="datetime-local" required>
+              <label class="lbl" data-i18n="f_opening">موعد فتح الأظرفة *</label>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="e-date" class="inp" type="date" required>
+                <input id="e-time" class="inp" type="time" value="10:00" required>
+              </div>
             </div>
           </div>
           <p class="text-xs text-slate-400 leading-relaxed" data-i18n="edit_ref_note">الرقم محجوب — لأنه يحدد الرمز QR (يبقى نفسه).</p>

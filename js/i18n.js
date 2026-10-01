@@ -56,7 +56,8 @@
       f_duration_ph: '60 يومًا',
       f_title: 'العنوان *',
       f_title_ph: 'استشارة — توريد تجهيزات مخبرية',
-      f_opening: 'تاريخ فتح الأظرفة *',
+      f_opening: 'موعد فتح الأظرفة *',
+      f_opening_note: 'التاريخ ثم الوقت — إن تركت الوقت فارغًا يُعتمد 10:00 صباحًا',
       f_file: 'دفتر الشروط (PDF — بحد أقصى 50MB) *',
       create_btn: '🚀 نشر وتوليد QR',
 
@@ -70,7 +71,7 @@
       card_downloads_l: 'التحميلات',
       btn_qr: '🔳 بطاقة QR',
       btn_downloaders: '👥 من حمّل ({n})',
-      btn_direct_dl: '📄 تحميل الدفتر',
+      btn_direct_dl: '📄 تحميل دفتر الشروط',
       t_direct_start: 'جارٍ تجهيز رابط التحميل…',
       t_direct_fail: 'تعذّر التحميل المباشر — تأكد أن الاستشارة منشورة',
       t_direct_nofile: 'لا يوجد ملف لهذه الاستشارة — ارفع دفتر الشروط أولًا',
@@ -192,7 +193,7 @@
 
       // بطاقة QR
       qr_title: 'بطاقة QR — تُسلَّم للمتعامل',
-      qr_office: 'مكتب الصفقات — قسيمة تحميل دفتر الشروط',
+      qr_office: 'بوابة مكتب الصفقات — قسيمة تحميل دفتر الشروط',
       qr_count: 'عدد: ',
       qr_dur_l: 'المدة',
       qr_op_l: 'فتح الأظرفة',
@@ -438,7 +439,8 @@
       f_duration_ph: '60 jours',
       f_title: 'Intitulé *',
       f_title_ph: 'Consultation — Fourniture d’équipements de laboratoire',
-      f_opening: "Date d'ouverture des plis *",
+      f_opening: "Date et heure d'ouverture des plis *",
+      f_opening_note: 'Date puis heure — temps vide = 10h00 par défaut',
       f_file: 'Cahier des charges (PDF — 50 Mo max) *',
       create_btn: '🚀 Publier et générer le QR',
 

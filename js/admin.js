@@ -539,7 +539,7 @@
       const ref = val('f-reference');
       const title = val('f-title');
       const duration = val('f-duration');
-      const opening = val('f-opening');
+      const opening = (val('f-date') && val('f-time')) ? (val('f-date') + 'T' + val('f-time')) : (val('f-date') ? (val('f-date') + 'T10:00') : '');
       const file = $('f-file').files[0];
       const kindEl = document.querySelector('input[name="f-kind"]:checked');
       const kind = kindEl ? kindEl.value : 'consultation';
@@ -697,9 +697,9 @@
       ef.value = tt.faculty_id || (A.faculties.find((f) => f.is_central) || {}).id || '';
       ef.disabled = A.scopeOf() !== 'all'; // تغيير كلية الاستشارة: نطاق كامل فقط
     }
-    const d = new Date(tt.opening_date);
-    if (isNaN(d.getTime())) $('e-opening').value = '';
-    else $('e-opening').value = isoToOfficeWall(tt.opening_date);
+    const wall = isoToOfficeWall(tt.opening_date);
+    $('e-date').value = wall ? wall.slice(0, 10) : '';
+    $('e-time').value = wall ? (wall.slice(11, 16) || '10:00') : '10:00';
     openModal('edit-modal');
   }
 
@@ -712,7 +712,7 @@
       const id = $('e-id').value;
       const title = val('e-title').trim();
       const duration = val('e-duration').trim();
-      const opening = val('e-opening');
+      const opening = (val('e-date') && val('e-time')) ? (val('e-date') + 'T' + val('e-time')) : (val('e-date') ? (val('e-date') + 'T10:00') : '');
       const kindEl = document.querySelector('input[name="e-kind"]:checked');
       const kind = kindEl ? kindEl.value : 'consultation';
       if (!id || !title || !opening) return toast(t('t_fill_all'), 'error');
