@@ -6,7 +6,7 @@
 
   /* ---------- تبديل التبويبات ---------- */
   window.switchTo = function (id) {
-    ['tab-create', 'tab-tenders', 'tab-opening', 'tab-accounts'].forEach((s) => {
+    ['tab-dashboard', 'tab-create', 'tab-tenders', 'tab-opening', 'tab-accounts'].forEach((s) => {
       const el = $(s);
       if (el) el.classList.add('hidden');
     });
@@ -24,6 +24,7 @@
       btn.addEventListener('click', () => {
         const target = btn.dataset.tab;
         window.switchTo(target);
+        if (target === 'tab-dashboard') window.Admin.loadDashboard();
         if (target === 'tab-tenders') window.Admin.refreshTenders();
         if (target === 'tab-opening') window.Admin.loadOpening();
         if (target === 'tab-accounts') window.Admin.refreshAccounts();
@@ -52,7 +53,7 @@
     document.querySelectorAll('[data-close]').forEach((btn) => {
       btn.addEventListener('click', () => closeModal(btn.dataset.close));
     });
-    ['qr-modal', 'downloads-modal', 'open-modal'].forEach((id) => {
+    ['qr-modal', 'wa-faculty-modal', 'downloads-modal', 'open-modal'].forEach((id) => {
       const el = $(id);
       if (el) {
         el.addEventListener('click', (e) => {
@@ -90,6 +91,7 @@
       const A = window.Admin;
       if (A && adminStarted) {
         if (A.updateRoleBadge) A.updateRoleBadge();
+        if (A.loadDashboard) A.loadDashboard();
         if (A.refreshTenders) A.refreshTenders();
         if (A.loadOpening) A.loadOpening();
         if (A.refreshAccounts) A.refreshAccounts();

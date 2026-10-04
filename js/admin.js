@@ -67,6 +67,504 @@
   const t = (k, v) => I18N.t(k, v);
   const kindLabel = (k) => (k === 'tender' ? t('kind_tender_s') : t('kind_consultation_s'));
 
+  function displayTitle(tt) {
+    if (!tt) return '';
+    if (I18N.lang === 'fr' && tt.title_fr) return tt.title_fr;
+    return tt.title || tt.title_fr || '';
+  }
+
+  function decodeEntities(s) {
+    const ta = document.createElement('textarea');
+    ta.innerHTML = s;
+    return ta.value;
+  }
+
+  function hasArabic(s) {
+    return /[\u0600-\u06FF]/.test(String(s || ''));
+  }
+
+  A._trCache = {};
+
+  async function translateWithGemini(q, from, to) {
+    const key = (window.GEMINI_API_KEY || '').trim();
+    if (!key) throw new Error('gemini_key_missing');
+    const langNames = { ar: 'Arabic', fr: 'French' };
+    const prompt =
+      'You are a professional translator for Algerian public procurement tenders. ' +
+      'Translate the following ' + (langNames[from] || from) + ' text to ' + (langNames[to] || to) + '. ' +
+      'Return ONLY the translated text, with no explanation and no quotes.\n' +
+      'Text: "' + q + '"';
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + encodeURIComponent(key);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2 }
+      })
+    });
+    if (!res.ok) throw new Error('gemini_http_' + res.status);
+    const j = await res.json();
+    const out = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts && j.candidates[0].content.parts[0] && j.candidates[0].content.parts[0].text;
+    if (!out) throw new Error('gemini_empty');
+    return String(out).trim().replace(/^["']+|["']+$/g, '').trim();
+  }
+
+  async function translateWithGoogle(q, from, to) {
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + encodeURIComponent(from) +
+      '&tl=' + encodeURIComponent(to) + '&dt=t&q=' + encodeURIComponent(q);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('google_translation_http_' + res.status);
+    const j = await res.json();
+    let out = '';
+    if (Array.isArray(j) && Array.isArray(j[0])) {
+      j[0].forEach((seg) => { if (seg && seg[0]) out += seg[0]; });
+    }
+    if (!out) throw new Error('google_translation_empty');
+    return decodeEntities(out).trim();
+  }
+
+  async function translateWithMyMemory(q, from, to) {
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(q) + '&langpair=' + encodeURIComponent(from + '|' + to);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('mymemory_translation_http_' + res.status);
+    const j = await res.json();
+    const out = j && j.responseData && j.responseData.translatedText;
+    if (!out) throw new Error('mymemory_translation_empty');
+    return decodeEntities(out).trim();
+  }
+
+  async function translateText(text, from, to) {
+    const q = String(text || '').trim();
+    if (!q || q.length < 3) return q;
+    if (from === 'ar' && to === 'fr' && !hasArabic(q)) return q;
+    if (from === 'fr' && to === 'ar' && hasArabic(q)) return q;
+    const key = from + '|' + to + '|' + q;
+    if (A._trCache[key]) return A._trCache[key];
+    const protectedSource = protectGlossary(q, from, to);
+    let result = null;
+    try {
+      result = await translateWithGemini(protectedSource.out, from, to);
+    } catch (e) {
+      try {
+        result = await translateWithGoogle(protectedSource.out, from, to);
+      } catch (e2) {
+        result = await translateWithMyMemory(protectedSource.out, from, to);
+      }
+    }
+    result = restoreGlossary(result, protectedSource.map);
+    A._trCache[key] = result;
+    return result;
+  }
+
+  async function translateFrToAr(text) {
+    return translateText(text, 'fr', 'ar');
+  }
+
+  function normalizeText(s) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/[\u0600-\u065F]/g, (ch) => {
+        if (ch === 'أ' || ch === 'إ' || ch === 'آ') return 'ا';
+        if (ch === 'ة') return 'ه';
+        if (ch === 'ى') return 'ي';
+        if (ch === 'ؤ') return 'و';
+        if (ch === 'ئ') return 'ي';
+        return ch;
+      })
+      .replace(/[^\p{L}\p{N}]+/gu, ' ');
+  }
+
+  const WA_GLOSSARY = [
+    { fr: 'cahier des charges', ar: 'دفتر الشروط' },
+    { fr: 'appel d offres', ar: 'طلب عروض' },
+    { fr: 'consultation', ar: 'استشارة' },
+    { fr: 'fourniture', ar: 'توريد' },
+    { fr: 'travaux', ar: 'اشغال' },
+    { fr: 'entretien', ar: 'صيانة' },
+    { fr: 'etudes', ar: 'دراسات' },
+    { fr: 'prestation de services', ar: 'خدمات' },
+    { fr: 'laboratoire', ar: 'مختبر' },
+    { fr: 'informatique', ar: 'معلوماتية' },
+    { fr: 'mobilier', ar: 'اثاث' },
+    { fr: 'transport', ar: 'نقل' },
+    { fr: 'electricite', ar: 'كهرباء' },
+    { fr: 'nettoyage', ar: 'تنظيف' },
+    { fr: 'restauration', ar: 'طعام' }
+  ];
+
+  const GLOSSARY_FR_AR = [
+    { re: /cahiers? des charges?/gi, out: 'دفتر الشروط' },
+    { re: /appels? d['’]?offres/gi, out: 'طلب عروض' },
+    { re: /consultations?/gi, out: 'استشارة' },
+    { re: /fournitures?/gi, out: 'توريد' },
+    { re: /travaux/gi, out: 'أشغال' },
+    { re: /entretiens?/gi, out: 'صيانة' },
+    { re: /études?/gi, out: 'دراسات' },
+    { re: /laboratoires?/gi, out: 'مختبر' },
+    { re: /informatique/gi, out: 'معلوماتية' },
+    { re: /mobilier/gi, out: 'أثاث' },
+    { re: /transports?/gi, out: 'نقل' },
+    { re: /nettoyage/gi, out: 'تنظيف' },
+    { re: /électricité|electricite/gi, out: 'كهرباء' },
+    { re: /restauration/gi, out: 'خدمات مطعم' }
+  ];
+
+  const GLOSSARY_AR_FR = [
+    { re: /دفتر الشروط/g, out: 'cahier des charges' },
+    { re: /طلب عروض/g, out: "appel d'offres" },
+    { re: /استشارات?/g, out: 'consultation' },
+    { re: /توريد/g, out: 'fourniture' },
+    { re: /أشغال|اشغال/g, out: 'travaux' },
+    { re: /صيانة/g, out: 'entretien' },
+    { re: /دراسات/g, out: 'études' },
+    { re: /مختبر|مخبر/g, out: 'laboratoire' },
+    { re: /معلوماتية/g, out: 'informatique' },
+    { re: /أثاث|اثاث/g, out: 'mobilier' },
+    { re: /نقل/g, out: 'transport' },
+    { re: /تنظيف/g, out: 'nettoyage' },
+    { re: /كهرباء/g, out: 'électricité' },
+    { re: /طعام|وجبات/g, out: 'restauration' }
+  ];
+
+  function protectGlossary(source, from, to) {
+    const map = [];
+    let out = String(source || '');
+    const list = (from === 'fr' && to === 'ar') ? GLOSSARY_FR_AR : ((from === 'ar' && to === 'fr') ? GLOSSARY_AR_FR : []);
+    list.forEach((g) => {
+      g.re.lastIndex = 0;
+      if (out.match(g.re)) {
+        const ph = '[[GL' + map.length + ']]';
+        out = out.replace(g.re, ph);
+        map.push(g.out);
+      }
+    });
+    return { out, map };
+  }
+
+  function restoreGlossary(text, map) {
+    return String(text || '').replace(/\[\[GL(\d+)\]\]/g, (m, i) => map[Number(i)] || m);
+  }
+
+  function normalizeWaPhone(p) {
+    let s = String(p || '').replace(/\D/g, '');
+    if (s.startsWith('00')) s = s.slice(2);
+    if (s.startsWith('0')) s = '213' + s.slice(1);
+    if (s.length === 9) s = '213' + s;
+    return s;
+  }
+
+  function waLink(phone, text) {
+    return 'https://wa.me/' + normalizeWaPhone(phone) + '?text=' + encodeURIComponent(text);
+  }
+
+  A.operatorWhatsAppText = function (tt, company) {
+    const fac = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
+    const facName = fac ? (fac.name_ar || fac.name_fr || t('pv_central')) : t('pv_central');
+    const lines = [
+      company ? '🏢 ' + company : '📢 استشارة جديدة / Nouvel avis',
+      '🏛️ ' + facName,
+      '🔢 ' + fmtRef(tt.reference),
+      '🇩🇿 ' + (tt.title || ''),
+      '🇫🇷 ' + (tt.title_fr || ''),
+      '🗓️ ' + fmtDate(tt.opening_date, true)
+    ];
+    return lines.join('\n');
+  };
+
+  A._suggestedRows = [];
+  A._selectedSuggested = {};
+
+  function tokenizeText(s) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length >= 3 && ![
+        'pour', 'avec', 'dans', 'sur', 'the', 'and', 'de', 'la', 'le', 'les', 'un', 'une', 'et', 'ou', 'par', 'from', 'to', 'of', 'in', 'on', 'at',
+        'fourniture', 'fournir', 'fournitures', 'acquisition', 'prestation', 'prestations', 'service', 'services', 'etude', 'marche', 'marches', 'consultation', 'appel', 'offres',
+        'في', 'من', 'على', 'عن', 'إلى', 'و', 'ال', 'ب', 'ل', 'تم', 'استشارة', 'طلب', 'عروض', 'توريد', 'اقتناء', 'خدمات', 'خدمة', 'دراسة', 'مراقبة', 'معدات'
+      ].includes(w));
+  }
+
+  const TITLE_CATEGORIES = {
+    lab: ['مخبر', 'مختبر', 'معمل', 'تحليل', 'عينات', 'laboratoire', 'labo', 'analyse', 'analyseur', 'equipement'],
+    medical: ['طبي', 'استشفاء', 'مستشفى', 'صحة', 'medical', 'medicale', 'sante', 'hopital'],
+    it: ['معلوماتية', 'حاسوب', 'كمبيوتر', 'برمجيات', 'شبكات', 'informatique', 'ordinateur', 'logiciel', 'reseau', 'reseaux'],
+    construction: ['بناء', 'أشغال', 'أعمال', 'صيانة', 'تهيئة', 'طرق', 'construction', 'travaux', 'batiment', 'routier', 'entretien'],
+    furniture: ['أثاث', 'مكاتب', 'مقاعد', 'mobilier', 'meuble', 'bureau'],
+    printing: ['طباعة', 'نسخ', 'ورق', 'impression', 'imprime', 'papier'],
+    transport: ['نقل', 'سيارات', 'حافلات', 'transport', 'vehicule', 'voiture', 'bus'],
+    cleaning: ['تنظيف', 'عناية', 'nettoyage', 'hygiene'],
+    food: ['طعام', 'وجبات', 'مطعم', 'restauration', 'catering', 'alimentation'],
+    electric: ['كهرباء', 'إنارة', 'مولد', 'electricite', 'electric', 'luminaire', 'electrogene']
+  };
+
+  function analyzeTitles(titleAr, titleFr) {
+    const combined = String(titleAr || '') + ' ' + String(titleFr || '');
+    const norm = normalizeText(combined);
+    const tokens = Array.from(new Set([...tokenizeText(titleAr), ...tokenizeText(titleFr)]));
+    const matchedKeywords = [];
+    Object.keys(TITLE_CATEGORIES).forEach((cat) => {
+      TITLE_CATEGORIES[cat].forEach((kw) => {
+        if (norm.includes(normalizeText(kw)) && !matchedKeywords.includes(kw)) matchedKeywords.push(kw);
+      });
+    });
+    const extra = [];
+    WA_GLOSSARY.forEach((g) => {
+      if (norm.includes(normalizeText(g.fr)) && !extra.includes(g.ar)) extra.push(g.ar);
+      if (norm.includes(normalizeText(g.ar)) && !extra.includes(g.fr)) extra.push(g.fr);
+    });
+    const all = Array.from(new Set([...matchedKeywords, ...tokens, ...extra]));
+    return { tokens, matchedKeywords, all };
+  }
+
+  function renderWaFacultyList(rows, infoText) {
+    const list = $('wa-faculty-list');
+    const info = $('wa-faculty-info');
+    if (!list || !info) return;
+    A._waFacultyRows = rows;
+    info.textContent = infoText;
+    if (!rows.length) {
+      list.innerHTML = '<div class="py-8 text-center text-sm text-slate-400">' + t('wa_faculty_empty') + '</div>';
+      return;
+    }
+    list.innerHTML = rows.map((r) =>
+      '<div class="px-4 py-3 flex items-center justify-between gap-3">' +
+      '<div class="min-w-0"><div class="font-bold text-slate-800 text-sm truncate">' + esc(r.company || '—') + '</div>' +
+      '<div class="text-xs text-slate-500" dir="ltr">' + esc(r.phone) + '</div></div>' +
+      '<button type="button" class="btn-secondary text-xs whitespace-nowrap" data-wa-open="1" data-phone="' + esc(r.phone) + '">' + t('wa_open') + '</button>' +
+      '</div>'
+    ).join('');
+  }
+
+  A.openSuggestedWhatsAppModal = function () {
+    const tt = A.lastQrTender;
+    if (!tt) return;
+    const allSuggested = A._suggestedRows || [];
+    const selected = allSuggested.filter((r) => A._selectedSuggested && A._selectedSuggested[r.phone]);
+    const rows = selected.length ? selected : allSuggested;
+    if (!rows.length) {
+      toast(t('ai_no_match'), 'error', 4000);
+      return;
+    }
+    A._waFacultyTender = tt;
+    const fac = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
+    const facName = fac ? (I18N.lang === 'ar' ? fac.name_ar : (fac.name_fr || fac.name_ar)) : t('pv_central');
+    openModal('wa-faculty-modal');
+    renderWaFacultyList(rows, facName + ' — ' + rows.length + (selected.length ? '' : ' — ' + t('ai_suggest_title')));
+  };
+
+  A.refreshSuggestions = async function () {
+    const box = $('suggest-box');
+    const list = $('suggest-list');
+    if (!box || !list) return;
+    const facId = val('f-faculty') || null;
+    const titleAr = val('f-title').trim();
+    const titleFr = val('f-title-fr').trim();
+    A._suggestedRows = [];
+    A._selectedSuggested = {};
+    if (!facId && !titleAr && !titleFr) {
+      box.classList.add('hidden');
+      return;
+    }
+    box.classList.remove('hidden');
+    list.innerHTML = '<div class="spinner my-4"></div>';
+    let arText = titleAr;
+    let frText = titleFr;
+    try {
+      if (frText && !hasArabic(frText)) {
+        const frToAr = await translateText(frText, 'fr', 'ar');
+        if (frToAr) arText = (arText + ' ' + frToAr).trim();
+      }
+      if (arText && hasArabic(arText)) {
+        const arToFr = await translateText(arText, 'ar', 'fr');
+        if (arToFr) frText = (frText + ' ' + arToFr).trim();
+      }
+    } catch (e) { /* نكمل بدون الترجمة */ }
+    const analysis = analyzeTitles(arText, frText);
+    const analysisEl = $('suggest-analysis');
+    if (analysisEl) {
+      analysisEl.classList.remove('hidden');
+      const shown = (analysis.matchedKeywords.length ? analysis.matchedKeywords : analysis.tokens).slice(0, 8);
+      analysisEl.innerHTML =
+        '<b>🔎 ' + t('ai_analysis') + ':</b> ' +
+        (shown.length
+          ? '<span dir="auto">' + esc(shown.join('، ')) + '</span>'
+          : '<span class="opacity-70">' + t('ai_no_keywords') + '</span>');
+    }
+    try {
+      const { data: ops, error } = await DB.from('operators').select('*').limit(300);
+      if (error) throw error;
+      const cleanOps = (ops || []).filter((op) => op && op.phone);
+      if (!cleanOps.length) {
+        A._suggestedRows = [];
+        A._selectedSuggested = {};
+        list.innerHTML = '<div class="text-xs text-primary-700/80 py-3 text-center">' + t('ai_no_operators') + '</div>';
+        return;
+      }
+      const phones = cleanOps.map((op) => op.phone).slice(0, 200);
+      const historyByPhone = {};
+      try {
+        const { data: dls, error: dlErr } = await DB.from('downloads')
+          .select('phone, tender_id')
+          .in('phone', phones)
+          .limit(1000);
+        if (!dlErr && dls && dls.length) {
+          const tIds = Array.from(new Set(dls.map((d) => d.tender_id).filter(Boolean)));
+          if (tIds.length) {
+            const { data: tds, error: tdErr } = await DB.from('tenders')
+              .select('id, title, title_fr')
+              .in('id', tIds);
+            if (!tdErr && tds) {
+              const titleById = {};
+              tds.forEach((x) => { titleById[x.id] = ((x.title || '') + ' ' + (x.title_fr || '')); });
+              const byPhone = {};
+              dls.forEach((d) => {
+                if (!byPhone[d.phone]) byPhone[d.phone] = [];
+                const txt = titleById[d.tender_id];
+                if (txt) byPhone[d.phone].push(txt);
+              });
+              Object.keys(byPhone).forEach((p) => {
+                historyByPhone[p] = byPhone[p].join(' ');
+              });
+            }
+          }
+        }
+      } catch (e) { /* نكمل بدون التاريخ الكامل */ }
+
+      const matchTerms = analysis.all.length ? analysis.all : analysis.tokens;
+      const hasMeaningfulQuery = matchTerms.length > 0;
+      const now = Date.now();
+      const scored = cleanOps
+        .map((op) => {
+          let score = 0;
+          const reasons = [];
+          if (facId && op.faculty_id === facId) {
+            score += 50;
+            reasons.push(t('ai_same_office'));
+          }
+          const fallbackHistory = (op.last_title || '') + ' ' + (op.last_title_fr || '');
+          const hay = normalizeText((op.company || '') + ' ' + (historyByPhone[op.phone] || fallbackHistory));
+          let matches = 0;
+          let categoryMatches = 0;
+          matchTerms.forEach((term) => {
+            if (!term) return;
+            const termNorm = normalizeText(term);
+            if (termNorm && hay.includes(termNorm)) {
+              matches += 1;
+              const isCategory = analysis.matchedKeywords.some((k) => normalizeText(k) === termNorm) ||
+                Object.values(TITLE_CATEGORIES).some((arr) => arr.some((k) => normalizeText(k) === termNorm));
+              if (isCategory) categoryMatches += 1;
+            }
+          });
+          if (categoryMatches) {
+            score += Math.min(categoryMatches * 30, 60);
+            reasons.push(t('ai_match'));
+          } else if (matches) {
+            score += Math.min(matches * 10, 40);
+          }
+          if (op.total_downloads >= 3) {
+            score += 10;
+            reasons.push(t('ai_freq'));
+          }
+          const days = (now - new Date(op.last_seen_at).getTime()) / 86400000;
+          if (days <= 30) {
+            score += 10;
+            reasons.push(t('ai_recent'));
+          } else if (days <= 90) {
+            score += 5;
+          }
+          return { op, score, reasons, matches, categoryMatches };
+        })
+        .filter((x) => x.score > 0 && (!hasMeaningfulQuery || x.matches > 0 || x.categoryMatches > 0))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 12);
+
+      A._suggestedRows = scored.map((x) => ({ phone: x.op.phone, company: x.op.company, reasons: x.reasons, score: x.score }));
+      if (!A._suggestedRows.length) {
+        list.innerHTML = '<div class="text-xs text-primary-700/80 py-3 text-center">' + t('ai_no_match') + '</div>';
+        return;
+      }
+      list.innerHTML = A._suggestedRows.map((r) => {
+        const checked = A._selectedSuggested[r.phone] ? 'checked' : '';
+        const badges = (r.reasons || []).slice(0, 3).map((reason) =>
+          '<span class="text-[9px] font-bold bg-white text-primary-700 border border-primary-200 rounded-full px-2 py-0.5 whitespace-nowrap">' + esc(reason) + '</span>'
+        ).join('');
+        return '<label class="flex items-center justify-between gap-2 bg-white rounded-xl border border-primary-100 p-2 cursor-pointer hover:border-primary-300">' +
+          '<div class="flex items-center gap-2 min-w-0">' +
+          '<input type="checkbox" class="suggest-check" data-phone="' + esc(r.phone) + '" ' + checked + '>' +
+          '<div class="min-w-0"><div class="font-bold text-slate-800 text-sm truncate">' + esc(r.company || '—') + '</div>' +
+          '<div class="text-xs text-slate-500" dir="ltr">' + esc(r.phone) + '</div></div>' +
+          '</div>' +
+          '<div class="flex gap-1 flex-wrap justify-end">' + badges + '</div>' +
+          '</label>';
+      }).join('');
+    } catch (e) {
+      A._suggestedRows = [];
+      A._selectedSuggested = {};
+      list.innerHTML = '<div class="text-xs text-primary-700/80 py-3 text-center">' + t('ai_no_operators') + '</div>';
+    }
+  };
+
+  A.openWhatsAppFacultyModal = async function (tt) {
+    if (!tt) return;
+    if (!A.me || !hasLogs()) return toast(t('t_perm_denied'), 'error');
+    const modal = $('wa-faculty-modal');
+    const list = $('wa-faculty-list');
+    const info = $('wa-faculty-info');
+    if (!modal || !list || !info) return;
+    openModal('wa-faculty-modal');
+    A._waFacultyTender = tt;
+    A._waFacultyRows = [];
+    info.textContent = '';
+    list.innerHTML = '<div class="spinner my-8"></div>';
+    try {
+      const facId = tt.faculty_id || null;
+      let tq = DB.from('tenders').select('id');
+      if (facId) tq = tq.eq('faculty_id', facId);
+      else tq = tq.is('faculty_id', null);
+      const { data: tds, error: tErr } = await tq;
+      if (tErr) throw tErr;
+      const ids = (tds || []).map((x) => x.id);
+      if (!ids.length) {
+        list.innerHTML = '<div class="py-8 text-center text-sm text-slate-400">' + t('wa_faculty_empty') + '</div>';
+        return;
+      }
+      const { data: dls, error: dErr } = await DB.from('downloads')
+        .select('company, phone, tender_id, downloaded_at')
+        .in('tender_id', ids)
+        .order('downloaded_at', { ascending: false })
+        .limit(500);
+      if (dErr) throw dErr;
+      const map = {};
+      (dls || []).forEach((d) => {
+        const p = String(d.phone || '').trim();
+        if (!p || map[p]) return;
+        map[p] = { phone: p, company: (d.company || '').trim() };
+      });
+      const rows = Object.values(map).slice(0, 80);
+      A._waFacultyRows = rows;
+      const fac = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
+      const facName = fac ? (I18N.lang === 'ar' ? fac.name_ar : (fac.name_fr || fac.name_ar)) : t('pv_central');
+      info.textContent = facName + ' — ' + rows.length;
+      if (!rows.length) {
+        list.innerHTML = '<div class="py-8 text-center text-sm text-slate-400">' + t('wa_faculty_empty') + '</div>';
+        return;
+      }
+      list.innerHTML = rows.map((r) =>
+        '<div class="px-4 py-3 flex items-center justify-between gap-3">' +
+        '<div class="min-w-0"><div class="font-bold text-slate-800 text-sm truncate">' + esc(r.company || '—') + '</div>' +
+        '<div class="text-xs text-slate-500" dir="ltr">' + esc(r.phone) + '</div></div>' +
+        '<button type="button" class="btn-secondary text-xs whitespace-nowrap" data-wa-open="1" data-phone="' + esc(r.phone) + '">' + t('wa_open') + '</button>' +
+        '</div>'
+      ).join('');
+    } catch (e) {
+      console.error(e);
+      list.innerHTML = errorState(e);
+    }
+  };
+
   A.init = function () {
     bindCreate();
     bindStaticButtons();
@@ -84,6 +582,7 @@
       A.loadTenders();
       A.loadStats();
       A.checkOpeningReminder();
+      A.initNotifications();
     });
   };
 
@@ -119,6 +618,98 @@
   let reminderData = [];
   let reminderTimer = null;
   let reminderOpen = false;
+
+  let notifItems = [];
+  let notifUnread = 0;
+  let notifSeen = new Set();
+  let notifTimer = null;
+  let rtChannel = null;
+  let rtActive = false;
+
+  function addNotif(item) {
+    if (!item || !item.id) return;
+    if (notifSeen.has(item.id)) return;
+    notifSeen.add(item.id);
+    if (notifSeen.size > 800) {
+      const first = notifSeen.values().next().value;
+      if (first) notifSeen.delete(first);
+    }
+    notifItems.unshift(item);
+    notifItems = notifItems.slice(0, 20);
+    notifUnread = Math.min(99, notifUnread + 1);
+    renderReminder();
+  }
+
+  async function handleDownloadEvent(d) {
+    if (!d || !d.id) return;
+    const nid = 'dl-' + d.id;
+    if (notifSeen.has(nid)) return;
+    let ref = '';
+    try {
+      const { data } = await DB.from('tenders').select('reference').eq('id', d.tender_id).maybeSingle();
+      if (data && data.reference) ref = fmtRef(data.reference);
+    } catch (e) { /* غير حرج */ }
+    addNotif({
+      id: nid,
+      icon: '⬇️',
+      title: d.company || '—',
+      sub: (ref ? ref + ' • ' : '') + t('ntf_new_download') + ' • ' + fmtDate(d.downloaded_at || new Date().toISOString(), true),
+      time: d.downloaded_at || new Date().toISOString()
+    });
+  }
+
+  async function handleTenderEvent(r) {
+    if (!r || !r.id) return;
+    addNotif({
+      id: 'td-' + r.id,
+      icon: '📄',
+      title: (r.reference ? fmtRef(r.reference) : '—'),
+      sub: t('ntf_new_tender') + (r.title ? ' • ' + r.title : ''),
+      time: r.created_at || new Date().toISOString()
+    });
+  }
+
+  A.pollNotifications = async function () {
+    try {
+      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const dlRes = await DB.from('downloads')
+        .select('id, company, downloaded_at, tender_id')
+        .gt('downloaded_at', since)
+        .order('downloaded_at', { ascending: false })
+        .limit(30);
+      if (!dlRes.error && dlRes.data) {
+        for (const d of dlRes.data) await handleDownloadEvent(d);
+      }
+      const tdRes = await DB.from('tenders')
+        .select('id, reference, title, created_at')
+        .gt('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!tdRes.error && tdRes.data) {
+        for (const r of tdRes.data) await handleTenderEvent(r);
+      }
+    } catch (e) { /* غير حرج */ }
+  };
+
+  A.initNotifications = function () {
+    if (notifTimer) return;
+    A.pollNotifications();
+    notifTimer = setInterval(() => { A.pollNotifications(); }, 45 * 1000);
+    try {
+      if (DB.realtime && typeof DB.realtime.channel === 'function') {
+        rtChannel = DB.realtime.channel('ntf-' + (new Date().getTime()));
+        rtChannel
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'downloads' }, (p) => { handleDownloadEvent(p && p.new); })
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tenders' }, (p) => { handleTenderEvent(p && p.new); })
+          .subscribe((status) => {
+            rtActive = status === 'SUBSCRIBED';
+            renderReminder();
+          });
+      }
+    } catch (e) {
+      rtActive = false;
+    }
+  };
 
   A.checkOpeningReminder = async function () {
     try {
@@ -167,20 +758,29 @@
     });
 
     // شارة العدد على الجرس
-    if (!items.length) {
+    const totalBadge = Math.min(99, items.length + notifUnread);
+    if (!totalBadge) {
       badge.classList.add('hidden');
       badge.classList.remove('flex');
       if (ico) ico.classList.remove('animate-pulse');
       return;
     }
-    badge.textContent = items.length;
+    badge.textContent = totalBadge;
     badge.classList.remove('hidden');
     badge.classList.add('flex');
-    if (ico) ico.classList.toggle('animate-pulse', items.some((i) => i.isToday));
+    if (ico) ico.classList.toggle('animate-pulse', items.some((i) => i.isToday) || notifUnread > 0);
 
     // محتوى اللوحة (تُحدَّث فقط وهي مفتوحة)
     if (!reminderOpen) return;
     const trunc = (s) => (s && s.length > 60 ? s.slice(0, 60) + '…' : s);
+    const notifRowHtml = (n) =>
+      '<div class="px-4 py-3 flex items-start gap-2.5 bg-teal-50/40">' +
+      '<span class="mt-0.5 text-base">' + (n.icon || '🔔') + '</span>' +
+      '<div class="min-w-0">' +
+      '<div class="text-sm font-bold text-slate-800">' + esc(n.title || '') + '</div>' +
+      (n.sub ? '<div class="text-xs text-slate-500 leading-snug mt-0.5">' + esc(n.sub) + '</div>' : '') +
+      '</div>' +
+      '</div>';
     const rowHtml = (i) =>
       '<div class="px-4 py-3 flex items-start gap-2.5 ' +
       (i.isToday ? 'bg-amber-50' : i.isTmr ? 'bg-sky-50/70' : '') + '">' +
@@ -192,16 +792,28 @@
       esc(i.when) + ' — ' + t('rm_open_word') + ' <span class="tabular-nums">(' + i.o.h + ':' + i.o.mi + ')</span></div>' +
       '</div>' +
       '</div>';
+    const hasAny = items.length || notifItems.length;
     panel.innerHTML =
       '<div class="px-4 py-3 bg-gradient-to-l from-amber-50 via-white to-white border-b border-amber-100 flex items-center gap-2">' +
       '<span class="text-lg">🔔</span>' +
-      '<span class="text-sm font-black text-slate-800">' + t('rm_title') + '</span>' +
-      '<span class="text-[11px] font-black text-white bg-amber-500 rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">' + items.length + '</span>' +
+      '<span class="text-sm font-black text-slate-800">' + t('ntf_title') + '</span>' +
+      '<span class="text-[11px] font-black text-white bg-amber-500 rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">' + totalBadge + '</span>' +
       '</div>' +
-      (items.length
-        ? '<div class="max-h-[55vh] overflow-y-auto divide-y divide-slate-100">' + items.map(rowHtml).join('') + '</div>'
-        : '<div class="py-10 text-center text-sm text-slate-400">' + t('rm_empty') + '</div>') +
-      '<div class="px-4 py-2 text-[10px] text-slate-400 border-t border-slate-100 text-center">🔄 ' + t('rm_auto') + '</div>';
+      (hasAny
+        ? '<div class="max-h-[55vh] overflow-y-auto divide-y divide-slate-100">' +
+          (notifItems.length
+            ? '<div class="px-4 pt-3 pb-1 text-[10px] font-black text-teal-700 bg-teal-50/60">📡 ' + t('ntf_live') + '</div>' +
+              notifItems.map(notifRowHtml).join('')
+            : '') +
+          (items.length
+            ? '<div class="px-4 pt-3 pb-1 text-[10px] font-black text-amber-700 bg-amber-50/60">🗓️ ' + t('rm_title') + '</div>' +
+              items.map(rowHtml).join('')
+            : '') +
+          '</div>'
+        : '<div class="py-10 text-center text-sm text-slate-400">' + t('ntf_empty') + '</div>') +
+      '<div class="px-4 py-2 text-[10px] text-slate-400 border-t border-slate-100 text-center">' +
+      (rtActive ? '📡 ' + t('ntf_realtime') : '🔄 ' + t('ntf_polling')) +
+      '</div>';
   }
 
   A.toggleReminder = function () {
@@ -209,6 +821,8 @@
     const panel = $('remind-panel');
     if (!panel) return;
     if (reminderOpen) {
+      renderReminder();
+      notifUnread = 0;
       renderReminder();
       panel.classList.remove('hidden', 'remind-pop');
       void panel.offsetWidth; // إعادة تشغيل الحركة
@@ -335,6 +949,8 @@
     const canCreate = A.can('create');
     const canAccounts = A.can('accounts');
     const canView = A.scopeOf() !== 'none';
+    document.querySelectorAll('.nav-btn[data-tab="tab-dashboard"]')
+      .forEach((b) => b.classList.toggle('hidden', !canView));
     document.querySelectorAll('.nav-btn[data-tab="tab-create"]')
       .forEach((b) => b.classList.toggle('hidden', !canCreate));
     document.querySelectorAll('.nav-btn[data-tab="tab-accounts"]')
@@ -344,8 +960,8 @@
     document.querySelectorAll('.nav-btn[data-tab="tab-opening"]')
       .forEach((b) => b.classList.toggle('hidden', !canView));
     let n = 0;
+    if (canView) n += 3;
     if (canCreate) n++;
-    if (canView) n += 2;
     if (canAccounts) n++;
     setGrid(Math.max(1, n));
     // النسخ الاحتياطي/الاستعادة: نطاق كامل + حذف + إنشاء فقط
@@ -358,7 +974,7 @@
     if (window.switchTo) {
       // لجنة فتح خالصة (فتح+سجل فقط) تفتح تبويب الفتح — غير ذلك القائمة
       const openerOnly = canView && !canCreate && !canAccounts && A.can('open') && !A.can('edit') && !A.can('delete');
-      window.switchTo(openerOnly ? 'tab-opening' : (canView ? 'tab-tenders' : 'tab-opening'));
+      window.switchTo(openerOnly ? 'tab-opening' : (canView ? 'tab-dashboard' : 'tab-opening'));
     }
   }
 
@@ -503,7 +1119,7 @@
     const banner = $('schema-banner');
     if (!banner) return;
     try {
-      const { error } = await DB.from('tenders').select('id, kind, pdf_source').limit(1);
+      const { error } = await DB.from('tenders').select('id, kind, pdf_source, title_fr').limit(1);
       if (error) banner.classList.remove('hidden');
     } catch (e) {
       banner.classList.remove('hidden');
@@ -512,6 +1128,118 @@
 
   A.refreshTenders = function () {
     A.loadTenders();
+  };
+
+  A._dbCharts = [];
+  A.loadDashboard = async function () {
+    const statsEl = $('db-stats');
+    if (!statsEl) return;
+    statsEl.innerHTML = '<div class="spinner my-8"></div>';
+    ['db-upcoming', 'db-recent'].forEach((id) => { const el = $(id); if (el) el.innerHTML = ''; });
+    A._dbCharts.forEach((c) => { try { c.destroy(); } catch (_) {} });
+    A._dbCharts = [];
+
+    try {
+      let q = DB.from('tenders').select('id, reference, title, kind, status, opening_date, faculty_id, downloads(count)');
+      if (A.scopeOf() !== 'all') q = q.eq('faculty_id', A.facultyId);
+      const { data: tenders, error } = await q;
+      if (error) throw error;
+      const list = tenders || [];
+      const ids = list.map((x) => x.id);
+      const total = list.length;
+      const published = list.filter((x) => x.status === 'published').length;
+      const opened = list.filter((x) => x.status === 'opened').length;
+      const dlTotal = list.reduce((s, x) => s + ((x.downloads && x.downloads.count) || 0), 0);
+
+      const card = (icon, label, value, color) =>
+        '<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">' +
+        '<div class="text-2xl mb-2">' + icon + '</div>' +
+        '<div class="text-2xl font-black ' + color + '">' + value + '</div>' +
+        '<div class="text-xs text-slate-500 font-semibold mt-1">' + label + '</div>' +
+        '</div>';
+      statsEl.innerHTML =
+        card('📥', t('db_total'), total, 'text-slate-800') +
+        card('🟢', t('db_published'), published, 'text-primary-700') +
+        card('🔓', t('db_opened'), opened, 'text-indigo-600') +
+        card('⬇️', t('db_downloads'), dlTotal, 'text-teal-700');
+
+      if (typeof Chart !== 'undefined') {
+        const facAgg = {};
+        list.forEach((x) => { const fid = x.faculty_id || 'central'; facAgg[fid] = (facAgg[fid] || 0) + 1; });
+        const facLabels = Object.keys(facAgg).map((fid) => {
+          const f = (A.facultyById && A.facultyById[fid]) || null;
+          return I18N.lang === 'ar' ? ((f && f.name_ar) || t('fac_central_label')) : ((f && (f.name_fr || f.name_ar)) || t('fac_central_label'));
+        });
+        const facData = Object.values(facAgg);
+        const c1 = new Chart($('chart-faculties'), {
+          type: 'bar',
+          data: { labels: facLabels, datasets: [{ data: facData, backgroundColor: '#10b981', borderRadius: 6 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+        });
+        A._dbCharts.push(c1);
+
+        let dlQuery = DB.from('downloads').select('downloaded_at');
+        if (ids.length) dlQuery = dlQuery.in('tender_id', ids);
+        const dlRes = ids.length ? await dlQuery : { data: [], error: null };
+        if (dlRes.error) throw dlRes.error;
+        const days = [];
+        for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const p = officePartsDate(d); days.push(p.y + '-' + p.mo + '-' + p.da); }
+        const counts = {};
+        days.forEach((d) => { counts[d] = 0; });
+        (dlRes.data || []).forEach((d) => {
+          const p = officePartsDate(d.downloaded_at);
+          if (!p) return;
+          const key = p.y + '-' + p.mo + '-' + p.da;
+          if (counts[key] != null) counts[key]++;
+        });
+        const dayLabels = days.map((d) => { const p = officePartsDate(d); return p.da + '/' + p.mo; });
+        const c2 = new Chart($('chart-downloads'), {
+          type: 'line',
+          data: { labels: dayLabels, datasets: [{ data: days.map((d) => counts[d]), borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,.12)', fill: true, tension: .35 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+        });
+        A._dbCharts.push(c2);
+      }
+
+      const now = Date.now();
+      const today = officePartsDate(new Date());
+      const tmr = officePartsDate(new Date(now + 86400000));
+      const upcoming = list
+        .filter((x) => x.status === 'published' && new Date(x.opening_date).getTime() >= now)
+        .sort((a, b) => new Date(a.opening_date) - new Date(b.opening_date))
+        .slice(0, 5);
+      const upEl = $('db-upcoming');
+      if (upEl) {
+        upEl.innerHTML = upcoming.length ? upcoming.map((x) => {
+          const p = officePartsDate(x.opening_date);
+          const dayLabel = (p && p.y === today.y && p.mo === today.mo && p.da === today.da) ? t('db_today')
+            : (p && p.y === tmr.y && p.mo === tmr.mo && p.da === tmr.da) ? t('db_tomorrow')
+            : fmtDate(x.opening_date, true);
+          return '<div class="flex items-center justify-between gap-3 bg-slate-50 rounded-xl px-3 py-2">' +
+            '<div class="min-w-0"><div class="font-bold text-slate-700 text-sm" dir="ltr">' + esc(fmtRef(x.reference)) + '</div>' +
+            '<div class="text-xs text-slate-500 mt-0.5 truncate">' + esc(displayTitle(x)) + '</div></div>' +
+            '<div class="text-xs font-bold text-primary-700 whitespace-nowrap">' + dayLabel + '</div></div>';
+        }).join('') : '<div class="text-xs text-slate-400">' + t('db_empty') + '</div>';
+      }
+
+      let recentQ = DB.from('downloads').select('company, phone, downloaded_at, tender_id').order('downloaded_at', { ascending: false }).limit(8);
+      if (ids.length) recentQ = recentQ.in('tender_id', ids);
+      const recentRes = ids.length ? await recentQ : { data: [], error: null };
+      if (recentRes.error) throw recentRes.error;
+      const refById = {};
+      list.forEach((x) => { refById[x.id] = x.reference; });
+      const recEl = $('db-recent');
+      if (recEl) {
+        recEl.innerHTML = (recentRes.data && recentRes.data.length) ? recentRes.data.map((d) =>
+          '<div class="flex items-center justify-between gap-3 bg-slate-50 rounded-xl px-3 py-2">' +
+          '<div class="min-w-0"><div class="font-bold text-slate-700 text-sm truncate">' + esc(d.company || '—') + '</div>' +
+          '<div class="text-[11px] text-slate-500 mt-0.5" dir="ltr">' + esc(fmtRef(refById[d.tender_id] || '')) + '</div></div>' +
+          '<div class="text-[11px] text-slate-400 whitespace-nowrap">' + fmtDate(d.downloaded_at, true) + '</div></div>'
+        ).join('') : '<div class="text-xs text-slate-400">' + t('db_empty') + '</div>';
+      }
+    } catch (e) {
+      statsEl.innerHTML = errorState(e);
+    }
   };
 
   function debounce(fn, ms) {
@@ -523,6 +1251,30 @@
   }
 
   /* ---------- إنشاء استشارة ---------- */
+
+  function bindTitleTranslation(frId, arId, btnId) {
+    const frEl = $(frId);
+    const arEl = $(arId);
+    const btn = $(btnId);
+    if (!frEl || !arEl) return;
+    arEl.addEventListener('input', () => { arEl.dataset.userEdited = '1'; });
+    async function runTranslate(silent) {
+      const v = frEl.value.trim();
+      if (v.length < 2) return;
+      if (btn) setBusy(btn, true, t('translating'));
+      try {
+        const out = await translateFrToAr(v);
+        if (!arEl.dataset.userEdited || !silent) arEl.value = out;
+        if (!silent) delete arEl.dataset.userEdited;
+      } catch (e) {
+        if (!silent) toast(t('translation_fail'), 'error', 4000);
+      } finally {
+        if (btn) setBusy(btn, false, t('translate_btn'));
+      }
+    }
+    frEl.addEventListener('input', debounce(() => runTranslate(true), 900));
+    if (btn) btn.addEventListener('click', () => runTranslate(false));
+  }
 
   function bindCreate() {
     const form = $('create-form');
@@ -538,12 +1290,44 @@
       if (v) $('f-reference').value = fmtRef(v);
     });
 
+    bindTitleTranslation('f-title-fr', 'f-title', 'translate-title-btn');
+
+    const suggestRefreshDebounced = debounce(() => A.refreshSuggestions(), 1000);
+    const facSel = $('f-faculty');
+    if (facSel) facSel.addEventListener('change', () => A.refreshSuggestions());
+    ['f-title', 'f-title-fr'].forEach((id) => {
+      const el = $(id);
+      if (el) el.addEventListener('input', suggestRefreshDebounced);
+    });
+    const suggestRefresh = $('suggest-refresh');
+    if (suggestRefresh) suggestRefresh.addEventListener('click', () => A.refreshSuggestions());
+    const suggestSelectAll = $('suggest-select-all');
+    if (suggestSelectAll) suggestSelectAll.addEventListener('click', () => {
+      document.querySelectorAll('.suggest-check').forEach((c) => {
+        c.checked = true;
+        A._selectedSuggested[c.dataset.phone] = true;
+      });
+    });
+    const suggestClear = $('suggest-clear');
+    if (suggestClear) suggestClear.addEventListener('click', () => {
+      A._selectedSuggested = {};
+      document.querySelectorAll('.suggest-check').forEach((c) => { c.checked = false; });
+    });
+    const suggestList = $('suggest-list');
+    if (suggestList) suggestList.addEventListener('change', (e) => {
+      const c = e.target.closest('.suggest-check');
+      if (!c) return;
+      if (c.checked) A._selectedSuggested[c.dataset.phone] = true;
+      else delete A._selectedSuggested[c.dataset.phone];
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!A.me || !hasCreate()) return toast(t('t_perm_denied'), 'error');
       const refRaw = val('f-reference');
       const ref = fmtRef(refRaw);
-      const title = val('f-title');
+      const titleFr = val('f-title-fr').trim();
+      const title = val('f-title').trim();
       const duration = val('f-duration');
       const opening = (val('f-date') && val('f-time')) ? (val('f-date') + 'T' + val('f-time')) : (val('f-date') ? (val('f-date') + 'T10:00') : '');
       const file = $('f-file').files[0];
@@ -551,11 +1335,12 @@
       const kind = kindEl ? kindEl.value : 'consultation';
       const facultyId = val('f-faculty') || null;
 
-      if (!ref || !title.trim() || !opening || !file) return toast(t('t_fill_all'), 'error');
+      if (!ref || !titleFr || !title || !opening || !file) return toast(t('t_fill_all'), 'error');
       if (file.type !== 'application/pdf') return toast(t('t_pdf_only'), 'error');
       if (file.size > 50 * 1024 * 1024) return toast(t('t_too_big'), 'error');
       if (ref.length > 60) return toast(t('t_ref_long'), 'error');
-      if (title.trim().length > 200) return toast(t('t_title_long'), 'error');
+      if (titleFr.length > 200) return toast(t('t_title_long'), 'error');
+      if (title.length > 200) return toast(t('t_title_long'), 'error');
       if (duration.length > 100) return toast(t('t_duration_long'), 'error');
       if (isNaN(new Date(opening).getTime())) return toast(t('t_bad_date'), 'error');
 
@@ -590,6 +1375,7 @@
               kind,
               reference: ref,
               title: title.trim(),
+              title_fr: titleFr,
               duration: duration.trim(),
               opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
               faculty_id: facultyId,
@@ -618,6 +1404,7 @@
             kind,
             reference: ref,
             title: title.trim(),
+            title_fr: titleFr,
             duration: duration.trim() || null,
             opening_date: new Date(opening).toISOString(),
             pdf_path: pdfPath,
@@ -630,27 +1417,36 @@
         }
 
         form.reset();
+        if ($('f-title')) delete $('f-title').dataset.userEdited;
+        A._suggestedRows = [];
+        A._selectedSuggested = {};
+        const suggestBox = $('suggest-box');
+        if (suggestBox) suggestBox.classList.add('hidden');
+        const suggestListEl = $('suggest-list');
+        if (suggestListEl) suggestListEl.innerHTML = '';
         $('file-info').textContent = '';
         toast(t('t_published'), 'success');
         A.page = 1;
         await A.loadTenders();
         window.switchTo('tab-tenders');
-        A.showQR({
+        const publishedTender = {
           id: tenderId,
           kind,
           reference: ref,
           title: title.trim(),
+          title_fr: titleFr,
           duration: duration.trim() || null,
           opening_date: new Date(opening).toISOString(),
           secure_link: true,
           faculty_id: facultyId,
-        });
+        };
+        A.showQR(publishedTender);
       } catch (err) {
         console.error(err);
         const msg = String((err && err.message) || err);
         if (msg.includes('duplicate')) {
           toast(t('t_dup2'), 'error', 5000);
-        } else if (msg.includes('column of') || msg.includes('schema cache')) {
+        } else if (msg.includes('column of') || msg.includes('schema cache') || msg.includes('does not exist')) {
           toast(t('t_schema'), 'error', 8000);
           checkSchema();
         } else if (msg.includes('R2') || msg.includes('r2') || msg.includes('Cloudflare')) {
@@ -673,6 +1469,29 @@
     if (pdfBtn) pdfBtn.addEventListener('click', exportPdf);
     const printBtn = $('print-qr-btn');
     if (printBtn) printBtn.addEventListener('click', () => window.print());
+    const waSuggestedBtn = $('wa-suggested-btn');
+    if (waSuggestedBtn) waSuggestedBtn.addEventListener('click', () => {
+      A.openSuggestedWhatsAppModal();
+    });
+    const waFacultyBtn = $('wa-faculty-btn');
+    if (waFacultyBtn) waFacultyBtn.addEventListener('click', () => {
+      if (A.lastQrTender) A.openWhatsAppFacultyModal(A.lastQrTender);
+    });
+    const waFacultyCopy = $('wa-faculty-copy');
+    if (waFacultyCopy) waFacultyCopy.addEventListener('click', () => {
+      const nums = (A._waFacultyRows || []).map((r) => r.phone).join('\n');
+      if (!nums) return;
+      navigator.clipboard.writeText(nums).then(() => toast(t('t_copied') || 'Copied', 'success', 2500)).catch(() => {});
+    });
+    const waFacultyList = $('wa-faculty-list');
+    if (waFacultyList) waFacultyList.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-wa-open]');
+      if (!btn) return;
+      const row = (A._waFacultyRows || []).find((r) => r.phone === btn.dataset.phone);
+      if (!row || !A._waFacultyTender) return;
+      const text = A.operatorWhatsAppText(A._waFacultyTender, row.company);
+      window.open(waLink(row.phone, text), '_blank', 'noopener');
+    });
     const openBtn = $('open-confirm-btn');
     if (openBtn) openBtn.addEventListener('click', confirmOpen);
     const replaceBtn = $('replace-confirm-btn');
@@ -696,7 +1515,9 @@
       '<div class="text-xs text-slate-400 mt-1">' + t('edit_ref_note') + '</div>';
     const kindInput = document.querySelector('input[name="e-kind"][value="' + (tt.kind === 'tender' ? 'tender' : 'consultation') + '"]');
     if (kindInput) kindInput.checked = true;
+    $('e-title-fr').value = tt.title_fr || '';
     $('e-title').value = tt.title || '';
+    if ($('e-title')) delete $('e-title').dataset.userEdited;
     $('e-duration').value = tt.duration || '';
     const ef = $('e-faculty');
     if (ef) {
@@ -712,16 +1533,19 @@
   function bindEditForm() {
     const form = $('edit-form');
     if (!form) return;
+    bindTitleTranslation('e-title-fr', 'e-title', 'e-translate-btn');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!A.me || !hasEdit()) return toast(t('t_perm_denied'), 'error');
       const id = $('e-id').value;
+      const titleFr = val('e-title-fr').trim();
       const title = val('e-title').trim();
       const duration = val('e-duration').trim();
       const opening = (val('e-date') && val('e-time')) ? (val('e-date') + 'T' + val('e-time')) : (val('e-date') ? (val('e-date') + 'T10:00') : '');
       const kindEl = document.querySelector('input[name="e-kind"]:checked');
       const kind = kindEl ? kindEl.value : 'consultation';
       if (!id || !title || !opening) return toast(t('t_fill_all'), 'error');
+      if (titleFr.length > 200) return toast(t('t_title_long'), 'error');
       if (title.length > 200) return toast(t('t_title_long'), 'error');
       if (duration.length > 100) return toast(t('t_duration_long'), 'error');
       if (isNaN(new Date(opening).getTime())) return toast(t('t_bad_date'), 'error');
@@ -730,7 +1554,9 @@
       try {
         const { error } = await DB.from('tenders')
           .update({
-            kind, title,
+            kind,
+            title,
+            title_fr: titleFr || null,
             duration,
             opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
             faculty_id: A.scopeOf() === 'all' ? (val('e-faculty') || null) : (A.facultyId || null),
@@ -757,7 +1583,7 @@
     try {
       const term = (val('tender-search') || '').trim().replace(/[(),]/g, '');
       let q = DB.from('tenders').select('*, downloads(count), faculties(*)', { count: 'exact' });
-      if (term) q = q.or('reference.ilike.%' + term + '%,title.ilike.%' + term + '%');
+      if (term) q = q.or('reference.ilike.%' + term + '%,title.ilike.%' + term + '%,title_fr.ilike.%' + term + '%');
       if (tenderFilter && tenderFilter.status) q = q.eq('status', tenderFilter.status);
       if (tenderFilter && tenderFilter.facultyId) q = q.eq('faculty_id', tenderFilter.facultyId);
       const from = (A.page - 1) * PAGE_SIZE;
@@ -857,7 +1683,7 @@
       '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindLabel(tt.kind) + '</span>' +
       facChip(tt.faculties) +
       '</div>' +
-      '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
+      '<div class="text-sm text-slate-600 mt-0.5">' + esc(displayTitle(tt)) + '</div>' +
       '</div>' +
       statusBadge(tt.status) +
       '</div>' +
@@ -955,7 +1781,7 @@
         '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ' + (tt.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindLabel(tt.kind) + '</span>' +
         facChip(tt.faculties) +
         '</div>' +
-        '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
+        '<div class="text-sm text-slate-600 mt-0.5">' + esc(displayTitle(tt)) + '</div>' +
         '<div class="text-xs text-slate-400 mt-1">' + t('op_time', { d: fmtDate(tt.opening_date, true) }) +
         (isReady ? t('op_now') : '') + '</div>' +
         '</div>' +
@@ -977,7 +1803,7 @@
       const openedRow = (tt) => (
         '<div class="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between gap-3">' +
         '<div class="min-w-0">' +
-        '<div class="text-sm font-bold text-slate-700">' + esc(fmtRef(tt.reference)) + ' — ' + esc(tt.title) + '</div>' +
+        '<div class="text-sm font-bold text-slate-700">' + esc(fmtRef(tt.reference)) + ' — ' + esc(displayTitle(tt)) + '</div>' +
         '<div class="text-xs text-slate-400 mt-0.5">' + t('op_opened_at', { d: fmtDate(tt.opened_at, true) }) +
         (tt.opened_by ? t('op_by', { n: esc(userName[tt.opened_by] || t('op_unknown')) }) : '') + '</div>' +
         '</div>' +
@@ -1010,9 +1836,10 @@
   /* ---------- بطاقة QR ---------- */
 
   A.showQR = function (t) {
+    A.lastQrTender = t;
     $('qr-kind').textContent = kindLabel(t.kind);
     $('qr-reference').textContent = fmtRef(t.reference);
-    $('qr-title').textContent = t.title;
+    $('qr-title').textContent = displayTitle(t);
     $('qr-duration').textContent = t.duration || '—';
     $('qr-opening').textContent = fmtDate(t.opening_date, true);
 
@@ -1207,7 +2034,7 @@
   function askOpen(tt) {
     openTender = tt;
     $('open-tender-info').innerHTML =
-      '<b>' + esc(fmtRef(tt.reference)) + '</b> — ' + esc(tt.title) +
+      '<b>' + esc(fmtRef(tt.reference)) + '</b> — ' + esc(displayTitle(tt)) +
       '<br><span class="text-xs text-slate-400">' + t('op_time', { d: fmtDate(tt.opening_date, true) }) + '</span>';
     $('open-ref-input').value = '';
     openModal('open-modal');
@@ -1330,7 +2157,7 @@
       '<table class="info">' +
       '<tr><td class="k">' + t('pv_ref') + '</td><td><b>' + esc(fmtRef(tt.reference)) + '</b></td>' +
       '<td class="k">' + t('pv_kind') + '</td><td>' + kindLabel(tt.kind) + '</td></tr>' +
-      '<tr><td class="k">' + t('pv_title_l') + '</td><td colspan="3">' + esc(tt.title) + '</td></tr>' +
+      '<tr><td class="k">' + t('pv_title_l') + '</td><td colspan="3">' + esc(displayTitle(tt)) + '</td></tr>' +
       '<tr><td class="k">' + t('pv_faculty') + '</td><td colspan="3">' + esc(facName) + '</td></tr>' +
       '<tr><td class="k">' + t('pv_open_sched') + '</td><td>' + fmtDate(tt.opening_date, true) + '</td>' +
       '<td class="k">' + t('pv_open_actual') + '</td><td>' + fmtDate(tt.opened_at, true) + '</td></tr>' +
@@ -1360,7 +2187,7 @@
   function askReplace(tt) {
     replaceTender = tt;
     $('replace-tender-info').innerHTML =
-      '<b>' + esc(fmtRef(tt.reference)) + '</b> — ' + esc(tt.title) +
+      '<b>' + esc(fmtRef(tt.reference)) + '</b> — ' + esc(displayTitle(tt)) +
       '<br><span class="text-xs text-slate-400">' + t('rep_info_note') + '</span>';
     $('replace-file').value = '';
     $('replace-file-info').textContent = '';
@@ -1429,7 +2256,7 @@
   function askDelete(tt) {
     deleteTender = tt;
     $('delete-tender-info').innerHTML =
-      '<b>' + esc(fmtRef(tt.reference)) + '</b> — ' + esc(tt.title) +
+      '<b>' + esc(fmtRef(tt.reference)) + '</b> — ' + esc(displayTitle(tt)) +
       '<br><span class="text-xs text-slate-400">' +
       (tt.status === 'published' ? t('del_info_pub') : t('del_info_open')) +
       '</span>';
@@ -1531,7 +2358,7 @@
 
   /* ---------- نسخة احتياطية يدوية (إداري) ---------- */
 
-  const T_COLS = ['id', 'kind', 'reference', 'title', 'duration', 'opening_date', 'pdf_path', 'pdf_source', 'status', 'opened_at', 'opened_by', 'created_at'];
+  const T_COLS = ['id', 'kind', 'reference', 'title', 'title_fr', 'duration', 'opening_date', 'pdf_path', 'pdf_source', 'status', 'opened_at', 'opened_by', 'created_at'];
   const D_COLS = ['id', 'tender_id', 'company', 'phone', 'email', 'ip_address', 'user_agent', 'downloaded_at'];
   const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
 

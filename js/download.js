@@ -4,6 +4,12 @@
   const t = (k, v) => I18N.t(k, v);
   const kindName = (k) => (k === 'tender' ? t('kind_tender_s') : t('kind_consultation_s'));
 
+  function tenderTitle() {
+    if (!tender) return '';
+    if (I18N.lang === 'fr' && tender.title_fr) return tender.title_fr;
+    return tender.title || tender.title_fr || '';
+  }
+
   let token = null;
   let tender = null;
   let signed = { url: '', expiresAt: 0, updated: false };
@@ -250,7 +256,7 @@
       '<span class="font-black text-slate-900" dir="ltr">' + esc(fmtRef(tender.reference)) + '</span>' +
       '<span class="text-[10px] font-bold px-2 py-0.5 rounded ' + (tender.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindName(tender.kind) + '</span>' +
       '</div>' +
-      '<p class="text-sm text-slate-600 leading-relaxed mb-4">' + esc(tender.title) + '</p>' +
+      '<p class="text-sm text-slate-600 leading-relaxed mb-4">' + esc(tenderTitle()) + '</p>' +
       '<div class="bg-gradient-to-l from-emerald-700 to-emerald-500 text-white rounded-2xl p-4 mb-4 shadow-md">' +
       '<div class="text-[11px] text-emerald-50 mb-1 font-bold">' + t('opened_time_l') + '</div>' +
       '<div class="text-lg font-black" dir="auto">' + fmtDate(when, true) + '</div>' +
@@ -293,7 +299,7 @@
       '<span class="text-[10px] font-bold px-2 py-0.5 rounded ' + (tender.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindName(tender.kind) + '</span>' +
       '<span class="text-[10px] font-bold text-primary-700 bg-primary-50 border border-primary-200 rounded-full px-2 py-0.5">' + t('p_published') + '</span>' +
       '</div>' +
-      '<p class="text-sm text-slate-600 leading-relaxed mt-1">' + esc(tender.title) + '</p>' +
+      '<p class="text-sm text-slate-600 leading-relaxed mt-1">' + esc(tenderTitle()) + '</p>' +
       '</div>' +
       openingCountdownHtml() +
       '<div class="grid grid-cols-2 gap-2 mb-4 text-xs">' +

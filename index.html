@@ -27,6 +27,7 @@
   <!-- المكتبات -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-emerald-50 via-white to-teal-50 min-h-screen text-slate-800">
 
@@ -140,6 +141,29 @@
 
     <main class="max-w-3xl mx-auto px-4 py-5 pb-28">
 
+      <!-- ===== تبويب: لوحة الإحصائيات ===== -->
+      <section id="tab-dashboard" class="hidden">
+        <div id="db-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="db_by_faculty">حسب المكتب</h3>
+            <div class="h-56"><canvas id="chart-faculties"></canvas></div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="db_downloads_week">التحميلات آخر 7 أيام</h3>
+            <div class="h-56"><canvas id="chart-downloads"></canvas></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mt-3">
+          <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="db_upcoming">قريبة من الفتح</h3>
+          <div id="db-upcoming" class="space-y-2"></div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mt-3">
+          <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="db_recent">آخر التحميلات</h3>
+          <div id="db-recent" class="space-y-2"></div>
+        </div>
+      </section>
+
       <!-- ===== تبويب: إنشاء استشارة ===== -->
       <section id="tab-create">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
@@ -168,8 +192,28 @@
               </div>
             </div>
             <div>
-              <label class="lbl" for="f-title" data-i18n="f_title">العنوان *</label>
-              <input id="f-title" class="inp" data-i18n-ph="f_title_ph" placeholder="استشارة — توريد تجهيزات مخبرية" required>
+              <label class="lbl" for="f-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
+              <div class="flex gap-2">
+                <input id="f-title-fr" class="inp" dir="ltr" placeholder="Consultation — Fourniture d’équipements de laboratoire" required>
+                <button type="button" id="translate-title-btn" class="btn-secondary whitespace-nowrap" data-i18n="translate_btn">🔄 ترجمة</button>
+              </div>
+            </div>
+            <div>
+              <label class="lbl" for="f-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
+              <input id="f-title" class="inp" data-i18n-ph="f_title_ar_ph" placeholder="يُملأ تلقائيًا من الفرنسي…" required>
+            </div>
+            <div id="suggest-box" class="hidden rounded-2xl border border-primary-200 bg-primary-50 p-3">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <h3 class="text-xs font-black text-primary-800" data-i18n="ai_suggest_title">🤖 اقتراحات ذكية للتنبيه</h3>
+                <div class="flex gap-2">
+                  <button type="button" id="suggest-select-all" class="text-[11px] font-bold text-primary-700 hover:underline" data-i18n="ai_select_all">اختيار الكل</button>
+                  <button type="button" id="suggest-clear" class="text-[11px] font-bold text-primary-700 hover:underline" data-i18n="ai_clear">مسح</button>
+                  <button type="button" id="suggest-refresh" class="text-[11px] font-bold text-primary-700 hover:underline" data-i18n="ai_refresh">تحديث</button>
+                </div>
+              </div>
+              <p class="text-[11px] text-primary-700/70 mb-2" data-i18n="ai_suggest_sub">أرقام مقترحة من تحليل عنوان الاستشارة + تحميلات QR السابقة</p>
+              <div id="suggest-analysis" class="hidden mb-2 rounded-xl bg-white border border-primary-100 px-3 py-2 text-[11px] text-primary-800"></div>
+              <div id="suggest-list" class="space-y-2"></div>
             </div>
             <div>
               <label class="lbl" data-i18n="f_opening">موعد فتح الأظرفة *</label>
@@ -267,7 +311,10 @@
     <!-- شريط التنقل السفلي -->
     <nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,.05)]">
       <div class="max-w-3xl mx-auto grid grid-cols-4">
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-white nav-active" data-tab="tab-create">
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-white nav-active" data-tab="tab-dashboard">
+          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📊</span><span data-i18n="nav_dashboard">اللوحة</span>
+        </button>
+        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-create">
           <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📝</span><span data-i18n="nav_create">إنشاء</span>
         </button>
         <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-tenders">
@@ -315,8 +362,27 @@
         <div class="text-sm sm:text-base text-slate-600 font-semibold break-all mt-auto border-t border-slate-200 pt-3" dir="ltr" id="qr-url"></div>
       </div>
       <div class="px-4 pb-4 flex gap-2 no-print">
+        <button id="wa-suggested-btn" class="btn-primary w-full mb-2" data-i18n="wa_suggested_btn">📲 واتساب المقترحين</button>
+        <button id="wa-faculty-btn" class="btn-secondary w-full mb-2" data-i18n="wa_faculty_btn">📲 واتساب نفس المكتب</button>
         <button id="print-qr-btn" class="btn-primary flex-1" data-i18n="print_btn">🖨️ طباعة البطاقة</button>
         <button data-close="qr-modal" class="btn-secondary" data-i18n="close">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== نافذة: متعاملو نفس المكتب (واتساب) ===== -->
+  <div id="wa-faculty-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-l from-emerald-600 to-teal-500 text-white">
+        <span class="font-bold text-sm" data-i18n="wa_faculty_title">متعاملو نفس المكتب</span>
+        <button data-close="wa-faculty-modal" class="text-xl leading-none opacity-80">✕</button>
+      </div>
+      <div class="px-4 py-2 text-[11px] text-slate-500 border-b border-slate-100" data-i18n="wa_faculty_sub">رسالة خاصة لكل رقم — افتح واتساب ثم أرسل يدويًا</div>
+      <div id="wa-faculty-info" class="px-4 py-2 text-xs font-bold text-primary-700 bg-primary-50 border-b border-primary-100"></div>
+      <div id="wa-faculty-list" class="flex-1 overflow-y-auto divide-y divide-slate-100"></div>
+      <div class="px-4 py-3 border-t border-slate-100 flex gap-2">
+        <button id="wa-faculty-copy" class="btn-secondary flex-1" data-i18n="wa_copy_nums">📋 نسخ الأرقام</button>
+        <button data-close="wa-faculty-modal" class="btn-secondary" data-i18n="close">إغلاق</button>
       </div>
     </div>
   </div>
@@ -408,7 +474,14 @@
             </div>
           </div>
             <div>
-              <label class="lbl" for="e-title" data-i18n="f_title">العنوان *</label>
+              <label class="lbl" for="e-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
+              <div class="flex gap-2">
+                <input id="e-title-fr" class="inp" dir="ltr">
+                <button type="button" id="e-translate-btn" class="btn-secondary whitespace-nowrap" data-i18n="translate_btn">🔄 ترجمة</button>
+              </div>
+            </div>
+            <div>
+              <label class="lbl" for="e-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
               <input id="e-title" class="inp" required>
             </div>
             <div>
@@ -461,6 +534,7 @@
 
   <!-- ===== السكربتات ===== -->
   <script src="js/config.js"></script>
+  <script src="js/gemini-config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/supabase.js"></script>
