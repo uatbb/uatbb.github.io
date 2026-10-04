@@ -74,7 +74,6 @@
     bindBackup();
     bindRestore();
     bindReminderClose();
-    initCalNav();
     const s = $('tender-search');
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
     A.page = 1;
@@ -999,115 +998,7 @@
     } catch (err) {
       list.innerHTML = errorState(err);
     }
-    A.renderCalendar();
   };
-
-  /* ---------- تقويم مواعيد الفتح ---------- */
-
-  const MONTHS_AR = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-  const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-
-  A.calCursor = new Date();
-
-  A.renderCalendar = async function () {
-    const grid = $('cal-grid');
-    const label = $('cal-month-label');
-    if (!grid) return;
-    const cur = A.calCursor || new Date();
-    const y = cur.getFullYear();
-    const m = cur.getMonth();
-    const isAr = I18N.lang === 'ar';
-    label.textContent = (isAr ? MONTHS_AR : MONTHS_FR)[m] + ' ' + y;
-
-    let tenders = [];
-    let facColor = {};
-    try {
-      const start = new Date(y, m, 1).toISOString();
-      const end = new Date(y, m + 1, 1).toISOString();
-      const [tRes, fRes] = await Promise.all([
-        DB.from('tenders')
-          .select('id, reference, status, faculty_id')
-          .gte('opening_date', start)
-          .lt('opening_date', end),
-        DB.from('faculties').select('id, color'),
-      ]);
-      if (tRes.error) throw tRes.error;
-      tenders = tRes.data || [];
-      (fRes.data || []).forEach((f) => { facColor[f.id] = f.color; });
-    } catch (e) {
-      grid.innerHTML = '<div class="col-span-7 text-center text-slate-400 text-xs py-6">' + t('t_fail', { msg: String((e && e.message) || e) }) + '</div>';
-      return;
-    }
-
-    const byDay = {};
-    tenders.forEach((tt) => {
-      const d = new Date(tt.opening_date).getDate();
-      (byDay[d] = byDay[d] || []).push(tt);
-    });
-
-    const first = new Date(y, m, 1).getDay();
-    const daysIn = new Date(y, m + 1, 0).getDate();
-    const today = new Date();
-    const isToday = (d) => today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
-
-    let html = '';
-    for (let w = 0; w < 7; w++) {
-      html += '<div class="text-center text-[10px] font-bold text-slate-400 py-1">' + t('cal_wd' + w) + '</div>';
-    }
-    for (let b = 0; b < first; b++) html += '<div></div>';
-    for (let d = 1; d <= daysIn; d++) {
-      const items = byDay[d] || [];
-      let chips = '';
-      items.slice(0, 2).forEach((tt) => {
-        const c = facColor[tt.faculty_id] || '#047857';
-        const done = tt.status === 'opened';
-        chips += '<div data-cal-id="' + tt.id + '" class="flex items-center gap-1 text-[10px] font-bold truncate rounded-md px-1 py-0.5 cursor-pointer ' +
-          (done ? 'bg-slate-100 text-slate-400 line-through' : 'bg-primary-50 text-primary-800 hover:bg-primary-100') + '" title="' + esc(tt.reference) + '">' +
-          '<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + c + '"></span>' +
-          '<span class="truncate">' + esc(tt.reference) + '</span></div>';
-      });
-      if (items.length > 2) chips += '<div class="text-[9px] text-slate-400 font-bold">+' + (items.length - 2) + '</div>';
-      html += '<div class="min-h-[52px] rounded-lg border p-1 ' + (isToday(d) ? 'border-primary-400 bg-primary-50/60' : 'border-slate-100') + '">' +
-        '<div class="text-[10px] font-bold ' + (isToday(d) ? 'text-primary-700' : 'text-slate-400') + '">' + d + (isToday(d) ? ' ' + t('cal_today') : '') + '</div>' +
-        chips +
-        '</div>';
-    }
-    grid.innerHTML = html;
-
-    grid.onclick = (e) => {
-      const chip = e.target.closest('[data-cal-id]');
-      if (!chip) return;
-      const id = chip.getAttribute('data-cal-id');
-      DB.from('tenders').select('*').eq('id', id).maybeSingle().then(({ data }) => {
-        if (!data) return;
-        if (data.status === 'opened') {
-          toast(t('t_already_opened'), 'info', 4000);
-          return;
-        }
-        if (new Date(data.opening_date).getTime() > Date.now()) {
-          toast(t('t_open_early', { d: fmtDate(data.opening_date, true) }), 'info', 5000);
-          return;
-        }
-        if (!hasOpen()) return toast(t('t_open_perm'), 'error');
-        askOpen(data);
-      });
-    };
-  };
-
-  function initCalNav() {
-    const prev = $('cal-prev');
-    const next = $('cal-next');
-    if (prev) prev.addEventListener('click', () => {
-      const cur = A.calCursor || new Date();
-      A.calCursor = new Date(cur.getFullYear(), cur.getMonth() - 1, 1);
-      A.renderCalendar();
-    });
-    if (next) next.addEventListener('click', () => {
-      const cur = A.calCursor || new Date();
-      A.calCursor = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
-      A.renderCalendar();
-    });
-  }
 
   /* ---------- بطاقة QR ---------- */
 

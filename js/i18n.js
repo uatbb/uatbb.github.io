@@ -128,20 +128,6 @@
       pv_sig3: 'عضو اللجنة',
       pv_sign: 'الاسم والتوقيع',
 
-      // تقويم الفتح
-      cal_title: '📅 تقويم مواعيد الفتح',
-      cal_prev: '‹',
-      cal_next: '›',
-      cal_wd0: 'الأحد',
-      cal_wd1: 'الاثنين',
-      cal_wd2: 'الثلاثاء',
-      cal_wd3: 'الأربعاء',
-      cal_wd4: 'الخميس',
-      cal_wd5: 'الجمعة',
-      cal_wd6: 'السبت',
-      cal_opened: 'مفتوحة',
-      cal_today: 'اليوم',
-
       // تبويب الحسابات
       accounts_title: '👥 الحسابات',
       accounts_sub: 'صلاحيات دقيقة لكل حساب: نطاق + أفعال — مع طلبات الانتظار',
@@ -545,20 +531,6 @@
       pv_sig2: 'Membre de la commission',
       pv_sig3: 'Membre de la commission',
       pv_sign: 'Nom et signature',
-
-      // Calendrier des ouvertures
-      cal_title: '📅 Calendrier des ouvertures',
-      cal_prev: '‹',
-      cal_next: '›',
-      cal_wd0: 'Dim',
-      cal_wd1: 'Lun',
-      cal_wd2: 'Mar',
-      cal_wd3: 'Mer',
-      cal_wd4: 'Jeu',
-      cal_wd5: 'Ven',
-      cal_wd6: 'Sam',
-      cal_opened: 'Ouvert',
-      cal_today: 'Aujourd’hui',
 
       accounts_title: '👥 Comptes',
       accounts_sub: 'Permissions fines par compte : périmètre + actions — avec les demandes en attente',

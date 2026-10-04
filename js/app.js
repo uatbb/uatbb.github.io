@@ -62,83 +62,6 @@
     });
   }
 
-  /* ---------- تقويم الفتح العام (?cal=1) ---------- */
-
-  const P_MONTHS_AR = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-  const P_MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  let calCursor = new Date();
-  let calMode = false;
-
-  function renderPublicCal(root) {
-    const cur = calCursor || new Date();
-    const y = cur.getFullYear();
-    const m = cur.getMonth();
-    const isAr = I18N.lang === 'ar';
-    const tk = (k) => I18N.t(k);
-    root.innerHTML =
-      '<div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">' +
-      '<div class="flex items-center justify-between mb-3">' +
-      '<button id="pcal-prev" type="button" class="w-8 h-8 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 font-black text-lg leading-none">‹</button>' +
-      '<div class="text-center">' +
-      '<div class="font-black text-slate-800 text-sm">' + tk('cal_title') + '</div>' +
-      '<div id="pcal-month" class="text-xs font-bold text-primary-700 mt-0.5"></div>' +
-      '</div>' +
-      '<button id="pcal-next" type="button" class="w-8 h-8 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 font-black text-lg leading-none">›</button>' +
-      '</div>' +
-      '<div id="pcal-grid" class="grid grid-cols-7 gap-1"></div>' +
-      '</div>';
-    $('pcal-month').textContent = (isAr ? P_MONTHS_AR : P_MONTHS_FR)[m] + ' ' + y;
-    const grid = $('pcal-grid');
-    grid.innerHTML = '<div class="col-span-7 text-center text-slate-400 text-xs py-6"><div class="spinner my-2"></div></div>';
-    const start = new Date(y, m, 1).toISOString();
-    const end = new Date(y, m + 1, 1).toISOString();
-    DB.from('tenders_public').select('id, reference, title, opening_date, status')
-      .gte('opening_date', start)
-      .lt('opening_date', end)
-      .then(({ data, error }) => {
-        if (error) {
-          grid.innerHTML = '<div class="col-span-7 text-center text-slate-400 text-xs py-6">⚠️</div>';
-          return;
-        }
-        const byDay = {};
-        (data || []).forEach((tt) => {
-          const d = new Date(tt.opening_date).getDate();
-          (byDay[d] = byDay[d] || []).push(tt);
-        });
-        const first = new Date(y, m, 1).getDay();
-        const daysIn = new Date(y, m + 1, 0).getDate();
-        const today = new Date();
-        const isToday = (d) => today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
-        let html = '';
-        for (let w = 0; w < 7; w++) html += '<div class="text-center text-[10px] font-bold text-slate-400 py-1">' + tk('cal_wd' + w) + '</div>';
-        for (let b = 0; b < first; b++) html += '<div></div>';
-        for (let d = 1; d <= daysIn; d++) {
-          const items = byDay[d] || [];
-          let chips = '';
-          items.slice(0, 2).forEach((tt) => {
-            const done = tt.status === 'opened';
-            chips += '<div class="flex items-center gap-1 text-[10px] font-bold truncate rounded-md px-1 py-0.5 ' + (done ? 'bg-slate-100 text-slate-400 line-through' : 'bg-primary-50 text-primary-800') + '" title="' + tt.reference + ' — ' + (tt.title || '') + '">' +
-              '<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + (done ? '#94a3b8' : '#047857') + '"></span>' +
-              '<span class="truncate">' + tt.reference + '</span></div>';
-          });
-          if (items.length > 2) chips += '<div class="text-[9px] text-slate-400 font-bold">+' + (items.length - 2) + '</div>';
-          html += '<div class="min-h-[52px] rounded-lg border p-1 ' + (isToday(d) ? 'border-primary-400 bg-primary-50/60' : 'border-slate-100') + '">' +
-            '<div class="text-[10px] font-bold ' + (isToday(d) ? 'text-primary-700' : 'text-slate-400') + '">' + d + (isToday(d) ? ' ' + tk('cal_today') : '') + '</div>' +
-            chips +
-            '</div>';
-        }
-        grid.innerHTML = html;
-      });
-    $('pcal-prev').addEventListener('click', () => {
-      calCursor = new Date(cur.getFullYear(), m - 1, 1);
-      renderPublicCal(root);
-    });
-    $('pcal-next').addEventListener('click', () => {
-      calCursor = new Date(cur.getFullYear(), m + 1, 1);
-      renderPublicCal(root);
-    });
-  }
-
   /* ---------- رمز قصير (?c=012026) — نفس منطق الموقع العام ---------- */
   function resolveByCode(code) {
     const root = $('download-root');
@@ -164,7 +87,6 @@
       lb.addEventListener('click', () => I18N.setLang(I18N.other()));
     }
     document.addEventListener('langchange', () => {
-      if (calMode) renderPublicCal($('download-root'));
       const A = window.Admin;
       if (A && adminStarted) {
         if (A.updateRoleBadge) A.updateRoleBadge();
@@ -206,10 +128,6 @@
     } else if (code) {
       $('page-download').classList.remove('hidden');
       resolveByCode(code);
-    } else if (params.get('cal')) {
-      $('page-download').classList.remove('hidden');
-      calMode = true;
-      renderPublicCal($('download-root'));
     } else {
       // لوحة المدير: خلف تسجيل الدخول
       $('page-admin').classList.remove('hidden');
