@@ -134,7 +134,7 @@
     <!-- ===== تنبيه: قاعدة البيانات غير محدثة ===== -->
     <div id="schema-banner" class="hidden max-w-3xl mx-auto mt-3 mx-4 bg-red-50 border border-red-300 rounded-xl p-3 text-sm text-red-800 leading-relaxed" data-i18n-html="schema_banner">
       ⚠️ <b>قاعدة البيانات غير محدثة</b> — إنشاء/حذف الاستشارات سيفشل. افتح Supabase ← <b>SQL Editor</b> وشغّل محتوى الملف
-      <code class="bg-red-100 px-1.5 py-0.5 rounded text-xs" dir="ltr">supabase\migrations\006_full_update.sql</code>
+      <code class="bg-red-100 px-1.5 py-0.5 rounded text-xs" dir="ltr">supabase\migrations\019_announcement_fields.sql</code>
       ثم حدّث هذه الصفحة (F5).
     </div>
 
@@ -170,6 +170,20 @@
             <div>
               <label class="lbl" for="f-title" data-i18n="f_title">العنوان *</label>
               <input id="f-title" class="inp" data-i18n-ph="f_title_ph" placeholder="استشارة — توريد تجهيزات مخبرية" required>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="lbl" for="f-title-fr" data-i18n="f_title_fr">العنوان بالفرنسية</label>
+                <input id="f-title-fr" class="inp" dir="ltr" data-i18n-ph="f_title_fr_ph" placeholder="Consultation — Fourniture de…">
+              </div>
+              <div>
+                <label class="lbl" for="f-amount" data-i18n="f_amount">القيمة (دج)</label>
+                <input id="f-amount" class="inp" type="number" min="0" step="1" data-i18n-ph="f_amount_ph" placeholder="40000">
+              </div>
+              <div>
+                <label class="lbl" for="f-cdprice" data-i18n="f_cdprice">سعر دفتر الشروط (دج)</label>
+                <input id="f-cdprice" class="inp" type="number" min="0" step="1" data-i18n-ph="f_cdprice_ph" placeholder="1000">
+              </div>
             </div>
             <div>
               <label class="lbl" data-i18n="f_opening">موعد فتح الأظرفة *</label>
@@ -410,6 +424,20 @@
             <div>
               <label class="lbl" for="e-title" data-i18n="f_title">العنوان *</label>
               <input id="e-title" class="inp" required>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="lbl" for="e-title-fr" data-i18n="f_title_fr">العنوان بالفرنسية</label>
+                <input id="e-title-fr" class="inp" dir="ltr" data-i18n-ph="f_title_fr_ph" placeholder="Consultation — Fourniture de…">
+              </div>
+              <div>
+                <label class="lbl" for="e-amount" data-i18n="f_amount">القيمة (دج)</label>
+                <input id="e-amount" class="inp" type="number" min="0" step="1" data-i18n-ph="f_amount_ph" placeholder="40000">
+              </div>
+              <div>
+                <label class="lbl" for="e-cdprice" data-i18n="f_cdprice">سعر دفتر الشروط (دج)</label>
+                <input id="e-cdprice" class="inp" type="number" min="0" step="1" data-i18n-ph="f_cdprice_ph" placeholder="1000">
+              </div>
             </div>
             <div>
               <label class="lbl" for="e-faculty" data-i18n="f_faculty">المكتب</label>

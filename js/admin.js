@@ -503,7 +503,7 @@
     const banner = $('schema-banner');
     if (!banner) return;
     try {
-      const { error } = await DB.from('tenders').select('id, kind, pdf_source').limit(1);
+      const { error } = await DB.from('tenders').select('id, kind, pdf_source, title_fr, amount_da, cd_price_da').limit(1);
       if (error) banner.classList.remove('hidden');
     } catch (e) {
       banner.classList.remove('hidden');
@@ -544,6 +544,9 @@
       const kindEl = document.querySelector('input[name="f-kind"]:checked');
       const kind = kindEl ? kindEl.value : 'consultation';
       const facultyId = val('f-faculty') || null;
+      const titleFr = val('f-title-fr');
+      const amountDa = Number(val('f-amount')) || null;
+      const cdPrice = Number(val('f-cdprice')) || null;
 
       if (!ref.trim() || !title.trim() || !opening || !file) return toast(t('t_fill_all'), 'error');
       if (file.type !== 'application/pdf') return toast(t('t_pdf_only'), 'error');
@@ -623,6 +626,15 @@
           if (insErr) throw insErr;
         }
 
+        // حقول الإعلان الثنائي (إن أُدخلت)
+        const extra = {};
+        if (titleFr.trim()) extra.title_fr = titleFr.trim();
+        if (amountDa) extra.amount_da = amountDa;
+        if (cdPrice) extra.cd_price_da = cdPrice;
+        if (Object.keys(extra).length) {
+          try { await DB.from('tenders').update(extra).eq('id', tenderId); } catch (e) { console.warn('حقول الإعلان:', e && e.message || e); }
+        }
+
         form.reset();
         $('file-info').textContent = '';
         toast(t('t_published'), 'success');
@@ -691,6 +703,9 @@
     const kindInput = document.querySelector('input[name="e-kind"][value="' + (tt.kind === 'tender' ? 'tender' : 'consultation') + '"]');
     if (kindInput) kindInput.checked = true;
     $('e-title').value = tt.title || '';
+    $('e-title-fr').value = tt.title_fr || '';
+    $('e-amount').value = tt.amount_da || '';
+    $('e-cdprice').value = tt.cd_price_da || '';
     $('e-duration').value = tt.duration || '';
     const ef = $('e-faculty');
     if (ef) {
@@ -711,6 +726,9 @@
       if (!A.me || !hasEdit()) return toast(t('t_perm_denied'), 'error');
       const id = $('e-id').value;
       const title = val('e-title').trim();
+      const titleFr = val('e-title-fr').trim();
+      const amountDa = Number(val('e-amount')) || null;
+      const cdPrice = Number(val('e-cdprice')) || null;
       const duration = val('e-duration').trim();
       const opening = (val('e-date') && val('e-time')) ? (val('e-date') + 'T' + val('e-time')) : (val('e-date') ? (val('e-date') + 'T10:00') : '');
       const kindEl = document.querySelector('input[name="e-kind"]:checked');
@@ -724,7 +742,11 @@
       try {
         const { error } = await DB.from('tenders')
           .update({
-            kind, title, duration,
+            kind, title,
+            title_fr: titleFr || null,
+            amount_da: amountDa,
+            cd_price_da: cdPrice,
+            duration,
             opening_date: officeWallToISO(opening) || new Date(opening).toISOString(),
             faculty_id: A.scopeOf() === 'all' ? (val('e-faculty') || null) : (A.facultyId || null),
           })
@@ -851,6 +873,7 @@
       facChip(tt.faculties) +
       '</div>' +
       '<div class="text-sm text-slate-600 mt-0.5">' + esc(tt.title) + '</div>' +
+      (tt.amount_da ? '<div class="text-xs font-bold text-primary-700 mt-1">' + t('card_amount', { n: fmtMoney(tt.amount_da) }) + '</div>' : '') +
       '</div>' +
       statusBadge(tt.status) +
       '</div>' +
@@ -865,8 +888,9 @@
       '<div class="text-slate-700 font-bold">' + dl + '</div>' +
       '</div>' +
       '</div>' +
-       '<div class="mt-3 grid grid-cols-2 gap-2">' +
-         '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
+        '<div class="mt-3 grid grid-cols-2 gap-2">' +
+          '<button data-act="qr" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_qr') + '</button>' +
+          '<button data-act="ann" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_ann') + '</button>' +
          (hasEdit() && inScope(tt) ? '<button data-act="edit" data-id="' + tt.id + '" class="w-full btn-secondary !text-indigo-600">' + t('btn_edit') + '</button>' : '') +
          (hasLogs() && inScope(tt) ? '<button data-act="downloads" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_downloaders', { n: dl }) + '</button>' : '') +
         (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
@@ -900,6 +924,7 @@
     DB.from('tenders').select('*').eq('id', btn.dataset.id).maybeSingle().then(({ data, error }) => {
       if (error || !data) return toast(t('t_fetch_fail'), 'error');
       if (btn.dataset.act === 'qr') A.showQR(data);
+      else if (btn.dataset.act === 'ann') openAnnouncement(data);
       else if (btn.dataset.act === 'downloads') A.showDownloads(data);
       else if (btn.dataset.act === 'direct') directDownload(data);
       else if (btn.dataset.act === 'report') openReport(data);
@@ -1251,6 +1276,126 @@
     }
   }
 
+  /* ---------- توليد إعلان الاستشارة (عربي/فرنسي — صفحتان A4) ---------- */
+
+  const ANN_MONTHS_AR = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const ANN_MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+  function fmtMoney(n) {
+    return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
+
+  async function openAnnouncement(tt) {
+    if (!tt) return;
+    let faculty = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
+    if (!faculty && tt.faculty_id) {
+      try {
+        const { data } = await DB.from('faculties').select('*').eq('id', tt.faculty_id).maybeSingle();
+        faculty = data;
+      } catch (e) { /* تجاهل */ }
+    }
+
+    const kindAr = tt.kind === 'tender' ? 'طلب عروض' : 'استشارة';
+    const kindFr = tt.kind === 'tender' ? 'appel d’offres' : 'consultation';
+    const univAr = 'جامعة عين تموشنت - بلحاج بوشعيب';
+    const univFr = 'Université de Aïn Témouchent – Belhadj Bouchaïb';
+    const officeAr = faculty ? faculty.name_ar : 'المصلحة المركزية للصفقات العمومية';
+    const officeFr = faculty ? (faculty.name_fr || faculty.name_ar) : 'Service central des marchés publics';
+    const titleAr = esc(tt.title || '');
+    const titleFr = esc(tt.title_fr || tt.title || '');
+    const od = new Date(tt.opening_date);
+    const time = (od.toISOString().slice(11, 16));
+    const dateAr = od.getDate() + ' ' + ANN_MONTHS_AR[od.getMonth()] + ' ' + od.getFullYear();
+    const dateFr = od.getDate() + ' ' + ANN_MONTHS_FR[od.getMonth()] + ' ' + od.getFullYear();
+    const dur = esc(tt.duration || '—');
+    const addrAr = 'BP 284، طريق سيدي بوعابد، عين تموشنت (46000) — الجزائر';
+    const addrFr = 'BP 284, route Sidi Bouabid, Aïn Témouchent (46000) – ALGÉRIE';
+    const amount = tt.amount_da ? fmtMoney(tt.amount_da) : null;
+    const cdPrice = tt.cd_price_da ? fmtMoney(tt.cd_price_da) : null;
+
+    const headAr =
+      '<div class="head">' +
+      '<div class="rep">الجمهورية الجزائرية الديمقراطية الشعبية</div>' +
+      '<div class="min">وزارة التعليم العالي والبحث العلمي</div>' +
+      '<div class="uni">' + univAr + '</div>' +
+      '<div class="off">' + esc(officeAr) + '</div>' +
+      '</div>';
+    const headFr =
+      '<div class="head">' +
+      '<div class="rep">République Algérienne Démocratique et Populaire</div>' +
+      '<div class="min">Ministère de l’Enseignement Supérieur et de la Recherche Scientifique</div>' +
+      '<div class="uni">' + univFr + '</div>' +
+      '<div class="off">' + esc(officeFr) + '</div>' +
+      '</div>';
+
+    const pageAr =
+      '<div class="page" dir="rtl" lang="ar">' + headAr +
+      '<div class="meta"><span>عين تموشنت، في ' + dateAr + '</span><span>رقم: ' + esc(tt.reference) + '</span></div>' +
+      '<div class="subject">موضوع: ' + kindAr + ' — «' + titleAr + '»</div>' +
+      '<div class="body">تعلن ' + univAr + ' عن إجراء ' + kindAr + ' بعنوان: «' + titleAr + '».</div>' +
+      '<div class="body">على المتعاملين الاقتصاديين الراغبين في المشاركة في هذه الاستشارة، التوجه إلى مصلحة الصفقات العمومية بالجامعة لاقتناء دفتر الشروط' +
+      (cdPrice ? ' مقابل مبلغ ' + cdPrice + ' دينارًا (دج).' : '.') + '</div>' +
+      '<div class="body">تحتوي العروض على ملف ترشح وعرض تقني وعرض مالي، توضع في أظرف منفصلة ومغلقة ومختومة، تحمل تسمية المقاولة ورقم وموضوع الاستشارة، مع ذكر «ملف ترشح» أو «عرض تقني» أو «عرض مالي» حسب الحالة. توضع هذه الأظرف داخل ظرف خارجي مغلق وسري يحمل العبارة:</div>' +
+      '<div class="mention">«لا يُفتح إلا من طرف لجنة فتح الأظرفة وتقييم العروض»</div>' +
+      '<ul class="cond">' +
+      (amount ? '<li>القيمة التقديرية: ' + amount + ' دج</li>' : '') +
+      '<li>مدة تحضير العروض: ' + dur + ' من تاريخ هذا الإعلان</li>' +
+      '<li>آخر أجل لإيداع العروض: يوم ' + dateAr + ' على الساعة ' + time + '</li>' +
+      '<li>فتح الأظرفة: يوم ' + dateAr + ' على الساعة ' + time + ' بقاعة الصفقات بالجامعة</li>' +
+      '<li>العنوان: ' + addrAr + '</li>' +
+      '</ul>' +
+      '<div class="sig" style="text-align:left"><div class="who">عن ' + univAr + '</div><div class="role">رئيس لجنة فتح الأظرفة</div></div>' +
+      '</div>';
+
+    const pageFr =
+      '<div class="page" dir="ltr" lang="fr">' + headFr +
+      '<div class="meta"><span>Aïn Témouchent, le ' + dateFr + '</span><span>N° : ' + esc(tt.reference) + '</span></div>' +
+      '<div class="subject">Objet : ' + kindFr + ' — «' + titleFr + '»</div>' +
+      '<div class="body">L’' + univFr + ' annonce une ' + kindFr + ' intitulée : «' + titleFr + '».</div>' +
+      '<div class="body">Les opérateurs économiques intéressés de participer à la présente consultation doivent se rapprocher du service des marchés publics de l’université pour retirer le cahier des charges' +
+      (cdPrice ? ' en payant un montant de ' + cdPrice + ' dinars algériens (DA).' : '.') + '</div>' +
+      '<div class="body">Les offres doivent comporter un dossier de candidature, une offre technique et une offre financière. Ces documents sont insérés dans des enveloppes séparées et cachetées, indiquant la dénomination de l’entreprise, la référence et l’objet de la consultation ainsi que la mention « dossier de candidature », « offre technique » ou « offre financière », selon le cas. Ces enveloppes sont mises dans une autre enveloppe cachetée et anonyme, comportant la mention :</div>' +
+      '<div class="mention">« À n’ouvrir que par la commission d’ouverture des plis et d’évaluation des offres »</div>' +
+      '<ul class="cond">' +
+      (amount ? '<li>Montant : ' + amount + ' DA</li>' : '') +
+      '<li>Délai de préparation des offres : ' + dur + ' à partir de la date du présent avis.</li>' +
+      '<li>Date de dépôt des offres : le ' + dateFr + ' à ' + time + '.</li>' +
+      '<li>Date et heure d’ouverture des plis : le ' + dateFr + ' à ' + time + ', salle des marchés de l’université.</li>' +
+      '<li>Adresse : ' + addrFr + '</li>' +
+      '</ul>' +
+      '<div class="sig"><div class="who">Pour ' + univFr + '</div><div class="role">Le Président de la commission d’ouverture des plis</div></div>' +
+      '</div>';
+
+    const html =
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>إعلان ' + esc(tt.reference) + ' / Avis</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">' +
+      '<style>' +
+      '@page { size: A4; margin: 13mm; }' +
+      'body { font-family: "Cairo","Segoe UI",Tahoma,Arial,sans-serif; margin: 0; color: #111; }' +
+      '.page { page-break-after: always; min-height: 268mm; box-sizing: border-box; }' +
+      '.page:last-child { page-break-after: auto; }' +
+      '.head { text-align: center; border-bottom: 2.5px solid #111; padding-bottom: 8px; margin-bottom: 10px; }' +
+      '.head .rep { font-size: 13px; font-weight: 700; }' +
+      '.head .min { font-size: 11.5px; font-weight: 700; margin-top: 2px; }' +
+      '.head .uni { font-size: 13px; font-weight: 900; margin-top: 3px; }' +
+      '.head .off { font-size: 11px; margin-top: 2px; font-weight: 600; }' +
+      '.meta { display: flex; justify-content: space-between; font-size: 11.5px; margin: 6px 0 4px; font-weight: 700; }' +
+      '.subject { font-size: 12.5px; font-weight: 800; margin-bottom: 12px; }' +
+      '.body { font-size: 12px; line-height: 1.95; text-align: justify; margin-bottom: 8px; }' +
+      '.mention { font-weight: 800; text-align: center; margin: 10px 0; font-size: 12px; }' +
+      'ul.cond { font-size: 12px; line-height: 1.95; padding-inline-start: 18px; margin: 8px 0; }' +
+      '.sig { margin-top: 70px; font-size: 12px; }' +
+      '.sig .who { font-weight: 800; }' +
+      '.sig .role { margin-top: 3px; font-weight: 600; }' +
+      '</style></head><body>' + pageAr + pageFr +
+      '<script>window.onload=function(){setTimeout(function(){window.print()},450)}<\/script>' +
+      '</body></html>';
+    const w = window.open('', '_blank', 'width=900,height=1100');
+    if (!w) return toast(t('t_popup'), 'error');
+    w.document.write(html);
+    w.document.close();
+  }
+
   /* ---------- محضر فتح الأظرفة (وثيقة رسمية قابلة للطباعة) ---------- */
 
   async function openReport(tt) {
@@ -1319,6 +1464,7 @@
       '<tr><td class="k">' + t('pv_open_sched') + '</td><td>' + fmtDate(tt.opening_date, true) + '</td>' +
       '<td class="k">' + t('pv_open_actual') + '</td><td>' + fmtDate(tt.opened_at, true) + '</td></tr>' +
       '<tr><td class="k">' + t('pv_opened_by') + '</td><td colspan="3">' + esc(openedByName) + '</td></tr>' +
+      (tt.amount_da ? '<tr><td class="k">' + t('pv_amount') + '</td><td colspan="3">' + fmtMoney(tt.amount_da) + (lang === 'ar' ? ' دج' : ' DA') + '</td></tr>' : '') +
       '</table>' +
       '<h2>' + t('pv_dl_title') + ' <span style="font-weight:400;color:#64748b">(' + t('pv_n', { n: downloads.length }) + ')</span></h2>' +
       '<table class="list"><thead><tr>' +
@@ -1515,7 +1661,7 @@
 
   /* ---------- نسخة احتياطية يدوية (إداري) ---------- */
 
-  const T_COLS = ['id', 'kind', 'reference', 'title', 'duration', 'opening_date', 'pdf_path', 'pdf_source', 'status', 'opened_at', 'opened_by', 'created_at'];
+  const T_COLS = ['id', 'kind', 'reference', 'title', 'title_fr', 'amount_da', 'cd_price_da', 'duration', 'opening_date', 'pdf_path', 'pdf_source', 'status', 'opened_at', 'opened_by', 'created_at'];
   const D_COLS = ['id', 'tender_id', 'company', 'phone', 'email', 'ip_address', 'user_agent', 'downloaded_at'];
   const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
 
