@@ -198,12 +198,25 @@
   };
 
   window.fmtRef = function (ref) {
-    const s = String(ref || '').trim();
-    if (!s) return '';
-    const m = s.match(/(\d{1,4})[\s/.-]*([A-Za-z.]*)[\s/.-]*(\d{4})/);
-    if (m) return 'N° ' + m[1] + ' /U.A.T/' + m[3];
-    const n = s.match(/\d{1,4}/);
-    return 'N° ' + (n ? n[0] : s) + ' /U.A.T/' + new Date().getFullYear();
+    const raw = String(ref || '').trim();
+    if (!raw) return '';
+    const tokens = raw.split(/[\s/.\-–—°]+/).filter(Boolean);
+    const isYear = (tok) => /^(19|20)\d{2}$/.test(tok);
+    const isNum = (tok) => /^\d{1,4}$/.test(tok);
+    const isNoise = (tok) => /^(n|no|numero|u|a|t|uat)$/i.test(tok);
+    let num = '';
+    let year = '';
+    const suffixTokens = [];
+    tokens.forEach((tok) => {
+      if (!year && isYear(tok)) { year = tok; return; }
+      if (!num && isNum(tok) && !isYear(tok)) { num = tok; return; }
+      if (isNoise(tok)) return;
+      suffixTokens.push(tok);
+    });
+    if (!num) return raw;
+    if (!year) year = String(new Date().getFullYear());
+    const suffix = suffixTokens.map((tok) => (/^[A-Za-zÀ-ÖØ-öø-ÿ]+$/.test(tok) ? tok.toUpperCase() : tok)).join(' ');
+    return 'N° ' + num + ' /U.A.T/' + year + (suffix ? ' ' + suffix : '');
   };
 
   window.sameRef = function (a, b) {
