@@ -27,7 +27,6 @@
   <!-- المكتبات -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-emerald-50 via-white to-teal-50 min-h-screen text-slate-800">
 
@@ -193,15 +192,17 @@
             </div>
             <div>
               <label class="lbl" for="f-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
-              <div class="flex gap-2">
-                <input id="f-title-fr" class="inp" dir="ltr" placeholder="Consultation — Fourniture d’équipements de laboratoire" required>
-                <button type="button" id="translate-title-btn" class="btn-secondary whitespace-nowrap" data-i18n="translate_btn">🔄 ترجمة</button>
-              </div>
+              <input id="f-title-fr" class="inp" dir="ltr" placeholder="Consultation — Fourniture d’équipements de laboratoire" required>
             </div>
             <div>
               <label class="lbl" for="f-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
               <input id="f-title" class="inp" data-i18n-ph="f_title_ar_ph" placeholder="يُملأ تلقائيًا من الفرنسي…" required>
+              <div class="flex gap-2 mt-2">
+                <button type="button" id="translate-title-fr-ar-btn" class="btn-secondary flex-1" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
+                <button type="button" id="translate-title-ar-fr-btn" class="btn-secondary flex-1" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
+              </div>
             </div>
+            <button type="button" id="suggest-run" class="btn-secondary w-full" data-i18n="ai_run">🤖 توليد الاقتراحات</button>
             <div id="suggest-box" class="hidden rounded-2xl border border-primary-200 bg-primary-50 p-3">
               <div class="flex items-center justify-between gap-2 mb-2">
                 <h3 class="text-xs font-black text-primary-800" data-i18n="ai_suggest_title">🤖 اقتراحات ذكية للتنبيه</h3>
@@ -475,14 +476,15 @@
           </div>
             <div>
               <label class="lbl" for="e-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
-              <div class="flex gap-2">
-                <input id="e-title-fr" class="inp" dir="ltr">
-                <button type="button" id="e-translate-btn" class="btn-secondary whitespace-nowrap" data-i18n="translate_btn">🔄 ترجمة</button>
-              </div>
+              <input id="e-title-fr" class="inp" dir="ltr">
             </div>
             <div>
               <label class="lbl" for="e-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
               <input id="e-title" class="inp" required>
+              <div class="flex gap-2 mt-2">
+                <button type="button" id="e-translate-fr-ar-btn" class="btn-secondary flex-1" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
+                <button type="button" id="e-translate-ar-fr-btn" class="btn-secondary flex-1" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
+              </div>
             </div>
             <div>
               <label class="lbl" for="e-faculty" data-i18n="f_faculty">المكتب</label>

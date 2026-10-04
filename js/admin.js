@@ -1131,6 +1131,19 @@
   };
 
   A._dbCharts = [];
+  A._chartLibPromise = null;
+  function loadChartLib() {
+    if (typeof Chart !== 'undefined') return Promise.resolve();
+    if (A._chartLibPromise) return A._chartLibPromise;
+    A._chartLibPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+      s.onload = resolve;
+      s.onerror = () => { A._chartLibPromise = null; reject(new Error('chart_load_failed')); };
+      document.head.appendChild(s);
+    });
+    return A._chartLibPromise;
+  }
   A.loadDashboard = async function () {
     const statsEl = $('db-stats');
     if (!statsEl) return;
@@ -1163,6 +1176,7 @@
         card('🔓', t('db_opened'), opened, 'text-indigo-600') +
         card('⬇️', t('db_downloads'), dlTotal, 'text-teal-700');
 
+      try { await loadChartLib(); } catch (_) {}
       if (typeof Chart !== 'undefined') {
         const facAgg = {};
         list.forEach((x) => { const fid = x.faculty_id || 'central'; facAgg[fid] = (facAgg[fid] || 0) + 1; });
@@ -1252,28 +1266,30 @@
 
   /* ---------- إنشاء استشارة ---------- */
 
-  function bindTitleTranslation(frId, arId, btnId) {
+  function bindTitleTranslation(frId, arId, btnFrArId, btnArFrId) {
     const frEl = $(frId);
     const arEl = $(arId);
-    const btn = $(btnId);
+    const btnFrAr = $(btnFrArId);
+    const btnArFr = $(btnArFrId);
     if (!frEl || !arEl) return;
+    frEl.addEventListener('input', () => { frEl.dataset.userEdited = '1'; });
     arEl.addEventListener('input', () => { arEl.dataset.userEdited = '1'; });
-    async function runTranslate(silent) {
-      const v = frEl.value.trim();
+    async function runTranslate(from, to, sourceEl, targetEl, btn, label) {
+      const v = sourceEl.value.trim();
       if (v.length < 2) return;
       if (btn) setBusy(btn, true, t('translating'));
       try {
-        const out = await translateFrToAr(v);
-        if (!arEl.dataset.userEdited || !silent) arEl.value = out;
-        if (!silent) delete arEl.dataset.userEdited;
+        const out = await translateText(v, from, to);
+        targetEl.value = out;
+        delete targetEl.dataset.userEdited;
       } catch (e) {
-        if (!silent) toast(t('translation_fail'), 'error', 4000);
+        toast(t('translation_fail'), 'error', 4000);
       } finally {
-        if (btn) setBusy(btn, false, t('translate_btn'));
+        if (btn) setBusy(btn, false, label);
       }
     }
-    frEl.addEventListener('input', debounce(() => runTranslate(true), 900));
-    if (btn) btn.addEventListener('click', () => runTranslate(false));
+    if (btnFrAr) btnFrAr.addEventListener('click', () => runTranslate('fr', 'ar', frEl, arEl, btnFrAr, t('translate_fr_to_ar')));
+    if (btnArFr) btnArFr.addEventListener('click', () => runTranslate('ar', 'fr', arEl, frEl, btnArFr, t('translate_ar_to_fr')));
   }
 
   function bindCreate() {
@@ -1290,17 +1306,12 @@
       if (v) $('f-reference').value = fmtRef(v);
     });
 
-    bindTitleTranslation('f-title-fr', 'f-title', 'translate-title-btn');
+    bindTitleTranslation('f-title-fr', 'f-title', 'translate-title-fr-ar-btn', 'translate-title-ar-fr-btn');
 
-    const suggestRefreshDebounced = debounce(() => A.refreshSuggestions(), 1000);
-    const facSel = $('f-faculty');
-    if (facSel) facSel.addEventListener('change', () => A.refreshSuggestions());
-    ['f-title', 'f-title-fr'].forEach((id) => {
-      const el = $(id);
-      if (el) el.addEventListener('input', suggestRefreshDebounced);
-    });
     const suggestRefresh = $('suggest-refresh');
     if (suggestRefresh) suggestRefresh.addEventListener('click', () => A.refreshSuggestions());
+    const suggestRun = $('suggest-run');
+    if (suggestRun) suggestRun.addEventListener('click', () => A.refreshSuggestions());
     const suggestSelectAll = $('suggest-select-all');
     if (suggestSelectAll) suggestSelectAll.addEventListener('click', () => {
       document.querySelectorAll('.suggest-check').forEach((c) => {
@@ -1533,7 +1544,7 @@
   function bindEditForm() {
     const form = $('edit-form');
     if (!form) return;
-    bindTitleTranslation('e-title-fr', 'e-title', 'e-translate-btn');
+    bindTitleTranslation('e-title-fr', 'e-title', 'e-translate-fr-ar-btn', 'e-translate-ar-fr-btn');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!A.me || !hasEdit()) return toast(t('t_perm_denied'), 'error');
