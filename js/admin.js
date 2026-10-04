@@ -74,6 +74,7 @@
     bindBackup();
     bindRestore();
     bindReminderClose();
+    initCalNav();
     const s = $('tender-search');
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
     A.page = 1;
@@ -902,6 +903,7 @@
       if (btn.dataset.act === 'qr') A.showQR(data);
       else if (btn.dataset.act === 'downloads') A.showDownloads(data);
       else if (btn.dataset.act === 'direct') directDownload(data);
+      else if (btn.dataset.act === 'report') openReport(data);
       else if (btn.dataset.act === 'open') askOpen(data);
       else if (btn.dataset.act === 'edit') openEdit(data);
       else if (btn.dataset.act === 'replace') askReplace(data);
@@ -926,6 +928,7 @@
       const userName = {};
       const users = (uRes.data && uRes.data.users) || [];
       users.forEach((u) => { userName[u.id] = u.full_name || u.email; });
+      A.userNames = userName;
 
       const now = Date.now();
       const rows = data || [];
@@ -972,7 +975,10 @@
         '<div class="text-xs text-slate-400 mt-0.5">' + t('op_opened_at', { d: fmtDate(tt.opened_at, true) }) +
         (tt.opened_by ? t('op_by', { n: esc(userName[tt.opened_by] || t('op_unknown')) }) : '') + '</div>' +
         '</div>' +
+        '<div class="flex items-center gap-1.5 shrink-0">' +
         '<button data-act="downloads" data-id="' + tt.id + '" class="text-xs btn-secondary shrink-0">👥 ' + dl(tt) + '</button>' +
+        '<button data-act="report" data-id="' + tt.id + '" class="text-xs btn-secondary shrink-0" title="' + t('btn_report') + '">' + t('btn_report') + '</button>' +
+        '</div>' +
         '</div>'
       );
 
@@ -993,7 +999,115 @@
     } catch (err) {
       list.innerHTML = errorState(err);
     }
+    A.renderCalendar();
   };
+
+  /* ---------- تقويم مواعيد الفتح ---------- */
+
+  const MONTHS_AR = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+  A.calCursor = new Date();
+
+  A.renderCalendar = async function () {
+    const grid = $('cal-grid');
+    const label = $('cal-month-label');
+    if (!grid) return;
+    const cur = A.calCursor || new Date();
+    const y = cur.getFullYear();
+    const m = cur.getMonth();
+    const isAr = I18N.lang === 'ar';
+    label.textContent = (isAr ? MONTHS_AR : MONTHS_FR)[m] + ' ' + y;
+
+    let tenders = [];
+    let facColor = {};
+    try {
+      const start = new Date(y, m, 1).toISOString();
+      const end = new Date(y, m + 1, 1).toISOString();
+      const [tRes, fRes] = await Promise.all([
+        DB.from('tenders')
+          .select('id, reference, status, faculty_id')
+          .gte('opening_date', start)
+          .lt('opening_date', end),
+        DB.from('faculties').select('id, color'),
+      ]);
+      if (tRes.error) throw tRes.error;
+      tenders = tRes.data || [];
+      (fRes.data || []).forEach((f) => { facColor[f.id] = f.color; });
+    } catch (e) {
+      grid.innerHTML = '<div class="col-span-7 text-center text-slate-400 text-xs py-6">' + t('t_fail', { msg: String((e && e.message) || e) }) + '</div>';
+      return;
+    }
+
+    const byDay = {};
+    tenders.forEach((tt) => {
+      const d = new Date(tt.opening_date).getDate();
+      (byDay[d] = byDay[d] || []).push(tt);
+    });
+
+    const first = new Date(y, m, 1).getDay();
+    const daysIn = new Date(y, m + 1, 0).getDate();
+    const today = new Date();
+    const isToday = (d) => today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
+
+    let html = '';
+    for (let w = 0; w < 7; w++) {
+      html += '<div class="text-center text-[10px] font-bold text-slate-400 py-1">' + t('cal_wd' + w) + '</div>';
+    }
+    for (let b = 0; b < first; b++) html += '<div></div>';
+    for (let d = 1; d <= daysIn; d++) {
+      const items = byDay[d] || [];
+      let chips = '';
+      items.slice(0, 2).forEach((tt) => {
+        const c = facColor[tt.faculty_id] || '#047857';
+        const done = tt.status === 'opened';
+        chips += '<div data-cal-id="' + tt.id + '" class="flex items-center gap-1 text-[10px] font-bold truncate rounded-md px-1 py-0.5 cursor-pointer ' +
+          (done ? 'bg-slate-100 text-slate-400 line-through' : 'bg-primary-50 text-primary-800 hover:bg-primary-100') + '" title="' + esc(tt.reference) + '">' +
+          '<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + c + '"></span>' +
+          '<span class="truncate">' + esc(tt.reference) + '</span></div>';
+      });
+      if (items.length > 2) chips += '<div class="text-[9px] text-slate-400 font-bold">+' + (items.length - 2) + '</div>';
+      html += '<div class="min-h-[52px] rounded-lg border p-1 ' + (isToday(d) ? 'border-primary-400 bg-primary-50/60' : 'border-slate-100') + '">' +
+        '<div class="text-[10px] font-bold ' + (isToday(d) ? 'text-primary-700' : 'text-slate-400') + '">' + d + (isToday(d) ? ' ' + t('cal_today') : '') + '</div>' +
+        chips +
+        '</div>';
+    }
+    grid.innerHTML = html;
+
+    grid.onclick = (e) => {
+      const chip = e.target.closest('[data-cal-id]');
+      if (!chip) return;
+      const id = chip.getAttribute('data-cal-id');
+      DB.from('tenders').select('*').eq('id', id).maybeSingle().then(({ data }) => {
+        if (!data) return;
+        if (data.status === 'opened') {
+          toast(t('t_already_opened'), 'info', 4000);
+          return;
+        }
+        if (new Date(data.opening_date).getTime() > Date.now()) {
+          toast(t('t_open_early', { d: fmtDate(data.opening_date, true) }), 'info', 5000);
+          return;
+        }
+        if (!hasOpen()) return toast(t('t_open_perm'), 'error');
+        askOpen(data);
+      });
+    };
+  };
+
+  function initCalNav() {
+    const prev = $('cal-prev');
+    const next = $('cal-next');
+    if (prev) prev.addEventListener('click', () => {
+      const cur = A.calCursor || new Date();
+      A.calCursor = new Date(cur.getFullYear(), cur.getMonth() - 1, 1);
+      A.renderCalendar();
+    });
+    if (next) next.addEventListener('click', () => {
+      const cur = A.calCursor || new Date();
+      A.calCursor = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+      A.renderCalendar();
+    });
+  }
 
   /* ---------- بطاقة QR ---------- */
 
@@ -1244,6 +1358,94 @@
     } finally {
       setBusy(btn, false, t('open_m_btn'));
     }
+  }
+
+  /* ---------- محضر فتح الأظرفة (وثيقة رسمية قابلة للطباعة) ---------- */
+
+  async function openReport(tt) {
+    if (!tt || tt.status !== 'opened') return;
+    let downloads = [];
+    try {
+      const { data, error } = await DB.from('downloads')
+        .select('*')
+        .eq('tender_id', tt.id)
+        .order('downloaded_at', { ascending: true });
+      if (error) throw error;
+      downloads = data || [];
+    } catch (e) {
+      return toast(t('t_fail', { msg: String((e && e.message) || e) }), 'error', 6000);
+    }
+    let faculty = null;
+    if (tt.faculty_id) {
+      try {
+        const { data } = await DB.from('faculties').select('*').eq('id', tt.faculty_id).maybeSingle();
+        faculty = data;
+      } catch (e) { /* تجاهل */ }
+    }
+    const lang = I18N.lang;
+    const isRtl = lang === 'ar';
+    const facName = faculty
+      ? (isRtl ? faculty.name_ar : (faculty.name_fr || faculty.name_ar))
+      : t('pv_central');
+    const openedByName = (tt.opened_by && A.userNames && A.userNames[tt.opened_by]) || t('op_unknown');
+    const dlRows = downloads.length
+      ? downloads.map((d, i) =>
+          '<tr><td>' + (i + 1) + '</td><td>' + esc(d.company) + '</td><td dir="ltr">' + esc(d.phone) + '</td>' +
+          '<td dir="ltr">' + esc(d.email) + '</td><td>' + fmtDate(d.downloaded_at, true) + '</td></tr>').join('')
+      : '<tr><td colspan="5" class="empty">' + t('pv_none') + '</td></tr>';
+
+    const html =
+      '<!DOCTYPE html><html dir="' + (isRtl ? 'rtl' : 'ltr') + '" lang="' + lang + '"><head><meta charset="utf-8">' +
+      '<title>' + t('pv_title') + ' — ' + esc(tt.reference) + '</title>' +
+      '<style>' +
+      'body{font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;margin:28px;color:#0f172a}' +
+      '.head{text-align:center;border-bottom:3px double #047857;padding-bottom:12px;margin-bottom:14px}' +
+      '.head h1{font-size:19px;margin:0 0 3px;color:#065f46}' +
+      '.head p{font-size:12.5px;margin:0;color:#334155}' +
+      'table.info{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:16px}' +
+      'table.info td{border:1px solid #cbd5e1;padding:6px 10px}' +
+      'table.info td.k{background:#ecfdf5;color:#065f46;font-weight:700;width:32%}' +
+      'h2{font-size:13.5px;margin:0 0 6px;color:#0f172a}' +
+      'table.list{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:22px}' +
+      'th,td{border:1px solid #cbd5e1;padding:4px 8px}' +
+      'th{background:#ecfdf5;color:#047857;font-weight:700}' +
+      'td.empty{text-align:center;color:#64748b}' +
+      '.sigs{display:flex;gap:24px;margin-top:34px}' +
+      '.sig{flex:1;text-align:center;font-size:12.5px;font-weight:700}' +
+      '.sig .line{height:86px;border-top:1px solid #94a3b8;margin-top:56px;padding-top:6px;color:#475569;font-weight:600;font-size:11px}' +
+      '.foot{margin-top:26px;font-size:10.5px;color:#64748b;display:flex;justify-content:space-between}' +
+      '@media print{body{margin:14px}.sig .line{height:70px}}' +
+      '</style></head><body>' +
+      '<div class="head">' +
+      '<h1>' + t('pv_title') + '</h1>' +
+      '<p>' + t('univ') + ' — ' + t('app_name') + '</p>' +
+      '</div>' +
+      '<table class="info">' +
+      '<tr><td class="k">' + t('pv_ref') + '</td><td><b>' + esc(tt.reference) + '</b></td>' +
+      '<td class="k">' + t('pv_kind') + '</td><td>' + kindLabel(tt.kind) + '</td></tr>' +
+      '<tr><td class="k">' + t('pv_title_l') + '</td><td colspan="3">' + esc(tt.title) + '</td></tr>' +
+      '<tr><td class="k">' + t('pv_faculty') + '</td><td colspan="3">' + esc(facName) + '</td></tr>' +
+      '<tr><td class="k">' + t('pv_open_sched') + '</td><td>' + fmtDate(tt.opening_date, true) + '</td>' +
+      '<td class="k">' + t('pv_open_actual') + '</td><td>' + fmtDate(tt.opened_at, true) + '</td></tr>' +
+      '<tr><td class="k">' + t('pv_opened_by') + '</td><td colspan="3">' + esc(openedByName) + '</td></tr>' +
+      '</table>' +
+      '<h2>' + t('pv_dl_title') + ' <span style="font-weight:400;color:#64748b">(' + t('pv_n', { n: downloads.length }) + ')</span></h2>' +
+      '<table class="list"><thead><tr>' +
+      '<th style="width:34px">#</th><th>' + t('pv_th_company') + '</th><th>' + t('pv_th_phone') + '</th>' +
+      '<th>' + t('pv_th_email') + '</th><th>' + t('pv_th_time') + '</th>' +
+      '</tr></thead><tbody>' + dlRows + '</tbody></table>' +
+      '<div class="sigs">' +
+      '<div class="sig">' + t('pv_sig1') + '<div class="line">' + t('pv_sign') + '</div></div>' +
+      '<div class="sig">' + t('pv_sig2') + '<div class="line">' + t('pv_sign') + '</div></div>' +
+      '<div class="sig">' + t('pv_sig3') + '<div class="line">' + t('pv_sign') + '</div></div>' +
+      '</div>' +
+      '<div class="foot"><span>' + t('pdf_foot1') + '</span><span>' + fmtDate(new Date().toISOString(), true) + '</span></div>' +
+      '<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script>' +
+      '</body></html>';
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) return toast(t('t_popup'), 'error');
+    w.document.write(html);
+    w.document.close();
   }
 
   /* ---------- تغيير دفتر الشروط (نفس الـ QR) ---------- */
