@@ -196,4 +196,17 @@
       item[1] + '">' + window.esc(item[0]) + '</span>'
     );
   };
+
+  window.fmtRef = function (ref) {
+    const s = String(ref || '').trim();
+    if (!s) return '';
+    const m = s.match(/(\d{1,4})[\s/.-]*([A-Za-z.]*)[\s/.-]*(\d{4})/);
+    if (m) return 'N° ' + m[1] + ' /U.A.T/' + m[3];
+    const n = s.match(/\d{1,4}/);
+    return 'N° ' + (n ? n[0] : s) + ' /U.A.T/' + new Date().getFullYear();
+  };
+
+  window.sameRef = function (a, b) {
+    return window.fmtRef(a) === window.fmtRef(b);
+  };
 })();
