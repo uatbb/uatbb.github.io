@@ -1130,27 +1130,12 @@
     A.loadTenders();
   };
 
-  A._dbCharts = [];
-  A._chartLibPromise = null;
-  function loadChartLib() {
-    if (typeof Chart !== 'undefined') return Promise.resolve();
-    if (A._chartLibPromise) return A._chartLibPromise;
-    A._chartLibPromise = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
-      s.onload = resolve;
-      s.onerror = () => { A._chartLibPromise = null; reject(new Error('chart_load_failed')); };
-      document.head.appendChild(s);
-    });
-    return A._chartLibPromise;
-  }
   A.loadDashboard = async function () {
     const statsEl = $('db-stats');
     if (!statsEl) return;
     statsEl.innerHTML = '<div class="spinner my-8"></div>';
-    ['db-upcoming', 'db-recent'].forEach((id) => { const el = $(id); if (el) el.innerHTML = ''; });
-    A._dbCharts.forEach((c) => { try { c.destroy(); } catch (_) {} });
-    A._dbCharts = [];
+    const upEl0 = $('db-upcoming');
+    if (upEl0) upEl0.innerHTML = '';
 
     try {
       let q = DB.from('tenders').select('id, reference, title, kind, status, opening_date, faculty_id, downloads(count)');
@@ -1158,7 +1143,6 @@
       const { data: tenders, error } = await q;
       if (error) throw error;
       const list = tenders || [];
-      const ids = list.map((x) => x.id);
       const total = list.length;
       const published = list.filter((x) => x.status === 'published').length;
       const opened = list.filter((x) => x.status === 'opened').length;
@@ -1175,45 +1159,6 @@
         card('🟢', t('db_published'), published, 'text-primary-700') +
         card('🔓', t('db_opened'), opened, 'text-indigo-600') +
         card('⬇️', t('db_downloads'), dlTotal, 'text-teal-700');
-
-      try { await loadChartLib(); } catch (_) {}
-      if (typeof Chart !== 'undefined') {
-        const facAgg = {};
-        list.forEach((x) => { const fid = x.faculty_id || 'central'; facAgg[fid] = (facAgg[fid] || 0) + 1; });
-        const facLabels = Object.keys(facAgg).map((fid) => {
-          const f = (A.facultyById && A.facultyById[fid]) || null;
-          return I18N.lang === 'ar' ? ((f && f.name_ar) || t('fac_central_label')) : ((f && (f.name_fr || f.name_ar)) || t('fac_central_label'));
-        });
-        const facData = Object.values(facAgg);
-        const c1 = new Chart($('chart-faculties'), {
-          type: 'bar',
-          data: { labels: facLabels, datasets: [{ data: facData, backgroundColor: '#10b981', borderRadius: 6 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
-        });
-        A._dbCharts.push(c1);
-
-        let dlQuery = DB.from('downloads').select('downloaded_at');
-        if (ids.length) dlQuery = dlQuery.in('tender_id', ids);
-        const dlRes = ids.length ? await dlQuery : { data: [], error: null };
-        if (dlRes.error) throw dlRes.error;
-        const days = [];
-        for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const p = officePartsDate(d); days.push(p.y + '-' + p.mo + '-' + p.da); }
-        const counts = {};
-        days.forEach((d) => { counts[d] = 0; });
-        (dlRes.data || []).forEach((d) => {
-          const p = officePartsDate(d.downloaded_at);
-          if (!p) return;
-          const key = p.y + '-' + p.mo + '-' + p.da;
-          if (counts[key] != null) counts[key]++;
-        });
-        const dayLabels = days.map((d) => { const p = officePartsDate(d); return p.da + '/' + p.mo; });
-        const c2 = new Chart($('chart-downloads'), {
-          type: 'line',
-          data: { labels: dayLabels, datasets: [{ data: days.map((d) => counts[d]), borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,.12)', fill: true, tension: .35 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
-        });
-        A._dbCharts.push(c2);
-      }
 
       const now = Date.now();
       const today = officePartsDate(new Date());
@@ -1236,21 +1181,6 @@
         }).join('') : '<div class="text-xs text-slate-400">' + t('db_empty') + '</div>';
       }
 
-      let recentQ = DB.from('downloads').select('company, phone, downloaded_at, tender_id').order('downloaded_at', { ascending: false }).limit(8);
-      if (ids.length) recentQ = recentQ.in('tender_id', ids);
-      const recentRes = ids.length ? await recentQ : { data: [], error: null };
-      if (recentRes.error) throw recentRes.error;
-      const refById = {};
-      list.forEach((x) => { refById[x.id] = x.reference; });
-      const recEl = $('db-recent');
-      if (recEl) {
-        recEl.innerHTML = (recentRes.data && recentRes.data.length) ? recentRes.data.map((d) =>
-          '<div class="flex items-center justify-between gap-3 bg-slate-50 rounded-xl px-3 py-2">' +
-          '<div class="min-w-0"><div class="font-bold text-slate-700 text-sm truncate">' + esc(d.company || '—') + '</div>' +
-          '<div class="text-[11px] text-slate-500 mt-0.5" dir="ltr">' + esc(fmtRef(refById[d.tender_id] || '')) + '</div></div>' +
-          '<div class="text-[11px] text-slate-400 whitespace-nowrap">' + fmtDate(d.downloaded_at, true) + '</div></div>'
-        ).join('') : '<div class="text-xs text-slate-400">' + t('db_empty') + '</div>';
-      }
     } catch (e) {
       statsEl.innerHTML = errorState(e);
     }
