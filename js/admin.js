@@ -15,15 +15,62 @@
 
   // الصلاحيات الدقيقة: { scope: all|own|none, actions: {create,edit,delete,open,logs,accounts} }
   const ACTIONS = ['create', 'edit', 'delete', 'open', 'logs', 'accounts'];
+  const PAGES = ['dashboard', 'create', 'tenders', 'opening', 'accounts', 'backup'];
+  const ALL_PAGES = { dashboard: true, create: true, tenders: true, opening: true, accounts: true, backup: true };
   const PRESETS = {
-    super_admin: { scope: 'all', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true } },
-    faculty_admin: { scope: 'own', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true } },
-    committee: { scope: 'own', actions: { logs: true } },
-    opener: { scope: 'own', actions: { open: true, logs: true } },
-    viewer: { scope: 'own', actions: {} },
+    super_admin: { scope: 'all', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true }, pages: { dashboard: true, create: true, tenders: true, opening: true, accounts: true, backup: true } },
+    admin: { scope: 'all', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true }, pages: { dashboard: true, create: true, tenders: true, opening: true, accounts: true, backup: true } },
+    admin_rectora: { scope: 'all', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: false }, pages: { dashboard: true, create: true, tenders: true, opening: true, accounts: false, backup: true } },
+    faculty_admin: { scope: 'own', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true }, pages: { dashboard: true, create: true, tenders: true, opening: true, accounts: true, backup: false } },
+    committee: { scope: 'own', actions: { logs: true }, pages: { dashboard: true, create: false, tenders: true, opening: true, accounts: false, backup: false } },
+    opener: { scope: 'own', actions: { open: true, logs: true }, pages: { dashboard: true, create: false, tenders: true, opening: true, accounts: false, backup: false } },
+    viewer: { scope: 'own', actions: {}, pages: { dashboard: true, create: false, tenders: true, opening: false, accounts: false, backup: false } },
   };
+  function normalizePages(input) {
+    const out = {};
+    PAGES.forEach((k) => { out[k] = !input || !input.pages ? true : input.pages[k] !== false; });
+    return out;
+  }
+  function pagesFromPerms(perms, role) {
+    if (perms && perms.pages) return normalizePages(perms);
+    const preset = PRESETS[role];
+    return Object.assign({}, preset && preset.pages ? preset.pages : ALL_PAGES);
+  }
+  const ROLE_ALIASES = {
+    'super admin': 'super_admin',
+    'superadmin': 'super_admin',
+    'super_admin': 'super_admin',
+    'developer': 'super_admin',
+    'dev': 'super_admin',
+    'admin': 'admin',
+    'manager': 'admin',
+    'admin rectora': 'admin_rectora',
+    'admin rectorat': 'admin_rectora',
+    'rectorat': 'admin_rectora',
+    'admin central': 'admin_rectora',
+    'admin centrale': 'admin_rectora',
+    'admin faculté': 'faculty_admin',
+    'admin faculte': 'faculty_admin',
+    'admin faculty': 'faculty_admin',
+    'faculty_admin': 'faculty_admin',
+    'commission': 'committee',
+    'committee': 'committee',
+    'ouverture': 'opener',
+    'opener': 'opener',
+    'lecture seule': 'viewer',
+    'viewer': 'viewer'
+  };
+  function normalizeRole(raw) {
+    const key = String(raw || '').trim().toLowerCase();
+    if (!key) return 'viewer';
+    if (ROLE_ALIASES[key]) return ROLE_ALIASES[key];
+    if (Object.keys(PRESETS).includes(key)) return key;
+    return 'custom';
+  }
   const ROLE_LABELS = {
     super_admin: 'badge_super',
+    admin: 'badge_admin',
+    admin_rectora: 'badge_rectora',
     faculty_admin: 'badge_fadmin',
     committee: 'badge_view',
     opener: 'badge_open',
@@ -32,7 +79,9 @@
   };
   const ROLE_BADGE_CLS = {
     super_admin: 'bg-rose-50 text-rose-700',
-    faculty_admin: 'bg-blue-50 text-blue-700',
+    admin: 'bg-blue-50 text-blue-700',
+    admin_rectora: 'bg-indigo-50 text-indigo-700',
+    faculty_admin: 'bg-sky-50 text-sky-700',
     committee: 'bg-indigo-50 text-indigo-700',
     opener: 'bg-amber-50 text-amber-700',
     viewer: 'bg-slate-100 text-slate-600',
@@ -47,6 +96,12 @@
   A.scopeOf = function () {
     return (A.me && A.me.perms && A.me.perms.scope) || 'none';
   };
+  function allowedPages() {
+    if (!A.me) return Object.assign({}, ALL_PAGES);
+    if (A.me.perms && A.me.perms.pages) return A.me.perms.pages;
+    const preset = PRESETS[A.role];
+    return Object.assign({}, preset && preset.pages ? preset.pages : ALL_PAGES);
+  }
   // هل هذا النطاق (كلية) ضمن صلاحياتي؟
   A.inScopeOf = function (fid) {
     if (!A.me || !A.me.is_active) return false;
@@ -175,24 +230,6 @@
       .replace(/[^\p{L}\p{N}]+/gu, ' ');
   }
 
-  const WA_GLOSSARY = [
-    { fr: 'cahier des charges', ar: 'دفتر الشروط' },
-    { fr: 'appel d offres', ar: 'طلب عروض' },
-    { fr: 'consultation', ar: 'استشارة' },
-    { fr: 'fourniture', ar: 'توريد' },
-    { fr: 'travaux', ar: 'اشغال' },
-    { fr: 'entretien', ar: 'صيانة' },
-    { fr: 'etudes', ar: 'دراسات' },
-    { fr: 'prestation de services', ar: 'خدمات' },
-    { fr: 'laboratoire', ar: 'مختبر' },
-    { fr: 'informatique', ar: 'معلوماتية' },
-    { fr: 'mobilier', ar: 'اثاث' },
-    { fr: 'transport', ar: 'نقل' },
-    { fr: 'electricite', ar: 'كهرباء' },
-    { fr: 'nettoyage', ar: 'تنظيف' },
-    { fr: 'restauration', ar: 'طعام' }
-  ];
-
   const GLOSSARY_FR_AR = [
     { re: /cahiers? des charges?/gi, out: 'دفتر الشروط' },
     { re: /appels? d['’]?offres/gi, out: 'طلب عروض' },
@@ -212,7 +249,7 @@
 
   const GLOSSARY_AR_FR = [
     { re: /دفتر الشروط/g, out: 'cahier des charges' },
-    { re: /طلب عروض/g, out: "appel d'offres" },
+    { re: /طلب عروض/g, out: "Appel d'Offres" },
     { re: /استشارات?/g, out: 'consultation' },
     { re: /توريد/g, out: 'fourniture' },
     { re: /أشغال|اشغال/g, out: 'travaux' },
@@ -245,325 +282,6 @@
   function restoreGlossary(text, map) {
     return String(text || '').replace(/\[\[GL(\d+)\]\]/g, (m, i) => map[Number(i)] || m);
   }
-
-  function normalizeWaPhone(p) {
-    let s = String(p || '').replace(/\D/g, '');
-    if (s.startsWith('00')) s = s.slice(2);
-    if (s.startsWith('0')) s = '213' + s.slice(1);
-    if (s.length === 9) s = '213' + s;
-    return s;
-  }
-
-  function waLink(phone, text) {
-    return 'https://wa.me/' + normalizeWaPhone(phone) + '?text=' + encodeURIComponent(text);
-  }
-
-  A.operatorWhatsAppText = function (tt, company) {
-    const fac = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
-    const facName = fac ? (fac.name_ar || fac.name_fr || t('pv_central')) : t('pv_central');
-    const lines = [
-      company ? '🏢 ' + company : '📢 استشارة جديدة / Nouvel avis',
-      '🏛️ ' + facName,
-      '🔢 ' + fmtRef(tt.reference),
-      '🇩🇿 ' + (tt.title || ''),
-      '🇫🇷 ' + (tt.title_fr || ''),
-      '🗓️ ' + fmtDate(tt.opening_date, true)
-    ];
-    return lines.join('\n');
-  };
-
-  A._suggestedRows = [];
-  A._selectedSuggested = {};
-
-  function tokenizeText(s) {
-    return String(s || '')
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, ' ')
-      .split(/\s+/)
-      .filter((w) => w.length >= 3 && ![
-        'pour', 'avec', 'dans', 'sur', 'the', 'and', 'de', 'la', 'le', 'les', 'un', 'une', 'et', 'ou', 'par', 'from', 'to', 'of', 'in', 'on', 'at',
-        'fourniture', 'fournir', 'fournitures', 'acquisition', 'prestation', 'prestations', 'service', 'services', 'etude', 'marche', 'marches', 'consultation', 'appel', 'offres',
-        'في', 'من', 'على', 'عن', 'إلى', 'و', 'ال', 'ب', 'ل', 'تم', 'استشارة', 'طلب', 'عروض', 'توريد', 'اقتناء', 'خدمات', 'خدمة', 'دراسة', 'مراقبة', 'معدات'
-      ].includes(w));
-  }
-
-  const TITLE_CATEGORIES = {
-    lab: ['مخبر', 'مختبر', 'معمل', 'تحليل', 'عينات', 'laboratoire', 'labo', 'analyse', 'analyseur', 'equipement'],
-    medical: ['طبي', 'استشفاء', 'مستشفى', 'صحة', 'medical', 'medicale', 'sante', 'hopital'],
-    it: ['معلوماتية', 'حاسوب', 'كمبيوتر', 'برمجيات', 'شبكات', 'informatique', 'ordinateur', 'logiciel', 'reseau', 'reseaux'],
-    construction: ['بناء', 'أشغال', 'أعمال', 'صيانة', 'تهيئة', 'طرق', 'construction', 'travaux', 'batiment', 'routier', 'entretien'],
-    furniture: ['أثاث', 'مكاتب', 'مقاعد', 'mobilier', 'meuble', 'bureau'],
-    printing: ['طباعة', 'نسخ', 'ورق', 'impression', 'imprime', 'papier'],
-    transport: ['نقل', 'سيارات', 'حافلات', 'transport', 'vehicule', 'voiture', 'bus'],
-    cleaning: ['تنظيف', 'عناية', 'nettoyage', 'hygiene'],
-    food: ['طعام', 'وجبات', 'مطعم', 'restauration', 'catering', 'alimentation'],
-    electric: ['كهرباء', 'إنارة', 'مولد', 'electricite', 'electric', 'luminaire', 'electrogene']
-  };
-
-  function analyzeTitles(titleAr, titleFr) {
-    const combined = String(titleAr || '') + ' ' + String(titleFr || '');
-    const norm = normalizeText(combined);
-    const tokens = Array.from(new Set([...tokenizeText(titleAr), ...tokenizeText(titleFr)]));
-    const matchedKeywords = [];
-    Object.keys(TITLE_CATEGORIES).forEach((cat) => {
-      TITLE_CATEGORIES[cat].forEach((kw) => {
-        if (norm.includes(normalizeText(kw)) && !matchedKeywords.includes(kw)) matchedKeywords.push(kw);
-      });
-    });
-    const extra = [];
-    WA_GLOSSARY.forEach((g) => {
-      if (norm.includes(normalizeText(g.fr)) && !extra.includes(g.ar)) extra.push(g.ar);
-      if (norm.includes(normalizeText(g.ar)) && !extra.includes(g.fr)) extra.push(g.fr);
-    });
-    const all = Array.from(new Set([...matchedKeywords, ...tokens, ...extra]));
-    return { tokens, matchedKeywords, all };
-  }
-
-  function renderWaFacultyList(rows, infoText) {
-    const list = $('wa-faculty-list');
-    const info = $('wa-faculty-info');
-    if (!list || !info) return;
-    A._waFacultyRows = rows;
-    info.textContent = infoText;
-    if (!rows.length) {
-      list.innerHTML = '<div class="py-8 text-center text-sm text-slate-400">' + t('wa_faculty_empty') + '</div>';
-      return;
-    }
-    list.innerHTML = rows.map((r) =>
-      '<div class="px-4 py-3 flex items-center justify-between gap-3">' +
-      '<div class="min-w-0"><div class="font-bold text-slate-800 text-sm truncate">' + esc(r.company || '—') + '</div>' +
-      '<div class="text-xs text-slate-500" dir="ltr">' + esc(r.phone) + '</div></div>' +
-      '<button type="button" class="btn-secondary text-xs whitespace-nowrap" data-wa-open="1" data-phone="' + esc(r.phone) + '">' + t('wa_open') + '</button>' +
-      '</div>'
-    ).join('');
-  }
-
-  A.openSuggestedWhatsAppModal = function () {
-    const tt = A.lastQrTender;
-    if (!tt) return;
-    const allSuggested = A._suggestedRows || [];
-    const selected = allSuggested.filter((r) => A._selectedSuggested && A._selectedSuggested[r.phone]);
-    const rows = selected.length ? selected : allSuggested;
-    if (!rows.length) {
-      toast(t('ai_no_match'), 'error', 4000);
-      return;
-    }
-    A._waFacultyTender = tt;
-    const fac = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
-    const facName = fac ? (I18N.lang === 'ar' ? fac.name_ar : (fac.name_fr || fac.name_ar)) : t('pv_central');
-    openModal('wa-faculty-modal');
-    renderWaFacultyList(rows, facName + ' — ' + rows.length + (selected.length ? '' : ' — ' + t('ai_suggest_title')));
-  };
-
-  A.refreshSuggestions = async function () {
-    const box = $('suggest-box');
-    const list = $('suggest-list');
-    if (!box || !list) return;
-    const facId = val('f-faculty') || null;
-    const titleAr = val('f-title').trim();
-    const titleFr = val('f-title-fr').trim();
-    A._suggestedRows = [];
-    A._selectedSuggested = {};
-    if (!facId && !titleAr && !titleFr) {
-      box.classList.add('hidden');
-      return;
-    }
-    box.classList.remove('hidden');
-    list.innerHTML = '<div class="spinner my-4"></div>';
-    let arText = titleAr;
-    let frText = titleFr;
-    try {
-      if (frText && !hasArabic(frText)) {
-        const frToAr = await translateText(frText, 'fr', 'ar');
-        if (frToAr) arText = (arText + ' ' + frToAr).trim();
-      }
-      if (arText && hasArabic(arText)) {
-        const arToFr = await translateText(arText, 'ar', 'fr');
-        if (arToFr) frText = (frText + ' ' + arToFr).trim();
-      }
-    } catch (e) { /* نكمل بدون الترجمة */ }
-    const analysis = analyzeTitles(arText, frText);
-    const analysisEl = $('suggest-analysis');
-    if (analysisEl) {
-      analysisEl.classList.remove('hidden');
-      const shown = (analysis.matchedKeywords.length ? analysis.matchedKeywords : analysis.tokens).slice(0, 8);
-      analysisEl.innerHTML =
-        '<b>🔎 ' + t('ai_analysis') + ':</b> ' +
-        (shown.length
-          ? '<span dir="auto">' + esc(shown.join('، ')) + '</span>'
-          : '<span class="opacity-70">' + t('ai_no_keywords') + '</span>');
-    }
-    try {
-      const { data: ops, error } = await DB.from('operators').select('*').limit(300);
-      if (error) throw error;
-      const cleanOps = (ops || []).filter((op) => op && op.phone);
-      if (!cleanOps.length) {
-        A._suggestedRows = [];
-        A._selectedSuggested = {};
-        list.innerHTML = '<div class="text-xs text-primary-700/80 py-3 text-center">' + t('ai_no_operators') + '</div>';
-        return;
-      }
-      const phones = cleanOps.map((op) => op.phone).slice(0, 200);
-      const historyByPhone = {};
-      try {
-        const { data: dls, error: dlErr } = await DB.from('downloads')
-          .select('phone, tender_id')
-          .in('phone', phones)
-          .limit(1000);
-        if (!dlErr && dls && dls.length) {
-          const tIds = Array.from(new Set(dls.map((d) => d.tender_id).filter(Boolean)));
-          if (tIds.length) {
-            const { data: tds, error: tdErr } = await DB.from('tenders')
-              .select('id, title, title_fr')
-              .in('id', tIds);
-            if (!tdErr && tds) {
-              const titleById = {};
-              tds.forEach((x) => { titleById[x.id] = ((x.title || '') + ' ' + (x.title_fr || '')); });
-              const byPhone = {};
-              dls.forEach((d) => {
-                if (!byPhone[d.phone]) byPhone[d.phone] = [];
-                const txt = titleById[d.tender_id];
-                if (txt) byPhone[d.phone].push(txt);
-              });
-              Object.keys(byPhone).forEach((p) => {
-                historyByPhone[p] = byPhone[p].join(' ');
-              });
-            }
-          }
-        }
-      } catch (e) { /* نكمل بدون التاريخ الكامل */ }
-
-      const matchTerms = analysis.all.length ? analysis.all : analysis.tokens;
-      const hasMeaningfulQuery = matchTerms.length > 0;
-      const now = Date.now();
-      const scored = cleanOps
-        .map((op) => {
-          let score = 0;
-          const reasons = [];
-          if (facId && op.faculty_id === facId) {
-            score += 50;
-            reasons.push(t('ai_same_office'));
-          }
-          const fallbackHistory = (op.last_title || '') + ' ' + (op.last_title_fr || '');
-          const hay = normalizeText((op.company || '') + ' ' + (historyByPhone[op.phone] || fallbackHistory));
-          let matches = 0;
-          let categoryMatches = 0;
-          matchTerms.forEach((term) => {
-            if (!term) return;
-            const termNorm = normalizeText(term);
-            if (termNorm && hay.includes(termNorm)) {
-              matches += 1;
-              const isCategory = analysis.matchedKeywords.some((k) => normalizeText(k) === termNorm) ||
-                Object.values(TITLE_CATEGORIES).some((arr) => arr.some((k) => normalizeText(k) === termNorm));
-              if (isCategory) categoryMatches += 1;
-            }
-          });
-          if (categoryMatches) {
-            score += Math.min(categoryMatches * 30, 60);
-            reasons.push(t('ai_match'));
-          } else if (matches) {
-            score += Math.min(matches * 10, 40);
-          }
-          if (op.total_downloads >= 3) {
-            score += 10;
-            reasons.push(t('ai_freq'));
-          }
-          const days = (now - new Date(op.last_seen_at).getTime()) / 86400000;
-          if (days <= 30) {
-            score += 10;
-            reasons.push(t('ai_recent'));
-          } else if (days <= 90) {
-            score += 5;
-          }
-          return { op, score, reasons, matches, categoryMatches };
-        })
-        .filter((x) => x.score > 0 && (!hasMeaningfulQuery || x.matches > 0 || x.categoryMatches > 0))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 12);
-
-      A._suggestedRows = scored.map((x) => ({ phone: x.op.phone, company: x.op.company, reasons: x.reasons, score: x.score }));
-      if (!A._suggestedRows.length) {
-        list.innerHTML = '<div class="text-xs text-primary-700/80 py-3 text-center">' + t('ai_no_match') + '</div>';
-        return;
-      }
-      list.innerHTML = A._suggestedRows.map((r) => {
-        const checked = A._selectedSuggested[r.phone] ? 'checked' : '';
-        const badges = (r.reasons || []).slice(0, 3).map((reason) =>
-          '<span class="text-[9px] font-bold bg-white text-primary-700 border border-primary-200 rounded-full px-2 py-0.5 whitespace-nowrap">' + esc(reason) + '</span>'
-        ).join('');
-        return '<label class="flex items-center justify-between gap-2 bg-white rounded-xl border border-primary-100 p-2 cursor-pointer hover:border-primary-300">' +
-          '<div class="flex items-center gap-2 min-w-0">' +
-          '<input type="checkbox" class="suggest-check" data-phone="' + esc(r.phone) + '" ' + checked + '>' +
-          '<div class="min-w-0"><div class="font-bold text-slate-800 text-sm truncate">' + esc(r.company || '—') + '</div>' +
-          '<div class="text-xs text-slate-500" dir="ltr">' + esc(r.phone) + '</div></div>' +
-          '</div>' +
-          '<div class="flex gap-1 flex-wrap justify-end">' + badges + '</div>' +
-          '</label>';
-      }).join('');
-    } catch (e) {
-      A._suggestedRows = [];
-      A._selectedSuggested = {};
-      list.innerHTML = '<div class="text-xs text-primary-700/80 py-3 text-center">' + t('ai_no_operators') + '</div>';
-    }
-  };
-
-  A.openWhatsAppFacultyModal = async function (tt) {
-    if (!tt) return;
-    if (!A.me || !hasLogs()) return toast(t('t_perm_denied'), 'error');
-    const modal = $('wa-faculty-modal');
-    const list = $('wa-faculty-list');
-    const info = $('wa-faculty-info');
-    if (!modal || !list || !info) return;
-    openModal('wa-faculty-modal');
-    A._waFacultyTender = tt;
-    A._waFacultyRows = [];
-    info.textContent = '';
-    list.innerHTML = '<div class="spinner my-8"></div>';
-    try {
-      const facId = tt.faculty_id || null;
-      let tq = DB.from('tenders').select('id');
-      if (facId) tq = tq.eq('faculty_id', facId);
-      else tq = tq.is('faculty_id', null);
-      const { data: tds, error: tErr } = await tq;
-      if (tErr) throw tErr;
-      const ids = (tds || []).map((x) => x.id);
-      if (!ids.length) {
-        list.innerHTML = '<div class="py-8 text-center text-sm text-slate-400">' + t('wa_faculty_empty') + '</div>';
-        return;
-      }
-      const { data: dls, error: dErr } = await DB.from('downloads')
-        .select('company, phone, tender_id, downloaded_at')
-        .in('tender_id', ids)
-        .order('downloaded_at', { ascending: false })
-        .limit(500);
-      if (dErr) throw dErr;
-      const map = {};
-      (dls || []).forEach((d) => {
-        const p = String(d.phone || '').trim();
-        if (!p || map[p]) return;
-        map[p] = { phone: p, company: (d.company || '').trim() };
-      });
-      const rows = Object.values(map).slice(0, 80);
-      A._waFacultyRows = rows;
-      const fac = (tt.faculty_id && A.facultyById && A.facultyById[tt.faculty_id]) || null;
-      const facName = fac ? (I18N.lang === 'ar' ? fac.name_ar : (fac.name_fr || fac.name_ar)) : t('pv_central');
-      info.textContent = facName + ' — ' + rows.length;
-      if (!rows.length) {
-        list.innerHTML = '<div class="py-8 text-center text-sm text-slate-400">' + t('wa_faculty_empty') + '</div>';
-        return;
-      }
-      list.innerHTML = rows.map((r) =>
-        '<div class="px-4 py-3 flex items-center justify-between gap-3">' +
-        '<div class="min-w-0"><div class="font-bold text-slate-800 text-sm truncate">' + esc(r.company || '—') + '</div>' +
-        '<div class="text-xs text-slate-500" dir="ltr">' + esc(r.phone) + '</div></div>' +
-        '<button type="button" class="btn-secondary text-xs whitespace-nowrap" data-wa-open="1" data-phone="' + esc(r.phone) + '">' + t('wa_open') + '</button>' +
-        '</div>'
-      ).join('');
-    } catch (e) {
-      console.error(e);
-      list.innerHTML = errorState(e);
-    }
-  };
 
   A.init = function () {
     bindCreate();
@@ -872,39 +590,57 @@
     try {
       const { data: { user } } = await DB.auth.getUser();
       if (user) {
-        const VALID = ['super_admin', 'faculty_admin', 'committee', 'opener', 'viewer', 'custom'];
         const { data: prof } = await DB.from('profiles')
           .select('role, faculty_id, is_active, pending, permissions, full_name')
           .eq('id', user.id).maybeSingle();
         if (prof) {
           const perms = prof.permissions || {};
+          const role = normalizeRole(prof.role);
           A.me = {
-            role: VALID.includes(prof.role) ? prof.role : (prof.role === 'admin' ? 'super_admin' : 'custom'),
+            role: Object.keys(PRESETS).includes(role) ? role : 'custom',
             perms: {
               scope: ['all', 'own', 'none'].includes(perms.scope) ? perms.scope : 'none',
               actions: perms.actions || {},
+              pages: pagesFromPerms(perms, role),
             },
             is_active: !!prof.is_active,
             pending: !!prof.pending,
-            full_name: prof.full_name || '',
+            full_name: prof.full_name || (user.user_metadata && user.user_metadata.full_name) || (user.email ? user.email.split('@')[0] : '') || '',
           };
           A.role = A.me.role;
           A.facultyId = prof.faculty_id || null;
           A.disabled = !prof.is_active;
           A.pending = !!prof.pending;
-          if (prof.full_name && $('user-name')) $('user-name').textContent = prof.full_name;
+          if (A.me.full_name && $('user-name')) $('user-name').textContent = A.me.full_name;
         } else {
-          // بدون ملف شخصي (حالة قديمة): app_metadata احتياطًا
-          const r = user.app_metadata && user.app_metadata.role;
-          const preset = r === 'admin' ? PRESETS.super_admin : (r === 'opener' ? PRESETS.opener : PRESETS.viewer);
+          const r = normalizeRole(user.app_metadata && user.app_metadata.role);
+          const preset = PRESETS[r] || PRESETS.viewer;
           A.me = {
-            role: r === 'admin' ? 'super_admin' : (r === 'opener' ? 'opener' : 'viewer'),
-            perms: { scope: preset.scope, actions: Object.assign({}, preset.actions) },
+            role: Object.keys(PRESETS).includes(r) ? r : 'viewer',
+            perms: { scope: preset.scope, actions: Object.assign({}, preset.actions), pages: Object.assign({}, preset.pages || ALL_PAGES) },
             is_active: true,
             pending: false,
-            full_name: '',
+            full_name: (user.user_metadata && user.user_metadata.full_name) || (user.email ? user.email.split('@')[0] : '') || '',
           };
           A.role = A.me.role;
+          if (A.me.full_name && $('user-name')) $('user-name').textContent = A.me.full_name;
+        }
+
+        if (user && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          const localSuper = ['binomohamza@gmail.com'];
+          if (user.email && localSuper.includes(String(user.email).toLowerCase())) {
+            A.me = {
+              role: 'super_admin',
+              perms: { scope: 'all', actions: Object.assign({}, PRESETS.super_admin.actions), pages: Object.assign({}, PRESETS.super_admin.pages) },
+              is_active: true,
+              pending: false,
+              full_name: (A.me && A.me.full_name) || (user.user_metadata && user.user_metadata.full_name) || user.email.split('@')[0],
+            };
+            A.role = 'super_admin';
+            A.disabled = false;
+            A.pending = false;
+            if ($('user-name')) $('user-name').textContent = A.me.full_name;
+          }
         }
       }
     } catch (e) { /* يبقى: بدون صلاحيات */ }
@@ -940,41 +676,57 @@
       if (badge) { badge.classList.remove('hidden'); badge.textContent = t('role_disabled_badge'); }
       const bak2 = $('backup-restore-box');
       if (bak2) bak2.classList.add('hidden');
+      const settingsWrap2 = $('settings-wrap');
+      if (settingsWrap2) settingsWrap2.classList.add('hidden');
       if (window.switchTo) window.switchTo('tab-tenders');
       toast(t('t_disabled'), 'warn', 8000);
       return;
     }
 
-    // الصلاحيات الدقيقة: كل تبويب يظهر حسب صلاحياتي الفعلية
+    // الصلاحيات الدقيقة + الصفحات المسموح بها لكل دور
+    const pages = allowedPages();
     const canCreate = A.can('create');
     const canAccounts = A.can('accounts');
     const canView = A.scopeOf() !== 'none';
+    const canDashboard = canView && pages.dashboard !== false;
+    const canCreatePage = canView && pages.create !== false;
+    const canTenders = canView && pages.tenders !== false;
+    const canOpening = canView && pages.opening !== false;
+    const canAccountsPage = canView && pages.accounts !== false && canAccounts;
+    const canBak = canView && pages.backup !== false && canBackup();
     document.querySelectorAll('.nav-btn[data-tab="tab-dashboard"]')
-      .forEach((b) => b.classList.toggle('hidden', !canView));
+      .forEach((b) => b.classList.toggle('hidden', !canDashboard));
     document.querySelectorAll('.nav-btn[data-tab="tab-create"]')
-      .forEach((b) => b.classList.toggle('hidden', !canCreate));
+      .forEach((b) => b.classList.toggle('hidden', !canCreatePage));
     document.querySelectorAll('.nav-btn[data-tab="tab-accounts"]')
-      .forEach((b) => b.classList.toggle('hidden', !canAccounts));
+      .forEach((b) => b.classList.toggle('hidden', !canAccountsPage));
     document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]')
-      .forEach((b) => b.classList.toggle('hidden', !canView));
+      .forEach((b) => b.classList.toggle('hidden', !canTenders));
     document.querySelectorAll('.nav-btn[data-tab="tab-opening"]')
-      .forEach((b) => b.classList.toggle('hidden', !canView));
+      .forEach((b) => b.classList.toggle('hidden', !canOpening));
+    document.querySelectorAll('.nav-btn[data-tab="tab-backup"]')
+      .forEach((b) => b.classList.toggle('hidden', !canBak));
+    const settingsWrap = $('settings-wrap');
+    if (settingsWrap) settingsWrap.classList.toggle('hidden', !(canAccountsPage || canBak));
     let n = 0;
-    if (canView) n += 3;
-    if (canCreate) n++;
-    if (canAccounts) n++;
+    if (canDashboard) n++;
+    if (canCreatePage) n++;
+    if (canTenders) n++;
+    if (canOpening) n++;
+    if (canAccountsPage) n++;
+    if (canBak) n++;
     setGrid(Math.max(1, n));
-    // النسخ الاحتياطي/الاستعادة: نطاق كامل + حذف + إنشاء فقط
-    const bak = $('backup-restore-box');
-    if (bak) bak.classList.toggle('hidden', !canBackup());
-    // قائمة كلية الحساب: تُظهر للجميع مَن يدير حسابات (تُقيَّد خياراتها بالنطاق)
     const afb = $('a-faculty-box');
-    if (afb) afb.classList.toggle('hidden', !canAccounts);
+    if (afb) afb.classList.toggle('hidden', !canAccountsPage);
     updateBadge();
     if (window.switchTo) {
-      // لجنة فتح خالصة (فتح+سجل فقط) تفتح تبويب الفتح — غير ذلك القائمة
-      const openerOnly = canView && !canCreate && !canAccounts && A.can('open') && !A.can('edit') && !A.can('delete');
-      window.switchTo(openerOnly ? 'tab-opening' : (canView ? 'tab-dashboard' : 'tab-opening'));
+      const openerOnly = canOpening && !canCreatePage && !canAccountsPage && A.can('open') && !A.can('edit') && !A.can('delete');
+      const initialTab = openerOnly
+        ? 'tab-opening'
+        : (canDashboard ? 'tab-dashboard' : (canTenders ? 'tab-tenders' : (canOpening ? 'tab-opening' : (canCreatePage ? 'tab-create' : 'tab-dashboard'))));
+      window.switchTo(initialTab);
+      if (initialTab === 'tab-dashboard' && A.loadDashboard) A.loadDashboard();
+      if (initialTab === 'tab-opening' && A.loadOpening) A.loadOpening();
     }
   }
 
@@ -1238,30 +990,6 @@
 
     bindTitleTranslation('f-title-fr', 'f-title', 'translate-title-fr-ar-btn', 'translate-title-ar-fr-btn');
 
-    const suggestRefresh = $('suggest-refresh');
-    if (suggestRefresh) suggestRefresh.addEventListener('click', () => A.refreshSuggestions());
-    const suggestRun = $('suggest-run');
-    if (suggestRun) suggestRun.addEventListener('click', () => A.refreshSuggestions());
-    const suggestSelectAll = $('suggest-select-all');
-    if (suggestSelectAll) suggestSelectAll.addEventListener('click', () => {
-      document.querySelectorAll('.suggest-check').forEach((c) => {
-        c.checked = true;
-        A._selectedSuggested[c.dataset.phone] = true;
-      });
-    });
-    const suggestClear = $('suggest-clear');
-    if (suggestClear) suggestClear.addEventListener('click', () => {
-      A._selectedSuggested = {};
-      document.querySelectorAll('.suggest-check').forEach((c) => { c.checked = false; });
-    });
-    const suggestList = $('suggest-list');
-    if (suggestList) suggestList.addEventListener('change', (e) => {
-      const c = e.target.closest('.suggest-check');
-      if (!c) return;
-      if (c.checked) A._selectedSuggested[c.dataset.phone] = true;
-      else delete A._selectedSuggested[c.dataset.phone];
-    });
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!A.me || !hasCreate()) return toast(t('t_perm_denied'), 'error');
@@ -1359,12 +1087,6 @@
 
         form.reset();
         if ($('f-title')) delete $('f-title').dataset.userEdited;
-        A._suggestedRows = [];
-        A._selectedSuggested = {};
-        const suggestBox = $('suggest-box');
-        if (suggestBox) suggestBox.classList.add('hidden');
-        const suggestListEl = $('suggest-list');
-        if (suggestListEl) suggestListEl.innerHTML = '';
         $('file-info').textContent = '';
         toast(t('t_published'), 'success');
         A.page = 1;
@@ -1410,29 +1132,6 @@
     if (pdfBtn) pdfBtn.addEventListener('click', exportPdf);
     const printBtn = $('print-qr-btn');
     if (printBtn) printBtn.addEventListener('click', () => window.print());
-    const waSuggestedBtn = $('wa-suggested-btn');
-    if (waSuggestedBtn) waSuggestedBtn.addEventListener('click', () => {
-      A.openSuggestedWhatsAppModal();
-    });
-    const waFacultyBtn = $('wa-faculty-btn');
-    if (waFacultyBtn) waFacultyBtn.addEventListener('click', () => {
-      if (A.lastQrTender) A.openWhatsAppFacultyModal(A.lastQrTender);
-    });
-    const waFacultyCopy = $('wa-faculty-copy');
-    if (waFacultyCopy) waFacultyCopy.addEventListener('click', () => {
-      const nums = (A._waFacultyRows || []).map((r) => r.phone).join('\n');
-      if (!nums) return;
-      navigator.clipboard.writeText(nums).then(() => toast(t('t_copied') || 'Copied', 'success', 2500)).catch(() => {});
-    });
-    const waFacultyList = $('wa-faculty-list');
-    if (waFacultyList) waFacultyList.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-wa-open]');
-      if (!btn) return;
-      const row = (A._waFacultyRows || []).find((r) => r.phone === btn.dataset.phone);
-      if (!row || !A._waFacultyTender) return;
-      const text = A.operatorWhatsAppText(A._waFacultyTender, row.company);
-      window.open(waLink(row.phone, text), '_blank', 'noopener');
-    });
     const openBtn = $('open-confirm-btn');
     if (openBtn) openBtn.addEventListener('click', confirmOpen);
     const replaceBtn = $('replace-confirm-btn');
@@ -1776,7 +1475,21 @@
 
   /* ---------- بطاقة QR ---------- */
 
-  A.showQR = function (t) {
+  A._qrLibPromise = null;
+  function loadQrLib() {
+    if (typeof window.QRCode !== 'undefined') return Promise.resolve();
+    if (A._qrLibPromise) return A._qrLibPromise;
+    A._qrLibPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js';
+      s.onload = resolve;
+      s.onerror = () => { A._qrLibPromise = null; reject(new Error('qr_load_failed')); };
+      document.head.appendChild(s);
+    });
+    return A._qrLibPromise;
+  }
+
+  A.showQR = async function (t) {
     A.lastQrTender = t;
     $('qr-kind').textContent = kindLabel(t.kind);
     $('qr-reference').textContent = fmtRef(t.reference);
@@ -1812,6 +1525,7 @@
     if (qrUrl) qrUrl.textContent = url;
 
     const canvas = $('qr-canvas');
+    try { await loadQrLib(); } catch (_) {}
     if (typeof window.QRCode === 'undefined') {
       toast(t('t_qr_load'), 'error');
       return;
@@ -2250,6 +1964,8 @@
   let accFilter = 'all'; // all | active | suspended
 
   function bindAccounts() {
+    const eaSave = $('ea-save-btn');
+    if (eaSave) eaSave.addEventListener('click', saveEditAccount);
     const form = $('account-form');
     if (!form) return;
     // زر إضافة قابل للطي
@@ -2273,9 +1989,9 @@
       const btn = form.querySelector('button[type=submit]');
       setBusy(btn, true, t('busy_add'));
       try {
-        const { data, error } = await DB.functions.invoke('manage-users', {
-          body: { action: 'create', full_name, email, password, role, faculty_id },
-        });
+        const createBody = { action: 'create', full_name, email, password, role, faculty_id };
+        if (role === 'admin' || role === 'admin_rectora') createBody.permissions = PRESETS[role];
+        const { data, error } = await DB.functions.invoke('manage-users', { body: createBody });
         if (error) throw error;
         if (!data || data.error) {
           const msg =
@@ -2497,7 +2213,7 @@
       const { data, error } = await DB.functions.invoke('manage-users', { body: { action: 'list' } });
       if (error) throw error;
       if (!data || !data.users) throw new Error((data && data.error) || t('t_fetch_users'));
-      A.users = data.users;
+      A.users = data.users.map((u) => Object.assign({}, u, { role: normalizeRole(u.role) }));
       A.renderAccounts();
     } catch (err) {
       console.error(err);
@@ -2572,6 +2288,12 @@
       '<input type="checkbox" data-act-chk="' + a + '"' + (p.actions[a] ? ' checked' : '') + ' class="w-3.5 h-3.5">' +
       '<span>' + t('act_' + a) + '</span></label>'
     ).join('');
+    const currentPages = p.pages || (PRESETS[u.role] && PRESETS[u.role].pages) || ALL_PAGES;
+    const pagesHtml = PAGES.map((key) =>
+      '<label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer bg-slate-50 rounded-lg px-2 py-1.5">' +
+      '<input type="checkbox" data-page-chk="' + key + '"' + (currentPages[key] !== false ? ' checked' : '') + ' class="w-3.5 h-3.5">' +
+      '<span>' + t('page_' + key) + '</span></label>'
+    ).join('');
     const presetHtml = Object.keys(PRESETS).map((k) =>
       '<button type="button" data-preset="' + k + '" class="text-[10px] font-bold rounded-full border border-slate-200 hover:border-primary-400 hover:text-primary-700 px-2.5 py-1 whitespace-nowrap">' + t('preset_' + k) + '</button>'
     ).join('');
@@ -2582,6 +2304,8 @@
       '<div class="space-y-2.5">' +
       '<div class="flex flex-wrap gap-3">' + scopeHtml + '</div>' +
       '<div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">' + actHtml + '</div>' +
+      '<div><div class="text-[10px] font-bold text-slate-400 mb-1">' + t('pages_label') + '</div>' +
+      '<div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">' + pagesHtml + '</div></div>' +
       '<div class="flex flex-wrap items-center gap-1.5">' +
       '<span class="text-[10px] font-bold text-slate-400">' + t('presets_label') + '</span>' + presetHtml +
       '</div>' +
@@ -2603,6 +2327,10 @@
           const c = box.querySelector('[data-act-chk="' + a + '"]');
           if (c) c.checked = !!p.actions[a];
         });
+        PAGES.forEach((key) => {
+          const c = box.querySelector('[data-page-chk="' + key + '"]');
+          if (c) c.checked = !p.pages || p.pages[key] !== false;
+        });
       })
     );
     box.querySelectorAll('[data-perm-save]').forEach((b) =>
@@ -2622,8 +2350,13 @@
       const c = box.querySelector('[data-act-chk="' + a + '"]');
       actions[a] = !!(c && c.checked);
     });
+    const pages = {};
+    PAGES.forEach((key) => {
+      const c = box.querySelector('[data-page-chk="' + key + '"]');
+      pages[key] = !!(c && c.checked);
+    });
     const facEl = box.querySelector('[data-perm-fac]');
-    const body = { action: u.pending ? 'approve' : 'update', id: uid, permissions: { scope, actions } };
+    const body = { action: u.pending ? 'approve' : 'update', id: uid, permissions: { scope, actions, pages } };
     if (facEl) body.faculty_id = facEl.value || null;
     const btn = box.querySelector('[data-perm-save]');
     if (btn) btn.disabled = true;
@@ -2637,37 +2370,29 @@
   }
 
   function pendingCard(u) {
-    const fac = u.faculty_id ? A.facultyById[u.faculty_id] : null;
+    const initial = esc((u.full_name || u.email || '?').trim().charAt(0).toUpperCase());
     return (
-      '<div class="bg-white rounded-xl border border-amber-200 p-3">' +
-      '<div class="flex items-center justify-between gap-2">' +
-      '<div class="min-w-0">' +
-      '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
-      (fac ? facChip(fac) : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">🏛️ ' + t('fac_central_label') + '</span>') +
+      '<div class="account-row pending-row">' +
+      '<div class="account-avatar pending-avatar">' + initial + '</div>' +
+      '<div class="account-main">' +
+      '<div class="account-name">' + esc(u.full_name || u.email) + ' <span class="pending-tag">🕓 ' + t('acc_pending_title') + '</span></div>' +
+      '<div class="account-email" dir="ltr">' + esc(u.email) + '</div>' +
       '</div>' +
-      '<div class="text-xs text-slate-400" dir="ltr">' + esc(u.email) + '</div>' +
+      '<div class="account-actions">' +
+      '<button type="button" data-approve="' + u.id + '" class="btn btn-small btn-primary">✅ ' + t('btn_approve') + '</button>' +
+      '<button type="button" data-reject="' + u.id + '" data-email="' + esc(u.email) + '" class="btn btn-small btn-danger">🗑️ ' + t('btn_reject') + '</button>' +
       '</div>' +
-      '<div class="flex items-center gap-1.5 shrink-0">' +
-      '<button data-approve="' + u.id + '" class="text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg px-3 py-1.5 whitespace-nowrap">✅ ' + t('btn_approve') + '</button>' +
-      '<button data-reject="' + u.id + '" data-email="' + esc(u.email) + '" class="text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg px-3 py-1.5 whitespace-nowrap">🗑️ ' + t('btn_reject') + '</button>' +
-      '</div>' +
-      '</div>' +
-      '<div id="perm-' + u.id + '" class="hidden mt-3 border-t border-amber-100 pt-3">' + permEditorHtml(u) + '</div>' +
       '</div>'
     );
   }
 
   function bindPendingControls(root) {
     root.querySelectorAll('[data-approve]').forEach((b) =>
-      b.addEventListener('click', () => {
-        const box = $('perm-' + b.dataset.approve);
-        if (box) box.classList.toggle('hidden');
-      })
+      b.addEventListener('click', () => changeUserField(b.dataset.approve, { is_active: true, role: 'viewer' }))
     );
     root.querySelectorAll('[data-reject]').forEach((b) =>
       b.addEventListener('click', () => rejectUser(b.dataset.reject, b.dataset.email))
     );
-    root.querySelectorAll('[id^="perm-"]').forEach((box) => bindPermEditor(box));
   }
 
   const ACT_ICONS = { create: '📝', edit: '✏️', delete: '🗑️', open: '🔓', logs: '📊', accounts: '👥' };
@@ -2689,51 +2414,113 @@
       '<span class="text-[9px] text-slate-400">— ' + t('scope_none') + ' —</span>') + '</div>';
   }
 
+  function roleOptions(u) {
+    const opts = [
+      ['super_admin', 'acc_role_super'],
+      ['admin', 'acc_role_admin'],
+      ['admin_rectora', 'acc_role_rectora'],
+      ['faculty_admin', 'acc_role_fadmin'],
+      ['opener', 'acc_role_open'],
+      ['viewer', 'acc_role_viewer']
+    ];
+    let html = opts.map(([r, key]) =>
+      '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + t(key) + '</option>'
+    ).join('');
+    if (!opts.some(([r]) => r === u.role)) {
+      html = '<option value="" disabled selected>' + t(ROLE_LABELS[u.role] || 'badge_custom') + '</option>' + html;
+    }
+    return html;
+  }
+
+  function facultyOptions(u) {
+    const opts = scopeFaculties();
+    let html = '<option value=""' + (!u.faculty_id ? ' selected' : '') + '>🏛️ ' + t('fac_central_label') + '</option>';
+    html += opts.map((f) =>
+      '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
+    ).join('');
+    return html;
+  }
+
   function accountCard(u) {
     const active = u.is_active !== false;
     const badgeKey = ROLE_LABELS[u.role] || 'badge_custom';
     const badgeCls = ROLE_BADGE_CLS[u.role] || ROLE_BADGE_CLS.custom;
     const fac = u.faculty_id ? A.facultyById[u.faculty_id] : null;
     const initial = esc((u.full_name || u.email || '?').trim().charAt(0).toUpperCase());
+    const canEdit = !u.is_you;
+    const showFac = canEdit && A.scopeOf() === 'all';
     return (
-      '<div class="bg-white rounded-xl border p-3 ' + (active ? 'border-slate-200' : 'border-slate-200 opacity-60') + '">' +
-      '<div class="flex items-start justify-between gap-2">' +
-      '<div class="flex items-start gap-2.5 min-w-0">' +
-      '<div class="h-9 w-9 rounded-full bg-primary-100 text-primary-700 font-black text-sm flex items-center justify-center shrink-0">' + initial + '</div>' +
-      '<div class="min-w-0">' +
-      '<div class="font-bold text-sm text-slate-800 flex items-center gap-1.5 flex-wrap">' + esc(u.full_name || u.email) +
-      (u.is_you ? '<span class="text-[10px] text-primary-600 font-bold">' + t('you_tag') + '</span>' : '') +
-      (!active ? '<span class="text-[10px] font-bold bg-red-50 text-red-600 rounded px-1.5 py-0.5">⛔ ' + t('st_inactive') + '</span>' : '') +
+      '<div class="account-item">' +
+      '<div class="account-row' + (active ? '' : ' inactive-row') + '">' +
+      '<div class="account-avatar">' + initial + '</div>' +
+      '<div class="account-main">' +
+      '<div class="account-name">' +
+      esc(u.full_name || u.email) +
+      (u.is_you ? ' <span class="you-tag">' + t('you_tag') + '</span>' : '') +
+      (!active ? ' <span class="status-tag inactive">⛔ ' + t('st_inactive') + '</span>' : '') +
       '</div>' +
-      '<div class="text-xs text-slate-400 truncate" dir="ltr">' + esc(u.email) +
-      ' <span class="text-[10px]">· ' + t('created_in', { d: fmtDate(u.created_at) }) + '</span></div>' +
-      '<div class="flex flex-wrap items-center gap-1 mt-1">' +
-      '<span class="text-[10px] font-bold rounded px-1.5 py-0.5 ' + badgeCls + '">' + t(badgeKey) + '</span>' +
+      '<div class="account-email" dir="ltr">' + esc(u.email) + '</div>' +
+      '<div class="account-badges">' +
+      '<span class="role-badge ' + badgeCls + '">' + t(badgeKey) + '</span>' +
       (fac ? facChip(fac) : '') +
       '</div>' +
       permChips(u) +
       '</div>' +
+      (canEdit ? (
+        '<div class="account-actions">' +
+        '<select class="account-select" data-role="' + u.id + '" aria-label="role">' + roleOptions(u) + '</select>' +
+        (showFac ? '<select class="account-select" data-fac="' + u.id + '" aria-label="faculty">' + facultyOptions(u) + '</select>' : '') +
+        '<button type="button" data-edit="' + u.id + '" class="btn btn-small btn-secondary">📝 ' + t('btn_edit_acc') + '</button>' +
+        '<button type="button" data-perm="' + u.id + '" class="btn btn-small btn-secondary">⚙️ ' + t('btn_perm') + '</button>' +
+        '<button type="button" data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="btn btn-small ' + (active ? 'btn-secondary' : 'btn-primary') + '">' +
+        (active ? '⏸️ ' + t('btn_suspend') : '▶️ ' + t('btn_activate')) + '</button>' +
+        '<button type="button" data-del="' + u.id + '" data-email="' + esc(u.email) + '" class="btn btn-small btn-danger">' + t('btn_delete_word') + '</button>' +
+        '</div>'
+      ) : '') +
       '</div>' +
-      (u.is_you
-        ? ''
-        : '<div class="flex flex-col items-end gap-1.5 shrink-0">' +
-          '<button data-perm-toggle="' + u.id + '" class="text-xs font-bold rounded-lg px-2.5 py-1 text-primary-700 hover:bg-primary-50 whitespace-nowrap">🛡️ ' + t('btn_perm') + '</button>' +
-          '<button data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="text-xs font-bold rounded-lg px-2.5 py-1 whitespace-nowrap ' +
-            (active ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50') + '">' +
-            (active ? '⏸️ ' + t('btn_suspend') : '▶️ ' + t('btn_activate')) + '</button>' +
-          '<button data-del="' + u.id + '" data-email="' + esc(u.email) + '" class="text-xs text-red-600 font-bold hover:bg-red-50 rounded-lg px-2.5 py-1 whitespace-nowrap">' + t('btn_delete_word') + '</button>' +
-          '</div>') +
-      '</div>' +
-      (u.is_you ? '' : '<div id="perm-' + u.id + '" class="hidden mt-3 border-t border-slate-100 pt-3">' + permEditorHtml(u) + '</div>') +
+      (canEdit ? '<div id="perm-' + u.id + '" class="perm-box hidden"></div>' : '') +
       '</div>'
     );
   }
 
   function bindAccountControls(root) {
-    root.querySelectorAll('[data-perm-toggle]').forEach((b) =>
+    root.querySelectorAll('[data-role]').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        if (!sel.value) return;
+        if (sel.value === 'admin' || sel.value === 'admin_rectora') {
+          changeUserField(sel.dataset.role, { role: sel.value, permissions: PRESETS[sel.value] }, t('t_role_confirm', { label: t('acc_role_' + (sel.value === 'admin' ? 'admin' : 'rectora')) }));
+        } else {
+          changeUserField(sel.dataset.role, { role: sel.value }, t('t_role_confirm', { label: t('acc_role_' + (sel.value === 'super_admin' ? 'super' : sel.value === 'faculty_admin' ? 'fadmin' : sel.value === 'opener' ? 'open' : 'viewer')) }));
+        }
+      })
+    );
+    root.querySelectorAll('[data-fac]').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        changeUserField(sel.dataset.fac, { faculty_id: sel.value || null });
+      })
+    );
+    root.querySelectorAll('[data-edit]').forEach((b) =>
       b.addEventListener('click', () => {
-        const box = $('perm-' + b.dataset.permToggle);
-        if (box) box.classList.toggle('hidden');
+        const u = (A.users || []).find((x) => x.id === b.dataset.edit);
+        if (u) openEditAccount(u);
+      })
+    );
+    root.querySelectorAll('[data-perm]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const uid = b.dataset.perm;
+        const box = $('perm-' + uid);
+        if (!box) return;
+        const willOpen = box.classList.contains('hidden');
+        box.classList.toggle('hidden', !willOpen);
+        b.classList.toggle('btn-primary', willOpen);
+        if (willOpen && !box.dataset.loaded) {
+          const u = (A.users || []).find((x) => x.id === uid);
+          if (u) {
+            box.innerHTML = permEditorHtml(u);
+            bindPermEditor(box);
+            box.dataset.loaded = '1';
+          }
+        }
       })
     );
     root.querySelectorAll('[data-toggle]').forEach((b) =>
@@ -2742,7 +2529,6 @@
     root.querySelectorAll('[data-del]').forEach((b) =>
       b.addEventListener('click', () => deleteAccount(b.dataset.del, b.dataset.email))
     );
-    root.querySelectorAll('[id^="perm-"]').forEach((box) => bindPermEditor(box));
   }
 
   // تحديث عام لحقل من حقول الحساب (حالة)
@@ -2761,6 +2547,61 @@
     const active = b.dataset.active === '1';
     changeUserField(b.dataset.toggle, { is_active: !active },
       active ? t('t_suspend_confirm') : t('t_activate_confirm'));
+  }
+
+  function openEditAccount(u) {
+    const idEl = $('ea-id');
+    const nameEl = $('ea-name');
+    const emailEl = $('ea-email');
+    const passEl = $('ea-pass');
+    const roleEl = $('ea-role');
+    const facEl = $('ea-faculty');
+    const facBox = $('ea-faculty-box');
+    const activeEl = $('ea-active');
+    if (!idEl || !nameEl || !emailEl || !passEl || !roleEl || !facEl || !activeEl) return;
+    idEl.value = u.id;
+    nameEl.value = u.full_name || '';
+    emailEl.value = u.email || '';
+    passEl.value = '';
+    roleEl.innerHTML = roleOptions(u);
+    facEl.innerHTML = facultyOptions(u);
+    const canFac = A.scopeOf() === 'all';
+    facEl.disabled = !canFac;
+    if (facBox) facBox.classList.toggle('hidden', !canFac);
+    activeEl.checked = u.is_active !== false;
+    openModal('edit-account-modal');
+  }
+
+  function saveEditAccount() {
+    const id = $('ea-id').value;
+    const full_name = $('ea-name').value.trim();
+    const email = $('ea-email').value.trim();
+    const password = $('ea-pass').value;
+    const role = $('ea-role').value;
+    const active = $('ea-active').checked;
+    if (!id) return;
+    if (!full_name) return toast(t('t_fill'), 'error');
+    if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email)) return toast(t('t_bad_email'), 'error');
+    if (password && password.length < 8) return toast(t('acc_pass_short'), 'error');
+    if (!role) return toast(t('t_fill'), 'error');
+    const patch = { action: 'update', id, full_name, email, is_active: active, role };
+    if (password) patch.password = password;
+    if (A.scopeOf() === 'all') patch.faculty_id = $('ea-faculty').value || null;
+    if (role === 'admin' || role === 'admin_rectora') patch.permissions = PRESETS[role];
+    const btn = $('ea-save-btn');
+    if (btn) btn.disabled = true;
+    DB.functions.invoke('manage-users', { body: patch }).then(({ data, error }) => {
+      if (btn) btn.disabled = false;
+      if (error) return toast(t('t_role_change_fail', { msg: error.message || error }), 'error', 5000);
+      if (data && data.error === 'cannot_change_self') return toast(t('t_role_cannot_self'), 'error');
+      if (data && data.error) return toast(t('t_fail', { msg: data.error }), 'error', 5000);
+      closeModal('edit-account-modal');
+      toast(t('t_acc_updated'), 'success');
+      A.refreshAccounts();
+    }).catch((err) => {
+      if (btn) btn.disabled = false;
+      toast(t('t_fail', { msg: err.message || err }), 'error', 5000);
+    });
   }
 
   function rejectUser(id, email) {

@@ -4,531 +4,565 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>جامعة عين تموشنت بلحاج بوشعيب — بوابة مكتب الصفقات</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7', 400: '#34d399',
-              500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b'
-            }
-          },
-          fontFamily: { sans: ['Cairo', 'system-ui', 'Segoe UI', 'Tahoma', 'sans-serif'] }
-        }
-      }
-    };
-  </script>
-  <link rel="stylesheet" href="css/styles.css">
-  <!-- المكتبات -->
+  <link rel="stylesheet" href="css/tailwind.css?v=gotto16">
+  <link rel="stylesheet" href="css/app.css?v=gotto16">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-emerald-50 via-white to-teal-50 min-h-screen text-slate-800">
+<body>
 
-  <!-- ===== شريط الإعداد (يظهر إذا لم يُملا config) ===== -->
-  <div id="setup-banner" class="hidden max-w-xl mx-auto mt-10 mx-4 bg-amber-50 border border-amber-300 rounded-2xl p-5 shadow-sm">
-    <h2 class="font-black text-amber-800 mb-3" data-i18n="setup_title">⚙️ التطبيق غير موصول بقاعدة البيانات</h2>
-    <ol class="text-sm text-amber-800 space-y-2 list-decimal pr-5 leading-relaxed">
+  <!-- ===== شريط الإعداد ===== -->
+  <div id="setup-banner" class="setup-banner hidden">
+    <h2 data-i18n="setup_title">⚙️ التطبيق غير موصول بقاعدة البيانات</h2>
+    <ol class="setup-list">
       <li data-i18n-html="setup_s1">أنشئ مشروعًا مجانيًا على <span dir="ltr">supabase.com</span></li>
-      <li data-i18n-html="setup_s2">افتح <b>SQL Editor</b> وشغّل محتوى الملف
-        <code class="text-xs bg-amber-100 px-1.5 py-0.5 rounded" dir="ltr">supabase/migrations/001_initial_schema.sql</code></li>
-      <li data-i18n-html="setup_s3">من <b>Project Settings → API</b> انسخ <b>Project URL</b> و <b>anon key</b> إلى الملف
-        <code class="text-xs bg-amber-100 px-1.5 py-0.5 rounded" dir="ltr">js/config.js</code></li>
+      <li data-i18n-html="setup_s2">افتح <b>SQL Editor</b> وشغّل محتوى الملف <code dir="ltr">supabase/migrations/001_initial_schema.sql</code></li>
+      <li data-i18n-html="setup_s3">من <b>Project Settings → API</b> انسخ <b>Project URL</b> و <b>anon key</b> إلى الملف <code dir="ltr">js/config.js</code></li>
       <li data-i18n="setup_s4">حدّث هذه الصفحة</li>
     </ol>
-    <p class="text-xs text-amber-600 mt-3" data-i18n-html="setup_tip">💡 للتجربة المحلية: شغّل <code dir="ltr">npx serve</code> داخل مجلد المشروع وافتح <code dir="ltr">http://localhost:3000</code></p>
+    <p class="setup-tip" data-i18n-html="setup_tip">💡 للتجربة المحلية: شغّل <code dir="ltr">npx serve</code> داخل مجلد المشروع وافتح <code dir="ltr">http://localhost:3000</code></p>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- صفحة المتعامل (?open=UUID) — نظيفة بدون أي تبويبات            -->
-  <!-- ============================================================ -->
+  <!-- ===== صفحة المتعامل ===== -->
   <div id="page-download" class="hidden">
-    <div id="download-root" class="max-w-lg mx-auto px-4 py-8"></div>
-    <footer class="text-center text-[11px] text-slate-400 pb-6"><span data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</span> — <span data-i18n="app_name">بوابة مكتب الصفقات</span></footer>
+    <div id="download-root" class="download-root"></div>
+    <footer class="foot"><span data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</span> — <span data-i18n="app_name">بوابة مكتب الصفقات</span></footer>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- تطبيق المدير (بدون ?open=)                                    -->
-  <!-- ============================================================ -->
+  <!-- ===== تطبيق المدير ===== -->
   <div id="page-admin" class="hidden">
 
-    <!-- ===== شاشة تسجيل الدخول ===== -->
-    <div id="login-card" class="hidden min-h-screen flex items-center justify-center px-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-        <div class="bg-gradient-to-l from-emerald-600 to-teal-500 text-white px-6 py-5 text-center">
-          <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 object-contain mb-2 bg-white rounded-full p-1.5 shadow">
-          <h2 class="font-black" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</h2>
-          <p class="text-[11px] text-white/80 mt-0.5" data-i18n="login_sub">بوابة مكتب الصفقات — دخول موظف المكتب فقط</p>
+    <!-- تسجيل الدخول -->
+    <div id="login-card" class="screen-center hidden">
+      <div class="login-box">
+        <div class="login-head">
+          <img src="img/logo.png" alt="شعار الجامعة" class="login-logo">
+          <h2 data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</h2>
+          <p data-i18n="login_sub">بوابة مكتب الصفقات — دخول موظف المكتب فقط</p>
         </div>
-        <div class="p-6">
-        <form id="login-form" class="space-y-3">
-          <div>
-            <label class="lbl" for="login-email" data-i18n="login_email">البريد الإلكتروني</label>
-            <input id="login-email" class="inp" type="email" dir="ltr" required autocomplete="username">
-          </div>
-          <div>
-            <label class="lbl" for="login-password" data-i18n="login_pass">كلمة المرور</label>
-            <input id="login-password" class="inp" type="password" dir="ltr" required autocomplete="current-password">
-          </div>
-          <button type="submit" class="btn-primary w-full" data-i18n="login_btn">دخول</button>
-        </form>
-        <div class="mt-4 text-center">
-          <p class="text-[11px] text-slate-400 leading-relaxed" data-i18n="login_noacc">لا تملك حسابًا؟ يمكنك تقديم طلب حساب وسيتم تفعيله بعد موافقة الإدارة.</p>
-          <button id="req-acc-btn" type="button" class="text-xs font-bold text-primary-700 hover:underline mt-1.5" data-i18n="login_req_acc">📨 طلب حساب جديد</button>
-        </div>
-        <div id="req-acc-box" class="hidden mt-3 border-t border-slate-100 pt-3">
-          <form id="req-acc-form" class="space-y-2">
-            <input id="rq-name" class="inp" data-i18n-ph="rq_name_ph" placeholder="الاسم الكامل" required maxlength="100">
-            <input id="rq-email" class="inp" type="email" dir="ltr" data-i18n-ph="login_email" placeholder="البريد الإلكتروني" required>
-            <input id="rq-pass" class="inp" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
-            <button type="submit" class="btn-primary w-full !py-2 !text-xs" data-i18n="rq_submit">📨 إرسال الطلب</button>
+        <div class="login-body">
+          <form id="login-form" class="form">
+            <div class="field">
+              <label class="label" for="login-email" data-i18n="login_email">البريد الإلكتروني</label>
+              <input id="login-email" class="input" type="email" dir="ltr" required autocomplete="username">
+            </div>
+            <div class="field">
+              <label class="label" for="login-password" data-i18n="login_pass">كلمة المرور</label>
+              <input id="login-password" class="input" type="password" dir="ltr" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" data-i18n="login_btn">دخول</button>
           </form>
-          <p id="rq-msg" class="hidden text-[11px] mt-2 leading-relaxed"></p>
-        </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== شاشة: حساب بانتظار الموافقة ===== -->
-    <div id="pending-card" class="hidden min-h-screen flex items-center justify-center px-4">
-      <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6 w-full max-w-sm text-center">
-        <div class="text-4xl mb-3">🕓</div>
-        <h2 class="font-black text-slate-800 mb-2" data-i18n="pending_t">حسابك بانتظار الموافقة</h2>
-        <p class="text-sm text-slate-500 leading-relaxed" data-i18n="pending_s">تم استلام طلب حسابك وسيتم تفعيله من طرف إدارة الجامعة. بعد الموافقة يمكنك الدخول بنفس البريد وكلمة المرور.</p>
-        <button id="pending-logout" class="btn-secondary w-full mt-4" data-i18n="logout">تسجيل الخروج</button>
-      </div>
-    </div>
-
-    <!-- ===== تطبيق المدير (بعد تسجيل الدخول) ===== -->
-    <div id="authed-app" class="hidden">
-    <header class="sticky top-0 z-40 bg-gradient-to-l from-emerald-700 via-teal-600 to-emerald-600 text-white shadow-md">
-      <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <img src="img/logo.png" alt="شعار الجامعة" class="h-9 w-9 sm:h-10 sm:w-10 object-contain bg-white/95 rounded-lg p-0.5 shrink-0 shadow">
-          <div class="min-w-0">
-            <h1 class="font-black text-base sm:text-lg leading-tight" data-i18n="app_name">بوابة مكتب الصفقات</h1>
-            <p class="text-[11px] text-white/75 font-semibold hidden sm:block" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
+          <div class="login-extra">
+            <p data-i18n="login_noacc">لا تملك حسابًا؟ يمكنك تقديم طلب حساب وسيتم تفعيله بعد موافقة الإدارة.</p>
+            <button id="forgot-pass-btn" type="button" class="link-btn" data-i18n="forgot_btn">📧 نسيت كلمة المرور؟</button>
+            <button id="req-acc-btn" type="button" class="link-btn" data-i18n="login_req_acc">📨 طلب حساب جديد</button>
+          </div>
+          <div id="req-acc-box" class="req-box hidden">
+            <form id="req-acc-form" class="form">
+              <input id="rq-name" class="input" data-i18n-ph="rq_name_ph" placeholder="الاسم الكامل" required maxlength="100">
+              <input id="rq-email" class="input" type="email" dir="ltr" data-i18n-ph="login_email" placeholder="البريد الإلكتروني" required>
+              <input id="rq-pass" class="input" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
+              <button type="submit" class="btn btn-primary btn-block btn-small" data-i18n="rq_submit">📨 إرسال الطلب</button>
+            </form>
+            <p id="rq-msg" class="req-msg hidden"></p>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 sm:gap-2">
-          <span id="role-badge" class="hidden text-[10px] font-bold bg-white/20 text-white rounded-full px-2 py-0.5">👁️ لجنة — عرض فقط</span>
-          <span id="user-name" class="text-[11px] text-white/70 hidden sm:inline-block max-w-[110px] truncate" dir="ltr"></span>
-          <div class="relative">
-            <button id="remind-btn" type="button" class="relative text-lg leading-none hover:bg-white/15 rounded-lg p-1.5" data-i18n-title="rm_title">
-              <span id="remind-ico">🔔</span>
-              <span id="remind-badge" class="hidden absolute -top-1 -left-1 text-[9px] font-black bg-amber-400 text-amber-950 rounded-full min-w-[16px] h-4 px-1 items-center justify-center">0</span>
-            </button>
-            <div id="remind-panel" class="hidden fixed z-[70] inset-x-3 top-[76px] sm:inset-x-auto sm:left-3 sm:top-[68px] sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800"></div>
-          </div>
-          <button id="lang-btn" class="text-xs bg-white/15 hover:bg-white/25 text-white rounded-lg px-2.5 py-1 font-semibold" title="Changer de langue">🌐 FR</button>
-          <button id="logout-btn" class="text-xs bg-white/15 hover:bg-white/25 text-white rounded-lg px-3 py-1 font-semibold" data-i18n="logout">تسجيل الخروج</button>
-        </div>
       </div>
-    </header>
-
-    <!-- ===== تنبيه: قاعدة البيانات غير محدثة ===== -->
-    <div id="schema-banner" class="hidden max-w-3xl mx-auto mt-3 mx-4 bg-red-50 border border-red-300 rounded-xl p-3 text-sm text-red-800 leading-relaxed" data-i18n-html="schema_banner">
-      ⚠️ <b>قاعدة البيانات غير محدثة</b> — إنشاء/حذف الاستشارات سيفشل. افتح Supabase ← <b>SQL Editor</b> وشغّل محتوى الملف
-      <code class="bg-red-100 px-1.5 py-0.5 rounded text-xs" dir="ltr">supabase\migrations\006_full_update.sql</code>
-      ثم حدّث هذه الصفحة (F5).
     </div>
 
-    <main class="max-w-3xl mx-auto px-4 py-5 pb-28">
+    <!-- حساب قيد الانتظار -->
+    <div id="pending-card" class="screen-center hidden">
+      <div class="pending-box">
+        <div class="pending-icon">🕓</div>
+        <h2 data-i18n="pending_t">حسابك بانتظار الموافقة</h2>
+        <p data-i18n="pending_s">تم استلام طلب حسابك وسيتم تفعيله من طرف إدارة الجامعة. بعد الموافقة يمكنك الدخول بنفس البريد وكلمة المرور.</p>
+        <button id="pending-logout" class="btn btn-secondary btn-block" data-i18n="logout">تسجيل الخروج</button>
+      </div>
+    </div>
 
-      <!-- ===== تبويب: لوحة الإحصائيات ===== -->
-      <section id="tab-dashboard" class="hidden">
-        <div id="db-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mt-3">
-          <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="db_upcoming">قريبة من الفتح</h3>
-          <div id="db-upcoming" class="space-y-2"></div>
+    <!-- بعد تسجيل الدخول -->
+    <div id="authed-app" class="app hidden">
+
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <img src="img/logo.png" alt="شعار الجامعة" class="brand-logo">
+            <div class="brand-text">
+              <h1 data-i18n="app_name">بوابة مكتب الصفقات</h1>
+              <p data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</p>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <div class="user-info">
+              <span id="user-name" class="user-name" dir="auto"></span>
+              <span id="role-badge" class="role-badge hidden">👁️ لجنة — عرض فقط</span>
+            </div>
+            <div class="settings-wrap" id="settings-wrap">
+              <button id="settings-btn" type="button" class="icon-btn" data-i18n-title="side_settings" title="الإعدادات">
+                <span>⚙️</span>
+              </button>
+              <div id="settings-menu" class="settings-menu hidden">
+                <div class="settings-label" data-i18n="side_settings">الإعدادات</div>
+                <button class="settings-link nav-btn" data-tab="tab-accounts"><span class="side-ico">👥</span><span data-i18n="nav_accounts">إدارة الحسابات</span></button>
+                <button class="settings-link nav-btn" data-tab="tab-backup"><span class="side-ico">💾</span><span data-i18n="nav_backup">النسخ الاحتياطي</span></button>
+                <button id="cp-open-btn" class="settings-link" type="button"><span class="side-ico">🔒</span><span data-i18n="cp_open">تغيير كلمة المرور</span></button>
+              </div>
+            </div>
+            <div class="bell-wrap">
+              <button id="remind-btn" type="button" class="icon-btn" data-i18n-title="rm_title">
+                <span id="remind-ico">🔔</span>
+                <span id="remind-badge" class="bell-badge hidden">0</span>
+              </button>
+              <div id="remind-panel" class="remind-panel hidden"></div>
+            </div>
+            <button id="lang-btn" class="top-btn" title="Changer de langue">🌐 FR</button>
+            <button id="logout-btn" class="top-btn" data-i18n="logout">تسجيل الخروج</button>
+          </div>
         </div>
-      </section>
+      </header>
 
-      <!-- ===== تبويب: إنشاء استشارة ===== -->
-      <section id="tab-create">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h2 class="font-black text-slate-800 mb-1" data-i18n="create_title">📝 إنشاء استشارة / طلب عروض</h2>
-          <p class="text-xs text-slate-400 mb-4" data-i18n="create_sub">بعد النشر مباشرةً ستظهر بطاقة QR الجاهزة للطباعة والتسليم للمتعامل.</p>
-          <form id="create-form" class="space-y-4">
-            <div>
-              <label class="lbl" data-i18n="f_kind">نوع الصفقة *</label>
-              <div class="grid grid-cols-2 gap-2">
-                <label class="kind-opt"><input type="radio" name="f-kind" value="consultation" class="sr-only" checked><span data-i18n="kind_consultation">📄 استشارة</span></label>
-                <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="lbl" for="f-faculty" data-i18n="f_faculty">المكتب *</label>
-                <select id="f-faculty" class="inp"></select>
-              </div>
-              <div>
-                <label class="lbl" for="f-reference" data-i18n="f_reference">الرقم *</label>
-                <input id="f-reference" class="inp" dir="ltr" placeholder="N° 06 /U.A.T/2026" required>
-              </div>
-              <div>
-                <label class="lbl" for="f-duration" data-i18n="f_duration">المدة</label>
-                <input id="f-duration" class="inp" data-i18n-ph="f_duration_ph" placeholder="60 يومًا">
-              </div>
-            </div>
-            <div>
-              <label class="lbl" for="f-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
-              <input id="f-title-fr" class="inp" dir="ltr" placeholder="Consultation — Fourniture d’équipements de laboratoire" required>
-            </div>
-            <div>
-              <label class="lbl" for="f-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
-              <input id="f-title" class="inp" data-i18n-ph="f_title_ar_ph" placeholder="يُملأ تلقائيًا من الفرنسي…" required>
-              <div class="flex gap-2 mt-2">
-                <button type="button" id="translate-title-fr-ar-btn" class="btn-secondary flex-1" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
-                <button type="button" id="translate-title-ar-fr-btn" class="btn-secondary flex-1" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
-              </div>
-            </div>
-            <button type="button" id="suggest-run" class="btn-secondary w-full" data-i18n="ai_run">🤖 توليد الاقتراحات</button>
-            <div id="suggest-box" class="hidden rounded-2xl border border-primary-200 bg-primary-50 p-3">
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <h3 class="text-xs font-black text-primary-800" data-i18n="ai_suggest_title">🤖 اقتراحات ذكية للتنبيه</h3>
-                <div class="flex gap-2">
-                  <button type="button" id="suggest-select-all" class="text-[11px] font-bold text-primary-700 hover:underline" data-i18n="ai_select_all">اختيار الكل</button>
-                  <button type="button" id="suggest-clear" class="text-[11px] font-bold text-primary-700 hover:underline" data-i18n="ai_clear">مسح</button>
-                  <button type="button" id="suggest-refresh" class="text-[11px] font-bold text-primary-700 hover:underline" data-i18n="ai_refresh">تحديث</button>
+      <div id="schema-banner" class="schema-banner hidden" data-i18n-html="schema_banner">
+        ⚠️ <b>قاعدة البيانات غير محدثة</b> — إنشاء/حذف الاستشارات سيفشل. افتح Supabase ← <b>SQL Editor</b> وشغّل محتوى الملف
+        <code dir="ltr">supabase\migrations\006_full_update.sql</code>
+        ثم حدّث هذه الصفحة (F5).
+      </div>
+
+      <div class="app-body">
+      <aside class="sidebar" aria-label="القائمة">
+        <div class="side-section">
+          <div class="side-label" data-i18n="side_main">القائمة</div>
+          <button class="side-link nav-btn nav-active" data-tab="tab-dashboard"><span class="side-ico">📊</span><span data-i18n="nav_dashboard">اللوحة</span></button>
+          <button class="side-link nav-btn" data-tab="tab-create"><span class="side-ico">📝</span><span data-i18n="nav_create">إنشاء</span></button>
+          <button class="side-link nav-btn" data-tab="tab-tenders"><span class="side-ico">📥</span><span data-i18n="nav_tenders">الاستشارات</span></button>
+          <button class="side-link nav-btn" data-tab="tab-opening"><span class="side-ico">🔓</span><span data-i18n="nav_opening">الفتح</span></button>
+        </div>
+      </aside>
+
+      <main class="content">
+
+        <!-- لوحة -->
+        <section id="tab-dashboard" class="tab-panel hidden">
+          <div id="db-stats" class="stat-grid"></div>
+          <div class="card">
+            <h3 class="card-title" data-i18n="db_upcoming">قريبة من الفتح</h3>
+            <div id="db-upcoming" class="stack"></div>
+          </div>
+        </section>
+
+        <!-- إنشاء -->
+        <section id="tab-create" class="tab-panel">
+          <div class="card">
+            <h2 class="card-title" data-i18n="create_title">📝 إنشاء استشارة / طلب عروض</h2>
+            <p class="card-sub" data-i18n="create_sub">بعد النشر مباشرةً ستظهر بطاقة QR الجاهزة للطباعة والتسليم للمتعامل.</p>
+            <form id="create-form" class="form">
+              <div class="field">
+                <label class="label" data-i18n="f_kind">نوع الصفقة *</label>
+                <div class="grid-2">
+                  <label class="kind-opt"><input type="radio" name="f-kind" value="consultation" class="sr-only" checked><span data-i18n="kind_consultation">📄 استشارة</span></label>
+                  <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
                 </div>
               </div>
-              <p class="text-[11px] text-primary-700/70 mb-2" data-i18n="ai_suggest_sub">أرقام مقترحة من تحليل عنوان الاستشارة + تحميلات QR السابقة</p>
-              <div id="suggest-analysis" class="hidden mb-2 rounded-xl bg-white border border-primary-100 px-3 py-2 text-[11px] text-primary-800"></div>
-              <div id="suggest-list" class="space-y-2"></div>
-            </div>
-            <div>
-              <label class="lbl" data-i18n="f_opening">موعد فتح الأظرفة *</label>
-              <div class="grid grid-cols-2 gap-2">
-                <input id="f-date" class="inp" type="date" required>
-                <input id="f-time" class="inp" type="time" value="10:00" required>
+              <div class="grid-2">
+                <div class="field">
+                  <label class="label" for="f-faculty" data-i18n="f_faculty">المكتب *</label>
+                  <select id="f-faculty" class="input"></select>
+                </div>
+                <div class="field">
+                  <label class="label" for="f-reference" data-i18n="f_reference">الرقم *</label>
+                  <input id="f-reference" class="input" dir="ltr" placeholder="N° 06 /U.A.T/2026" required>
+                </div>
               </div>
-              <p class="text-[11px] text-slate-400 mt-1" data-i18n="f_opening_note">التاريخ ثم الوقت — إن تركت الوقت فارغًا يُعتمد 10:00 صباحًا</p>
-            </div>
-            <div>
-              <label class="lbl" for="f-file" data-i18n="f_file">دفتر الشروط (PDF — بحد أقصى 50MB) *</label>
-              <input id="f-file" type="file" accept="application/pdf" required
-                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-semibold file:cursor-pointer cursor-pointer">
-              <p id="file-info" class="text-xs text-slate-400 mt-1"></p>
-            </div>
-            <button id="create-btn" type="submit" class="btn-primary w-full" data-i18n="create_btn">🚀 نشر وتوليد QR</button>
-          </form>
-        </div>
-      </section>
-
-      <!-- ===== تبويب: الاستشارات ===== -->
-      <section id="tab-tenders" class="hidden">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="font-black text-slate-800" data-i18n="tenders_title">📥 الاستشارات / طلبات العروض</h2>
-          <input id="tender-search" class="inp !w-44 sm:!w-56" data-i18n-ph="tenders_search_ph" placeholder="🔍 بحث بالرقم أو العنوان">
-        </div>
-        <div id="tenders-stats" class="flex flex-wrap gap-1.5 mb-3"></div>
-        <div id="tenders-list" class="space-y-3"></div>
-        <div id="tenders-pager"></div>
-      </section>
-
-      <!-- ===== تبويب: لجنة فتح الأظرفة ===== -->
-      <section id="tab-opening" class="hidden">
-        <div class="mb-3">
-          <h2 class="font-black text-slate-800" data-i18n="opening_title">🔓 لجنة فتح الأظرفة</h2>
-          <p class="text-xs text-slate-400" data-i18n="opening_sub">ما حان موعد فتحه، المتعاملون الذين حمّلوا، وسجل ما فُتح</p>
-        </div>
-        <div id="opening-list" class="space-y-3"></div>
-      </section>
-
-      <!-- ===== تبويب: الحسابات ===== -->
-      <section id="tab-accounts" class="hidden">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <div>
-            <h2 class="font-black text-slate-800" data-i18n="accounts_title">👥 الحسابات</h2>
-            <p class="text-xs text-slate-400" data-i18n="accounts_sub">صلاحيات دقيقة لكل حساب: نطاق + أفعال — مع طلبات الانتظار</p>
-          </div>
-          <input id="accounts-search" class="inp !w-44 sm:!w-56" data-i18n-ph="acc_search_ph" placeholder="🔍 بحث بالاسم أو البريد">
-        </div>
-        <div id="accounts-chips" class="flex flex-wrap gap-1.5 mb-3"></div>
-        <button id="acc-add-toggle" type="button" class="btn-primary w-full mb-3" data-i18n="acc_add_toggle">➕ إضافة حساب جديد</button>
-        <div id="account-form-box" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-3">
-          <h3 class="font-bold text-slate-700 text-sm mb-3" data-i18n="acc_add_title">إضافة حساب جديد</h3>
-          <form id="account-form" class="space-y-3">
-            <input id="a-name" class="inp" type="text" data-i18n-ph="acc_name_ph" placeholder="الاسم الكامل" required>
-            <input id="a-email" class="inp" type="email" dir="ltr" placeholder="email@univ.dz" required>
-            <input id="a-pass" class="inp" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
-            <div>
-              <label class="lbl" data-i18n="acc_role">نوع الحساب</label>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="super_admin" class="sr-only"><span data-i18n="acc_role_super">👑 إداري جامعي</span></label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="faculty_admin" class="sr-only"><span data-i18n="acc_role_fadmin">🎓 إداري كلية</span></label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open">🔓 لجنة فتح</span></label>
-                <label class="kind-opt !text-[11px]"><input type="radio" name="a-role" value="viewer" class="sr-only" checked><span data-i18n="acc_role_viewer">👤 عرض فقط</span></label>
+              <div class="field">
+                <label class="label" for="f-duration" data-i18n="f_duration">المدة</label>
+                <input id="f-duration" class="input" data-i18n-ph="f_duration_ph" placeholder="60 يومًا">
               </div>
-              <p class="text-[11px] text-slate-400 mt-1" data-i18n="acc_role_desc">جامعي: كل الصلاحيات لكل الكليات — إداري كلية: إنشاء وإدارة في كليته فقط — لجنة عرض/فتح: حسب الدور — عرض فقط: مشاهدة</p>
+              <div class="field">
+                <label class="label" for="f-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
+                <input id="f-title-fr" class="input" dir="ltr" placeholder="Consultation — Fourniture d’équipements de laboratoire" required>
+              </div>
+              <div class="field">
+                <label class="label" for="f-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
+                <input id="f-title" class="input" data-i18n-ph="f_title_ar_ph" placeholder="يُملأ تلقائيًا من الفرنسي…" required>
+                <div class="btn-row">
+                  <button type="button" id="translate-title-fr-ar-btn" class="btn btn-secondary" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
+                  <button type="button" id="translate-title-ar-fr-btn" class="btn btn-secondary" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" data-i18n="f_opening">موعد فتح الأظرفة *</label>
+                <div class="grid-2">
+                  <input id="f-date" class="input" type="date" required>
+                  <input id="f-time" class="input" type="time" value="10:00" required>
+                </div>
+                <p class="hint" data-i18n="f_opening_note">التاريخ ثم الوقت — إن تركت الوقت فارغًا يُعتمد 10:00 صباحًا</p>
+              </div>
+              <div class="field">
+                <label class="label" for="f-file" data-i18n="f_file">دفتر الشروط (PDF — بحد أقصى 50MB) *</label>
+                <input id="f-file" type="file" accept="application/pdf" required class="file-input">
+                <p id="file-info" class="hint"></p>
+              </div>
+              <button id="create-btn" type="submit" class="btn btn-primary btn-block" data-i18n="create_btn">🚀 نشر وتوليد QR</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- الاستشارات -->
+        <section id="tab-tenders" class="tab-panel hidden">
+          <div class="list-head">
+            <h2 class="card-title" data-i18n="tenders_title">📥 الاستشارات / طلبات العروض</h2>
+            <input id="tender-search" class="input search-input" data-i18n-ph="tenders_search_ph" placeholder="🔍 بحث بالرقم أو العنوان">
+          </div>
+          <div id="tenders-stats" class="chips"></div>
+          <div id="tenders-list" class="stack"></div>
+          <div id="tenders-pager" class="pager"></div>
+        </section>
+
+        <!-- فتح الأظرفة -->
+        <section id="tab-opening" class="tab-panel hidden">
+          <div class="card">
+            <h2 class="card-title" data-i18n="opening_title">🔓 لجنة فتح الأظرفة</h2>
+            <p class="card-sub" data-i18n="opening_sub">ما حان موعد فتحه، المتعاملون الذين حمّلوا، وسجل ما فُتح</p>
+            <div id="opening-list" class="stack"></div>
+          </div>
+        </section>
+
+        <!-- الحسابات -->
+        <section id="tab-accounts" class="tab-panel hidden">
+          <div class="list-head">
+            <div>
+              <h2 class="card-title" data-i18n="accounts_title">👥 الحسابات</h2>
+              <p class="card-sub" data-i18n="accounts_sub">إدارة مباشرة: الدور، المكتب، التفعيل، الحذف — مع طلبات الانتظار</p>
             </div>
-            <div id="a-faculty-box" class="hidden">
-              <label class="lbl" for="a-faculty" data-i18n="acc_faculty">المكتب</label>
-              <select id="a-faculty" class="inp"></select>
-              <p class="text-[11px] text-slate-400 mt-1" data-i18n="acc_faculty_note">بدون تحديد = الحساب مرتبط بكلية المنشئ</p>
-            </div>
-            <button type="submit" class="btn-primary w-full" data-i18n="acc_add_btn">➕ إضافة الحساب</button>
-          </form>
+            <input id="accounts-search" class="input search-input" data-i18n-ph="acc_search_ph" placeholder="🔍 بحث بالاسم أو البريد">
+          </div>
+          <div id="accounts-chips" class="chips"></div>
+          <button id="acc-add-toggle" type="button" class="btn btn-primary btn-block" data-i18n="acc_add_toggle">➕ إضافة حساب جديد</button>
+          <div id="account-form-box" class="card account-form-box hidden">
+            <h3 class="card-title" data-i18n="acc_add_title">إضافة حساب جديد</h3>
+            <form id="account-form" class="form">
+              <input id="a-name" class="input" type="text" data-i18n-ph="acc_name_ph" placeholder="الاسم الكامل" required>
+              <input id="a-email" class="input" type="email" dir="ltr" placeholder="email@univ.dz" required>
+              <input id="a-pass" class="input" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
+              <div class="field">
+                <label class="label" data-i18n="acc_role">نوع الحساب</label>
+                <div class="grid-4">
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="super_admin" class="sr-only"><span data-i18n="acc_role_super">👑 المطور</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="admin" class="sr-only"><span data-i18n="acc_role_admin">🧑‍💼 المسؤول</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="admin_rectora" class="sr-only"><span data-i18n="acc_role_rectora">🏛️ موظف رئاسة الجامعة</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="faculty_admin" class="sr-only"><span data-i18n="acc_role_fadmin">🎓 موظف الكلية</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open">🔓 لجنة فتح الأظرفة</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="viewer" class="sr-only" checked><span data-i18n="acc_role_viewer">👤 مشاهد</span></label>
+                </div>
+                <p class="hint" data-i18n="acc_role_desc">جامعي: كل الصلاحيات لكل الكليات — إداري كلية: إنشاء وإدارة في كليته فقط — لجنة عرض/فتح: حسب الدور — عرض فقط: مشاهدة</p>
+              </div>
+              <div id="a-faculty-box" class="field hidden">
+                <label class="label" for="a-faculty" data-i18n="acc_faculty">المكتب</label>
+                <select id="a-faculty" class="input"></select>
+                <p class="hint" data-i18n="acc_faculty_note">بدون تحديد = الحساب مرتبط بكلية المنشئ</p>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block" data-i18n="acc_add_btn">➕ إضافة الحساب</button>
+            </form>
+          </div>
+          <div id="pending-list" class="stack"></div>
+          <div id="accounts-list" class="account-list"></div>
+        </section>
+
+        <!-- النسخ الاحتياطي -->
+        <section id="tab-backup" class="tab-panel hidden">
+          <div class="card">
+            <h2 class="card-title" data-i18n="bk_title">💾 النسخ الاحتياطي</h2>
+            <p class="card-sub" data-i18n="bk_sub">حمّل كل البيانات (الاستشارات + سجل التحميلات + الحسابات) إلى حاسوبك — ثلاث ملفات</p>
+            <button id="backup-btn" class="btn btn-primary btn-block" data-i18n="bk_btn">⬇️ تحميل النسخة الاحتياطية</button>
+          </div>
+          <div class="card restore-card">
+            <h2 class="card-title" data-i18n="rs_title">♻️ الاستعادة</h2>
+            <p class="card-sub" data-i18n="rs_sub">استرجاع البيانات من ملفات نسخة سابقة — سيُستبدل محتوى الموقع بما في الملفات</p>
+            <input id="restore-files" type="file" multiple accept=".json,.csv" class="file-input">
+            <div id="restore-summary" class="restore-summary hidden"></div>
+            <button id="restore-btn" class="btn btn-danger btn-block" data-i18n="rs_btn">♻️ استعادة من الملف</button>
+          </div>
+        </section>
+
+      </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== QR ===== -->
+  <div id="qr-modal" class="modal hidden">
+    <div class="modal-box qr-modal-box">
+      <div class="modal-head qr-head">
+        <span data-i18n="qr_title">بطاقة QR — تُسلَّم للمتعامل</span>
+        <button data-close="qr-modal" class="modal-close">✕</button>
+      </div>
+      <div id="qr-card" class="qr-card">
+        <img src="img/logo.png" alt="شعار الجامعة" class="qr-logo">
+        <div class="qr-univ" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</div>
+        <div class="qr-office" data-i18n="qr_office">مكتب الصفقات — قسيمة تحميل دفتر الشروط</div>
+        <div class="qr-main">
+          <div id="qr-faculty" class="qr-faculty hidden"></div>
+          <div dir="auto" class="qr-ref"><span id="qr-kind">استشارة</span> <span data-i18n="qr_count">عدد: </span><span id="qr-reference"></span></div>
+          <div id="qr-title" dir="auto" class="qr-title"></div>
+          <canvas id="qr-canvas" class="qr-canvas"></canvas>
         </div>
-        <div id="pending-list"></div>
-        <div id="accounts-list" class="space-y-2"></div>
-        <div id="backup-restore-box" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-3">
-          <h3 class="font-bold text-slate-700 text-sm mb-1" data-i18n="bk_title">💾 النسخ الاحتياطي</h3>
-          <p class="text-xs text-slate-400 mb-3" data-i18n="bk_sub">حمّل كل البيانات (الاستشارات + سجل التحميلات + الحسابات) إلى حاسوبك — ثلاث ملفات</p>
-          <button id="backup-btn" class="btn-secondary w-full" data-i18n="bk_btn">⬇️ تحميل النسخة الاحتياطية</button>
-          <div class="border-t border-slate-100 mt-4 pt-4">
-            <h3 class="font-bold text-slate-700 text-sm mb-1" data-i18n="rs_title">♻️ الاستعادة</h3>
-            <p class="text-xs text-slate-400 mb-3" data-i18n="rs_sub">استرجاع البيانات من ملفات نسخة سابقة — سيُستبدل محتوى الموقع بما في الملفات</p>
-            <input id="restore-files" type="file" multiple accept=".json,.csv"
-              class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-50 file:text-red-700 file:font-semibold file:cursor-pointer cursor-pointer">
-            <div id="restore-summary" class="hidden text-xs mt-2"></div>
-            <button id="restore-btn" class="btn-danger w-full mt-3" data-i18n="rs_btn">♻️ استعادة من الملف</button>
+        <div class="qr-grid">
+          <div class="qr-cell">
+            <div class="qr-cell-label" data-i18n="qr_dur_l">المدة:</div>
+            <div class="qr-cell-value" id="qr-duration"></div>
+          </div>
+          <div class="qr-cell">
+            <div class="qr-cell-label" data-i18n="qr_op_l">فتح الأظرفة:</div>
+            <div class="qr-cell-value" id="qr-opening"></div>
           </div>
         </div>
-      </section>
-
-    </main>
-
-    <!-- شريط التنقل السفلي -->
-    <nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,.05)]">
-      <div class="max-w-3xl mx-auto grid grid-cols-4">
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-white nav-active" data-tab="tab-dashboard">
-          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📊</span><span data-i18n="nav_dashboard">اللوحة</span>
-        </button>
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-create">
-          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📝</span><span data-i18n="nav_create">إنشاء</span>
-        </button>
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-tenders">
-          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">📥</span><span data-i18n="nav_tenders" class="leading-tight">الاستشارات / طلبات العروض</span>
-        </button>
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-opening">
-          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">🔓</span><span data-i18n="nav_opening">الفتح</span>
-        </button>
-        <button class="nav-btn py-2 text-center text-[10px] sm:text-xs font-semibold text-slate-500" data-tab="tab-accounts">
-          <span class="block text-base sm:text-lg leading-none mb-0.5 sm:mb-1">👥</span><span data-i18n="nav_accounts">الحسابات</span>
-        </button>
+        <p class="qr-note" data-i18n="qr_note">امسح الرمز بكاميرا الهاتف لفتح صفحة تحميل دفتر الشروط. الرابط المؤقت صالح 10 دقائق، وتُسجَّل بيانات مؤسستك عند كل تحميل.</p>
+        <div class="qr-url" dir="ltr" id="qr-url"></div>
       </div>
-    </nav>
-    </div>
-  </div>
-
-  <!-- ===== نافذة: بطاقة QR ===== -->
-  <div id="qr-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-l from-emerald-600 to-teal-500 text-white no-print sticky top-0 z-10">
-        <span class="font-bold text-sm" data-i18n="qr_title">بطاقة QR — تُسلَّم للمتعامل</span>
-        <button data-close="qr-modal" class="text-xl leading-none opacity-80">✕</button>
-      </div>
-      <div id="qr-card" class="p-5 sm:p-8 text-center bg-white w-[210mm] max-w-full min-h-[297mm] mx-auto flex flex-col">
-        <img src="img/logo.png" alt="شعار الجامعة" class="mx-auto h-16 w-16 sm:h-20 sm:w-20 object-contain mb-3">
-        <div class="font-black text-slate-900 text-2xl sm:text-3xl leading-snug mb-2" data-i18n="univ">جامعة عين تموشنت بلحاج بوشعيب</div>
-        <div class="text-sm sm:text-lg font-bold text-slate-500 mb-6" data-i18n="qr_office">مكتب الصفقات — قسيمة تحميل دفتر الشروط</div>
-        <div class="border-2 border-dashed border-slate-300 rounded-2xl p-4 sm:p-5 bg-slate-50/60 mb-6">
-          <div id="qr-faculty" class="hidden mb-2"></div>
-          <div dir="auto" class="font-black text-slate-900 text-xl sm:text-3xl mb-3"><span id="qr-kind">استشارة</span> <span data-i18n="qr_count">عدد: </span><span id="qr-reference"></span></div>
-          <div id="qr-title" dir="auto" class="text-base sm:text-xl text-slate-700 font-semibold leading-relaxed mb-5"></div>
-          <canvas id="qr-canvas" class="mx-auto rounded-lg border border-slate-200 bg-white p-2 max-w-full h-auto"></canvas>
-        </div>
-        <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
-          <div class="bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200">
-            <div class="text-slate-400 text-sm sm:text-base mb-2" data-i18n="qr_dur_l">المدة:</div>
-            <div class="text-slate-900 font-black text-lg sm:text-2xl break-words" id="qr-duration"></div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200">
-            <div class="text-slate-400 text-sm sm:text-base mb-2" data-i18n="qr_op_l">فتح الأظرفة:</div>
-            <div class="text-slate-900 font-black text-lg sm:text-2xl break-words" id="qr-opening"></div>
-          </div>
-        </div>
-        <p class="text-sm sm:text-base text-slate-600 leading-loose mb-4 px-2 sm:px-4" data-i18n="qr_note">امسح الرمز بكاميرا الهاتف لفتح صفحة تحميل دفتر الشروط. الرابط المؤقت صالح 10 دقائق، وتُسجَّل بيانات مؤسستك عند كل تحميل.</p>
-        <div class="text-sm sm:text-base text-slate-600 font-semibold break-all mt-auto border-t border-slate-200 pt-3" dir="ltr" id="qr-url"></div>
-      </div>
-      <div class="px-4 pb-4 flex gap-2 no-print">
-        <button id="wa-suggested-btn" class="btn-primary w-full mb-2" data-i18n="wa_suggested_btn">📲 واتساب المقترحين</button>
-        <button id="wa-faculty-btn" class="btn-secondary w-full mb-2" data-i18n="wa_faculty_btn">📲 واتساب نفس المكتب</button>
-        <button id="print-qr-btn" class="btn-primary flex-1" data-i18n="print_btn">🖨️ طباعة البطاقة</button>
-        <button data-close="qr-modal" class="btn-secondary" data-i18n="close">إغلاق</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== نافذة: متعاملو نفس المكتب (واتساب) ===== -->
-  <div id="wa-faculty-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-l from-emerald-600 to-teal-500 text-white">
-        <span class="font-bold text-sm" data-i18n="wa_faculty_title">متعاملو نفس المكتب</span>
-        <button data-close="wa-faculty-modal" class="text-xl leading-none opacity-80">✕</button>
-      </div>
-      <div class="px-4 py-2 text-[11px] text-slate-500 border-b border-slate-100" data-i18n="wa_faculty_sub">رسالة خاصة لكل رقم — افتح واتساب ثم أرسل يدويًا</div>
-      <div id="wa-faculty-info" class="px-4 py-2 text-xs font-bold text-primary-700 bg-primary-50 border-b border-primary-100"></div>
-      <div id="wa-faculty-list" class="flex-1 overflow-y-auto divide-y divide-slate-100"></div>
-      <div class="px-4 py-3 border-t border-slate-100 flex gap-2">
-        <button id="wa-faculty-copy" class="btn-secondary flex-1" data-i18n="wa_copy_nums">📋 نسخ الأرقام</button>
-        <button data-close="wa-faculty-modal" class="btn-secondary" data-i18n="close">إغلاق</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== نافذة: سجل التحميلات ===== -->
-  <div id="downloads-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-3 bg-slate-800 text-white">
-        <span id="dl-title" class="font-bold text-sm"></span>
-        <div class="flex items-center gap-2">
-          <button id="dl-csv" class="text-xs bg-slate-700 hover:bg-slate-600 rounded-lg px-3 py-1">⬇️ CSV</button>
-          <button id="dl-pdf" class="text-xs bg-slate-700 hover:bg-slate-600 rounded-lg px-3 py-1">📄 PDF</button>
-          <button data-close="downloads-modal" class="text-xl leading-none opacity-80">✕</button>
+      <div class="modal-foot qr-foot no-print">
+        <div class="btn-row">
+          <button id="print-qr-btn" class="btn btn-primary" data-i18n="print_btn">🖨️ طباعة البطاقة</button>
+          <button data-close="qr-modal" class="btn btn-secondary" data-i18n="close">إغلاق</button>
         </div>
       </div>
-      <div id="dl-rows" class="overflow-auto p-4"></div>
-      <div id="dl-pager" class="px-4 pb-4"></div>
     </div>
   </div>
 
-  <!-- ===== نافذة: تأكيد فتح الأظرفة ===== -->
-  <div id="open-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-red-600 text-white">
-        <h3 class="font-black" data-i18n="open_m_title">⚠️ فتح الأظرفة</h3>
-        <p class="text-xs mt-1 text-red-100 leading-relaxed" data-i18n="open_m_text">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
+  <!-- ===== سجل التحميلات ===== -->
+  <div id="downloads-modal" class="modal hidden">
+    <div class="modal-box dl-modal-box">
+      <div class="modal-head dl-head">
+        <span id="dl-title" class="dl-title"></span>
+        <div class="dl-actions">
+          <button id="dl-csv" class="mini-btn">⬇️ CSV</button>
+          <button id="dl-pdf" class="mini-btn">📄 PDF</button>
+          <button data-close="downloads-modal" class="modal-close">✕</button>
+        </div>
       </div>
-      <div class="p-5">
-        <div id="open-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <label class="lbl" for="open-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
-        <input id="open-ref-input" class="inp" autocomplete="off">
-        <button id="open-confirm-btn" class="btn-danger w-full mt-4" data-i18n="open_m_btn">🔓 تأكيد الفتح والحذف النهائي</button>
-        <button data-close="open-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
-      </div>
+      <div id="dl-rows" class="dl-rows"></div>
+      <div id="dl-pager" class="pager"></div>
     </div>
   </div>
 
-  <!-- ===== نافذة: تغيير دفتر الشروط ===== -->
-  <div id="replace-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-gradient-to-l from-emerald-600 to-teal-500 text-white">
-        <h3 class="font-black" data-i18n="rep_m_title">📄 تغيير دفتر الشروط</h3>
-        <p class="text-xs mt-1 text-primary-100 leading-relaxed" data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
+  <!-- ===== تأكيد الفتح ===== -->
+  <div id="open-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head danger-head">
+        <h3 data-i18n="open_m_title">⚠️ فتح الأظرفة</h3>
+        <p data-i18n="open_m_text">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
       </div>
-      <div class="p-5">
-        <div id="replace-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <input id="replace-file" type="file" accept="application/pdf"
-          class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-semibold file:cursor-pointer cursor-pointer">
-        <p id="replace-file-info" class="text-xs text-slate-400 mt-1"></p>
-        <button id="replace-confirm-btn" class="btn-primary w-full mt-4" data-i18n="rep_m_btn">📤 استبدال الملف</button>
-        <button data-close="replace-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
+      <div class="modal-body">
+        <div id="open-tender-info" class="info-box"></div>
+        <label class="label" for="open-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
+        <input id="open-ref-input" class="input" autocomplete="off">
+        <button id="open-confirm-btn" class="btn btn-danger btn-block" data-i18n="open_m_btn">🔓 تأكيد الفتح والحذف النهائي</button>
+        <button data-close="open-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== نافذة: حذف الاستشارة ===== -->
-  <div id="delete-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-red-600 text-white">
-        <h3 class="font-black" data-i18n="del_m_title">🗑️ حذف الاستشارة</h3>
-        <p class="text-xs mt-1 text-red-100 leading-relaxed" data-i18n="del_m_text">سيُحذف ملف دفتر الشروط (إن وُجد) مع الاستشارة وجميع سجل تحميلاتها. لا يمكن التراجع.</p>
+  <!-- ===== تغيير الملف ===== -->
+  <div id="replace-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head primary-head">
+        <h3 data-i18n="rep_m_title">📄 تغيير دفتر الشروط</h3>
+        <p data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
       </div>
-      <div class="p-5">
-        <div id="delete-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <label class="lbl" for="delete-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
-        <input id="delete-ref-input" class="inp" autocomplete="off">
-        <button id="delete-confirm-btn" class="btn-danger w-full mt-4" data-i18n="del_m_btn">🗑️ تأكيد الحذف النهائي</button>
-        <button data-close="delete-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
+      <div class="modal-body">
+        <div id="replace-tender-info" class="info-box"></div>
+        <input id="replace-file" type="file" accept="application/pdf" class="file-input">
+        <p id="replace-file-info" class="hint"></p>
+        <button id="replace-confirm-btn" class="btn btn-primary btn-block" data-i18n="rep_m_btn">📤 استبدال الملف</button>
+        <button data-close="replace-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== نافذة: تعديل الاستشارة ===== -->
-  <div id="edit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-gradient-to-l from-emerald-600 to-teal-500 text-white">
-        <h3 class="font-black" data-i18n="edit_m_title">✏️ تعديل الاستشارة / طلب العروض</h3>
-        <p class="text-xs mt-1 text-primary-100 leading-relaxed" data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
+  <!-- ===== حذف ===== -->
+  <div id="delete-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head danger-head">
+        <h3 data-i18n="del_m_title">🗑️ حذف الاستشارة</h3>
+        <p data-i18n="del_m_text">سيُحذف ملف دفتر الشروط (إن وُجد) مع الاستشارة وجميع سجل تحميلاتها. لا يمكن التراجع.</p>
       </div>
-      <div class="p-5">
-        <div id="edit-tender-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <form id="edit-form" class="space-y-4">
+      <div class="modal-body">
+        <div id="delete-tender-info" class="info-box"></div>
+        <label class="label" for="delete-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
+        <input id="delete-ref-input" class="input" autocomplete="off">
+        <button id="delete-confirm-btn" class="btn btn-danger btn-block" data-i18n="del_m_btn">🗑️ تأكيد الحذف النهائي</button>
+        <button data-close="delete-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== تعديل ===== -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head primary-head">
+        <h3 data-i18n="edit_m_title">✏️ تعديل الاستشارة / طلب العروض</h3>
+        <p data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
+      </div>
+      <div class="modal-body">
+        <div id="edit-tender-info" class="info-box"></div>
+        <form id="edit-form" class="form">
           <input type="hidden" id="e-id">
-          <div>
-            <label class="lbl" data-i18n="f_kind">نوع الصفقة *</label>
-            <div class="grid grid-cols-2 gap-2">
+          <div class="field">
+            <label class="label" data-i18n="f_kind">نوع الصفقة *</label>
+            <div class="grid-2">
               <label class="kind-opt"><input type="radio" name="e-kind" value="consultation" class="sr-only"><span data-i18n="kind_consultation">📄 استشارة</span></label>
               <label class="kind-opt"><input type="radio" name="e-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
             </div>
           </div>
-            <div>
-              <label class="lbl" for="e-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
-              <input id="e-title-fr" class="inp" dir="ltr">
+          <div class="field">
+            <label class="label" for="e-title-fr" data-i18n="f_title_fr">العنوان بالفرنسي *</label>
+            <input id="e-title-fr" class="input" dir="ltr">
+          </div>
+          <div class="field">
+            <label class="label" for="e-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
+            <input id="e-title" class="input" required>
+            <div class="btn-row">
+              <button type="button" id="e-translate-fr-ar-btn" class="btn btn-secondary" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
+              <button type="button" id="e-translate-ar-fr-btn" class="btn btn-secondary" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
             </div>
-            <div>
-              <label class="lbl" for="e-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
-              <input id="e-title" class="inp" required>
-              <div class="flex gap-2 mt-2">
-                <button type="button" id="e-translate-fr-ar-btn" class="btn-secondary flex-1" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
-                <button type="button" id="e-translate-ar-fr-btn" class="btn-secondary flex-1" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
-              </div>
+          </div>
+          <div class="field">
+            <label class="label" for="e-faculty" data-i18n="f_faculty">المكتب</label>
+            <select id="e-faculty" class="input"></select>
+            <p class="hint" data-i18n="edit_faculty_note">تغيير الكلية للإداري الجامعي فقط</p>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label class="label" for="e-duration" data-i18n="f_duration">المدة</label>
+              <input id="e-duration" class="input">
             </div>
-            <div>
-              <label class="lbl" for="e-faculty" data-i18n="f_faculty">المكتب</label>
-              <select id="e-faculty" class="inp"></select>
-              <p class="text-[11px] text-slate-400 mt-1" data-i18n="edit_faculty_note">تغيير الكلية للإداري الجامعي فقط</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="lbl" for="e-duration" data-i18n="f_duration">المدة</label>
-              <input id="e-duration" class="inp">
-            </div>
-            <div>
-              <label class="lbl" data-i18n="f_opening">موعد فتح الأظرفة *</label>
-              <div class="grid grid-cols-2 gap-2">
-                <input id="e-date" class="inp" type="date" required>
-                <input id="e-time" class="inp" type="time" value="10:00" required>
+            <div class="field">
+              <label class="label" data-i18n="f_opening">موعد فتح الأظرفة *</label>
+              <div class="grid-2">
+                <input id="e-date" class="input" type="date" required>
+                <input id="e-time" class="input" type="time" value="10:00" required>
               </div>
             </div>
           </div>
-          <p class="text-xs text-slate-400 leading-relaxed" data-i18n="edit_ref_note">الرقم محجوب — لأنه يحدد الرمز QR (يبقى نفسه).</p>
-          <button id="edit-btn" type="submit" class="btn-primary w-full" data-i18n="edit_m_btn">💾 حفظ التعديلات</button>
-          <button data-close="edit-modal" type="button" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
+          <p class="hint" data-i18n="edit_ref_note">الرقم محجوب — لأنه يحدد الرمز QR (يبقى نفسه).</p>
+          <button id="edit-btn" type="submit" class="btn btn-primary btn-block" data-i18n="edit_m_btn">💾 حفظ التعديلات</button>
+          <button data-close="edit-modal" type="button" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- ===== نافذة: تأكيد الاستعادة ===== -->
-  <div id="restore-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-      <div class="px-5 py-4 bg-red-600 text-white">
-        <h3 class="font-black" data-i18n="rs_m_title">⚠️ تأكيد الاستعادة</h3>
-        <p class="text-xs mt-1 text-red-100 leading-relaxed" data-i18n="rs_m_text">سيُحذف المحتوى الحالي ويستبدل بما في ملفات النسخة. لا يمكن التراجع.</p>
+  <!-- ===== تأكيد الاستعادة ===== -->
+  <div id="restore-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head danger-head">
+        <h3 data-i18n="rs_m_title">⚠️ تأكيد الاستعادة</h3>
+        <p data-i18n="rs_m_text">سيُحذف المحتوى الحالي ويستبدل بما في ملفات النسخة. لا يمكن التراجع.</p>
       </div>
-      <div class="p-5">
-        <div id="restore-modal-info" class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3 mb-4"></div>
-        <label class="flex items-center gap-2 text-sm text-slate-600 mb-4 cursor-pointer">
-          <input type="checkbox" id="restore-safety" checked class="w-4 h-4">
+      <div class="modal-body">
+        <div id="restore-modal-info" class="info-box"></div>
+        <label class="check-label">
+          <input type="checkbox" id="restore-safety" checked>
           <span data-i18n="rs_safety">تحميل نسخة أمان من الحالة الحالية أولًا (موصى به)</span>
         </label>
-        <button id="restore-confirm-btn" class="btn-danger w-full" data-i18n="rs_m_btn">✅ تأكيد الاستعادة</button>
-        <button data-close="restore-modal" class="btn-secondary w-full mt-2" data-i18n="back">تراجع</button>
+        <button id="restore-confirm-btn" class="btn btn-danger btn-block" data-i18n="rs_m_btn">✅ تأكيد الاستعادة</button>
+        <button data-close="restore-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== التنبيهات ===== -->
-  <div id="toasts" class="fixed top-4 inset-x-0 z-[60] flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
+  <!-- ===== تعديل حساب ===== -->
+  <div id="edit-account-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head primary-head">
+        <h3 data-i18n="acc_edit_title">✏️ تعديل الحساب</h3>
+        <button data-close="edit-account-modal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" data-i18n="acc_edit_sub">يمكنك تغيير الاسم أو البريد أو كلمة المرور أو الدور أو حالة الحساب</p>
+        <input type="hidden" id="ea-id">
+        <div class="field">
+          <label class="label" for="ea-name" data-i18n="acc_name">الاسم الكامل</label>
+          <input id="ea-name" class="input" required maxlength="100">
+        </div>
+        <div class="field">
+          <label class="label" for="ea-email" data-i18n="acc_email">البريد الإلكتروني</label>
+          <input id="ea-email" class="input" type="email" dir="ltr" required>
+        </div>
+        <div class="field">
+          <label class="label" for="ea-pass" data-i18n="acc_pass_label">كلمة مرور جديدة</label>
+          <input id="ea-pass" class="input" type="password" dir="ltr" autocomplete="new-password" minlength="8">
+          <p class="hint" data-i18n="acc_pass_optional">اتركها فارغة إذا لم ترد تغيير كلمة المرور</p>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="label" for="ea-role" data-i18n="acc_role">الدور</label>
+            <select id="ea-role" class="input"></select>
+          </div>
+          <div class="field" id="ea-faculty-box">
+            <label class="label" for="ea-faculty" data-i18n="acc_faculty">المكتب</label>
+            <select id="ea-faculty" class="input"></select>
+          </div>
+        </div>
+        <label class="check-label">
+          <input type="checkbox" id="ea-active" checked>
+          <span data-i18n="acc_active">الحساب نشط</span>
+        </label>
+        <button id="ea-save-btn" type="button" class="btn btn-primary btn-block" data-i18n="acc_edit_btn">💾 حفظ التعديلات</button>
+        <button data-close="edit-account-modal" type="button" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- ===== السكربتات ===== -->
-  <script src="js/config.js"></script>
-  <script src="js/gemini-config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/download.js"></script>
-  <script src="js/admin.js"></script>
-  <script src="js/app.js"></script>
+  <!-- ===== تغيير كلمة المرور ===== -->
+  <div id="change-password-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head primary-head">
+        <h3 data-i18n="cp_title">🔒 تغيير كلمة المرور</h3>
+        <button data-close="change-password-modal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" data-i18n="cp_sub">أنت مسجل الدخول بالفعل، أدخل كلمة المرور الجديدة لحسابك الحالي</p>
+        <div class="field">
+          <label class="label" for="cp-new" data-i18n="cp_new">كلمة المرور الجديدة</label>
+          <input id="cp-new" class="input" type="password" dir="ltr" autocomplete="new-password" minlength="8">
+        </div>
+        <div class="field">
+          <label class="label" for="cp-confirm" data-i18n="cp_repeat">تأكيد كلمة المرور</label>
+          <input id="cp-confirm" class="input" type="password" dir="ltr" autocomplete="new-password" minlength="8">
+        </div>
+        <button id="cp-save-btn" type="button" class="btn btn-primary btn-block" data-i18n="cp_btn">💾 تغيير كلمة المرور</button>
+        <button data-close="change-password-modal" type="button" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== استعادة كلمة المرور ===== -->
+  <div id="forgot-password-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head primary-head">
+        <h3 data-i18n="forgot_title">📧 استعادة كلمة المرور</h3>
+        <button data-close="forgot-password-modal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" data-i18n="forgot_sub">أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين إن كانت الخدمة مفعلة في Supabase</p>
+        <div class="field">
+          <label class="label" for="fp-email" data-i18n="forgot_email">البريد الإلكتروني</label>
+          <input id="fp-email" class="input" type="email" dir="ltr" required>
+        </div>
+        <button id="fp-send-btn" type="button" class="btn btn-primary btn-block" data-i18n="forgot_send">📨 إرسال رابط الاستعادة</button>
+        <p class="hint" data-i18n="forgot_tip">إذا لم يصلك البريد، تحقق من المجلد غير المرغوب فيه أو فعّل Recovery Emails في إعدادات Supabase</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script src="js/config.js?v=gotto16"></script>
+  <script src="js/gemini-config.js?v=gotto16"></script>
+  <script src="js/utils.js?v=gotto16"></script>
+  <script src="js/i18n.js?v=gotto16"></script>
+  <script src="js/supabase.js?v=gotto16"></script>
+  <script src="js/auth.js?v=gotto16"></script>
+  <script src="js/download.js?v=gotto16"></script>
+  <script src="js/admin.js?v=gotto16"></script>
+  <script src="js/app.js?v=gotto16"></script>
 </body>
 </html>

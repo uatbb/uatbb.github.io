@@ -10,6 +10,20 @@
     return tender.title || tender.title_fr || '';
   }
 
+  // شارة الكلية (من بيانات العرض العام tenders_public)
+  function facultyChip() {
+    if (!tender || !tender.faculty_name) return '';
+    const name = I18N.lang === 'ar' ? tender.faculty_name : (tender.faculty_name_fr || tender.faculty_name);
+    const c = tender.faculty_color || '#475569';
+    return '<span class="public-faculty" style="background:' + c + '1a;color:' + c + '">' +
+      (tender.faculty_icon || '🎓') + ' ' + esc(name) + '</span>';
+  }
+
+  function kindBadge() {
+    const cls = tender && tender.kind === 'tender' ? 'public-badge public-badge-tender' : 'public-badge public-badge-consultation';
+    return '<span class="' + cls + '">' + kindName(tender ? tender.kind : '') + '</span>';
+  }
+
   let token = null;
   let tender = null;
   let signed = { url: '', expiresAt: 0, updated: false };
@@ -20,6 +34,7 @@
   let lastErr = null;
   let lastErrRetry = false;
   let langBound = false;
+  let timeOffset = 0; // فرق وقت الخادم عن ساعة الجهاز (ملّي ثانية)
 
   const $ = (id) => document.getElementById(id);
   const val = (id) => ($(id) ? $(id).value : '');
@@ -44,37 +59,34 @@
   function shell(inner) {
     return (
       '<div>' +
-      '<div class="bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-700 text-white px-5 pt-4 pb-12 rounded-b-3xl shadow-md relative z-10 overflow-hidden">' +
-      '<div class="absolute -top-12 -left-12 w-44 h-44 rounded-full bg-white/5 pointer-events-none"></div>' +
-      '<div class="absolute -bottom-24 -right-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none"></div>' +
-      '<div class="relative flex items-center justify-between mb-5">' +
-      '<span class="text-[11px] font-bold bg-white/15 rounded-full px-3 py-1">' + t('office') + '</span>' +
-      '<button id="p-lang-btn" type="button" class="text-[11px] font-bold bg-white/15 hover:bg-white/25 rounded-full px-3 py-1 transition">' + otherLabel() + '</button>' +
+      '<div class="public-topcard">' +
+      '<div class="public-toprow">' +
+      '<span class="public-pill">' + t('office') + '</span>' +
+      '<button id="p-lang-btn" type="button" class="public-pill">' + otherLabel() + '</button>' +
       '</div>' +
-      '<div class="relative flex flex-col items-center text-center">' +
-      '<img src="img/logo.png" alt="" class="h-16 w-16 object-contain mb-3 bg-white rounded-2xl p-2 shadow-lg">' +
-      '<h1 class="text-base sm:text-lg font-black leading-snug">' + t('univ') + '</h1>' +
-      '<p class="text-[11px] text-primary-100 mt-1.5 font-semibold">' + t('p_download_sub') + '</p>' +
+      '<img src="img/logo.png" alt="" class="public-logo">' +
+      '<h1>' + t('univ') + '</h1>' +
+      '<p class="public-sub">' + t('p_download_sub') + '</p>' +
       '</div>' +
-      '</div>' +
-      '<div class="bg-white rounded-2xl shadow-lg border border-slate-200 px-4 sm:px-5 pt-5 pb-5 text-start -mt-7 relative z-20">' + inner + '</div>' +
+      '<div class="public-card">' + inner + '</div>' +
       '</div>'
     );
   }
 
   function stepBlock(n, label) {
-    return '<div class="flex items-center gap-2.5">' +
-      '<span class="w-7 h-7 rounded-full bg-primary-700 text-white text-[13px] font-black flex items-center justify-center shrink-0 shadow">' + n + '</span>' +
-      '<span class="font-bold text-slate-800 text-sm">' + label + '</span>' +
+    return '<div class="public-step">' +
+      '<span class="public-step-num">' + n + '</span>' +
+      '<span class="public-step-label">' + label + '</span>' +
       '</div>';
   }
 
   function stepLine() {
-    return '<div class="w-0.5 h-6 bg-slate-200 ms-3.5 my-2.5 rounded-full"></div>';
+    return '<div class="public-step-line"></div>';
   }
 
-  function iconCircle(emoji, cls) {
-    return '<div class="w-16 h-16 mx-auto mb-3 rounded-full ' + (cls || 'bg-slate-100') + ' flex items-center justify-center text-3xl">' + emoji + '</div>';
+  function iconCircle(emoji, tone) {
+    const cls = tone ? 'public-icon public-icon-' + tone : 'public-icon';
+    return '<div class="' + cls + '">' + emoji + '</div>';
   }
 
   /* ---------- عدّاد "كم يومًا متبقّي لفتح الأظرفة" ---------- */
@@ -87,15 +99,15 @@
   }
 
   function cdUnit(id, label) {
-    return '<div class="text-center min-w-[46px] sm:min-w-[54px]">' +
-      '<div class="text-3xl sm:text-4xl font-black tabular-nums leading-none" id="' + id + '">0</div>' +
-      '<div class="text-[10px] mt-1.5 opacity-80">' + label + '</div>' +
+    return '<div class="public-countdown-unit">' +
+      '<div class="public-countdown-value" id="' + id + '">0</div>' +
+      '<div class="public-countdown-label">' + label + '</div>' +
       '</div>';
   }
 
   function countdownGridHtml() {
-    const sep = '<div class="text-2xl font-black opacity-40 pt-0.5">:</div>';
-    return '<div class="flex items-start justify-center gap-1.5 sm:gap-2.5 my-3" dir="ltr">' +
+    const sep = '<div class="public-countdown-sep">:</div>';
+    return '<div class="public-countdown-grid" dir="ltr">' +
       cdUnit('cd-d', t('cd_l_days')) + sep +
       cdUnit('cd-h', t('cd_l_hours')) + sep +
       cdUnit('cd-m', t('cd_l_minutes')) + sep +
@@ -107,26 +119,24 @@
     if (!tender || !tender.opening_date) return '';
     const ms = new Date(tender.opening_date).getTime() - Date.now();
     if (ms <= 0) {
-      return '<div class="rounded-2xl bg-slate-100 text-slate-500 p-4 mb-4 flex items-center gap-4">' +
-        '<div class="text-3xl">⏰</div>' +
-        '<div class="min-w-0 flex-1">' +
-        '<div class="text-[11px] font-bold opacity-80">' + t('cd_left_title') + '</div>' +
-        '<div class="text-base font-black">' + t('cd_passed') + '</div>' +
+      return '<div class="public-countdown public-countdown-passed">' +
+        '<div class="public-countdown-emoji">⏰</div>' +
+        '<div class="public-countdown-body">' +
+        '<div class="public-countdown-title">' + t('cd_left_title') + '</div>' +
+        '<div class="public-countdown-value-lg">' + t('cd_passed') + '</div>' +
         '</div></div>';
     }
     if (ms < 86400000) {
-      return '<div class="rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-800 p-4 mb-4">' +
-        '<div class="flex items-center justify-center gap-2 text-[12px] font-bold text-amber-700">' +
-        '<span class="text-xl">⏳</span>' + t('cd_less24') + '</div>' +
+      return '<div class="public-countdown public-countdown-warning">' +
+        '<div class="public-countdown-head"><span>⏳</span>' + t('cd_less24') + '</div>' +
         countdownGridHtml() +
-        '<div class="text-center text-[11px] text-amber-700/80" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
+        '<div class="public-countdown-date" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
         '</div>';
     }
-    return '<div class="rounded-2xl bg-gradient-to-l from-emerald-600 to-teal-500 text-white p-4 mb-4 shadow-md">' +
-      '<div class="flex items-center justify-center gap-2 text-[12px] font-bold text-primary-100">' +
-      '<span class="text-xl">🗓️</span>' + t('cd_left_title') + '</div>' +
+    return '<div class="public-countdown public-countdown-active">' +
+      '<div class="public-countdown-head"><span>🗓️</span>' + t('cd_left_title') + '</div>' +
       countdownGridHtml() +
-      '<div class="text-center text-[11px] text-primary-100/90" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
+      '<div class="public-countdown-date" dir="auto">' + fmtDate(tender.opening_date, true) + '</div>' +
       '</div>';
   }
 
@@ -213,9 +223,9 @@
     currentView = 'loading';
     stopTimers();
     root().innerHTML = shell(
-      '<div class="text-center py-10">' +
-      '<div class="spinner my-4"></div>' +
-      '<p class="text-sm text-slate-400">' + t('loading') + '</p>' +
+      '<div class="public-center public-center-lg">' +
+      '<div class="spinner"></div>' +
+      '<p class="public-note">' + t('loading') + '</p>' +
       '</div>'
     );
   }
@@ -224,10 +234,10 @@
     currentView = 'notfound';
     stopTimers();
     root().innerHTML = shell(
-      '<div class="text-center py-6">' +
+      '<div class="public-center">' +
       iconCircle('🚫') +
-      '<h2 class="font-black text-slate-800 mb-2">' + t('notfound_t') + '</h2>' +
-      '<p class="text-sm text-slate-500 leading-relaxed">' + t('notfound_s') + '</p>' +
+      '<h2 class="public-title">' + t('notfound_t') + '</h2>' +
+      '<p class="public-text">' + t('notfound_s') + '</p>' +
       '</div>'
     );
   }
@@ -236,10 +246,10 @@
     currentView = 'closed';
     stopTimers();
     root().innerHTML = shell(
-      '<div class="text-center py-6">' +
-      iconCircle('🔒', 'bg-amber-50') +
-      '<h2 class="font-black text-slate-800 mb-2">' + t('closed_t') + '</h2>' +
-      '<p class="text-sm text-slate-500 leading-relaxed">' + t('closed_s') + '</p>' +
+      '<div class="public-center">' +
+      iconCircle('🔒', 'warning') +
+      '<h2 class="public-title">' + t('closed_t') + '</h2>' +
+      '<p class="public-text">' + t('closed_s') + '</p>' +
       '</div>'
     );
   }
@@ -249,19 +259,20 @@
     stopTimers();
     const when = tender.opened_at || tender.opening_date;
     root().innerHTML = shell(
-      '<div class="text-center py-4">' +
-      iconCircle('📬', 'bg-emerald-50') +
-      '<h2 class="font-black text-emerald-800 text-lg mb-2">' + t('opened_t') + '</h2>' +
-      '<div class="flex items-center justify-center gap-2 flex-wrap mb-1.5">' +
-      '<span class="font-black text-slate-900" dir="ltr">' + esc(fmtRef(tender.reference)) + '</span>' +
-      '<span class="text-[10px] font-bold px-2 py-0.5 rounded ' + (tender.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindName(tender.kind) + '</span>' +
+      '<div class="public-center">' +
+      iconCircle('📬', 'success') +
+      '<h2 class="public-title public-title-success">' + t('opened_t') + '</h2>' +
+      '<div class="public-meta-row">' +
+      '<span class="public-ref" dir="ltr">' + esc(fmtRef(tender.reference)) + '</span>' +
+      kindBadge() +
+      facultyChip() +
       '</div>' +
-      '<p class="text-sm text-slate-600 leading-relaxed mb-4">' + esc(tenderTitle()) + '</p>' +
-      '<div class="bg-gradient-to-l from-emerald-700 to-emerald-500 text-white rounded-2xl p-4 mb-4 shadow-md">' +
-      '<div class="text-[11px] text-emerald-50 mb-1 font-bold">' + t('opened_time_l') + '</div>' +
-      '<div class="text-lg font-black" dir="auto">' + fmtDate(when, true) + '</div>' +
+      '<p class="public-text">' + esc(tenderTitle()) + '</p>' +
+      '<div class="public-green-box">' +
+      '<div class="public-green-box-label">' + t('opened_time_l') + '</div>' +
+      '<div class="public-green-box-value" dir="auto">' + fmtDate(when, true) + '</div>' +
       '</div>' +
-      '<p class="text-xs text-slate-400 leading-relaxed">' + t('opened_s') + '</p>' +
+      '<p class="public-note">' + t('opened_s') + '</p>' +
       '</div>'
     );
   }
@@ -276,11 +287,11 @@
       msg = t('err_func');
     }
     root().innerHTML = shell(
-      '<div class="text-center py-6">' +
-      iconCircle('😕', 'bg-red-50') +
-      '<h2 class="font-black text-slate-800 mb-2">' + t('err_t') + '</h2>' +
-      '<p class="text-sm text-slate-500 mb-4">' + esc(msg) + '</p>' +
-      (retryable ? '<button id="retry-btn" type="button" class="btn-secondary">' + t('retry') + '</button>' : '') +
+      '<div class="public-center">' +
+      iconCircle('😕', 'danger') +
+      '<h2 class="public-title">' + t('err_t') + '</h2>' +
+      '<p class="public-text">' + esc(msg) + '</p>' +
+      (retryable ? '<button id="retry-btn" type="button" class="public-btn public-btn-secondary">' + t('retry') + '</button>' : '') +
       '</div>'
     );
     const b = $('retry-btn');
@@ -293,32 +304,33 @@
     const openingLabel = t('f_opening').replace(' *', '').replace(' *', '');
     root().innerHTML = shell(
       stepBlock(1, t('step1')) +
-      '<div class="mt-3">' +
-      '<div class="flex items-center gap-2 flex-wrap">' +
-      '<span class="font-black text-slate-900 text-lg" dir="ltr">' + esc(fmtRef(tender.reference)) + '</span>' +
-      '<span class="text-[10px] font-bold px-2 py-0.5 rounded ' + (tender.kind === 'tender' ? 'bg-indigo-50 text-indigo-700' : 'bg-primary-50 text-primary-700') + '">' + kindName(tender.kind) + '</span>' +
-      '<span class="text-[10px] font-bold text-primary-700 bg-primary-50 border border-primary-200 rounded-full px-2 py-0.5">' + t('p_published') + '</span>' +
+      '<div class="public-section">' +
+      '<div class="public-meta-row">' +
+      '<span class="public-ref" dir="ltr">' + esc(fmtRef(tender.reference)) + '</span>' +
+      kindBadge() +
+      facultyChip() +
+      '<span class="public-badge public-badge-status">' + t('p_published') + '</span>' +
       '</div>' +
-      '<p class="text-sm text-slate-600 leading-relaxed mt-1">' + esc(tenderTitle()) + '</p>' +
+      '<p class="public-text">' + esc(tenderTitle()) + '</p>' +
       '</div>' +
       openingCountdownHtml() +
-      '<div class="grid grid-cols-2 gap-2 mb-4 text-xs">' +
-      '<div class="bg-slate-50 rounded-xl px-3 py-2.5"><div class="text-slate-400 text-[10px] mb-1">' + t('f_duration').replace(' *', '') + '</div><div class="text-slate-700 font-semibold">' + esc(tender.duration || '—') + '</div></div>' +
-      '<div class="bg-slate-50 rounded-xl px-3 py-2.5"><div class="text-slate-400 text-[10px] mb-1">' + openingLabel + '</div><div class="text-slate-700 font-semibold" dir="auto">' + fmtDate(tender.opening_date, true) + '</div></div>' +
+      '<div class="public-info-grid">' +
+      '<div class="public-info-box"><div class="public-info-label">' + t('f_duration').replace(' *', '') + '</div><div class="public-info-value">' + esc(tender.duration || '—') + '</div></div>' +
+      '<div class="public-info-box public-info-box-teal"><div class="public-info-label">' + openingLabel + '</div><div class="public-info-value" dir="auto">' + fmtDate(tender.opening_date, true) + '</div></div>' +
       '</div>' +
-      '<form id="bidder-form" class="space-y-3">' +
+      '<form id="bidder-form" class="public-form">' +
       stepBlock(2, t('step2')) +
       stepLine() +
-      '<div><label class="lbl">🏢 ' + t('f_company') + '</label>' +
+      '<div class="public-field"><label class="lbl">🏢 ' + t('f_company') + '</label>' +
       '<input id="d-company" class="inp" type="text" required placeholder="' + esc(t('f_company_ph')) + '"></div>' +
-      '<div><label class="lbl">📞 ' + t('f_phone') + '</label>' +
+      '<div class="public-field"><label class="lbl">📞 ' + t('f_phone') + '</label>' +
       '<input id="d-phone" class="inp" type="tel" dir="ltr" required placeholder="0550 00 00 00"></div>' +
-      '<div><label class="lbl">✉️ ' + t('f_email') + '</label>' +
+      '<div class="public-field"><label class="lbl">✉️ ' + t('f_email') + '</label>' +
       '<input id="d-email" class="inp" type="email" dir="ltr" required placeholder="you@example.com"></div>' +
       stepLine() +
       stepBlock(3, t('step3')) +
-      '<button type="submit" class="w-full mt-2 bg-gradient-to-l from-emerald-500 to-teal-600 text-white font-black rounded-xl py-3 text-sm shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-700 active:scale-[.99] transition">' + t('btn_download') + '</button>' +
-      '<p class="text-[11px] text-slate-400 leading-relaxed">' + t('form_note') + '</p>' +
+      '<button type="submit" class="public-btn public-btn-primary public-w-full">' + t('btn_download') + '</button>' +
+      '<p class="public-note">' + t('form_note') + '</p>' +
       '</form>'
     );
     $('bidder-form').addEventListener('submit', onFormSubmit);
@@ -329,9 +341,9 @@
     currentView = 'working';
     stopTimers();
     root().innerHTML = shell(
-      '<div class="text-center py-10">' +
-      '<div class="spinner my-4"></div>' +
-      '<p class="text-sm text-slate-500">' + esc(msg || t('working')) + '</p>' +
+      '<div class="public-center public-center-lg">' +
+      '<div class="spinner"></div>' +
+      '<p class="public-text">' + esc(msg || t('working')) + '</p>' +
       '</div>'
     );
   }
@@ -340,19 +352,19 @@
     currentView = 'done';
     stopTimers();
     root().innerHTML = shell(
-      '<div class="text-center py-4">' +
-      iconCircle('✅', 'bg-primary-50') +
-      '<h2 class="font-black text-slate-800 mb-2">' + t('done_title') + '</h2>' +
-      '<p class="text-sm text-slate-500 mb-4 leading-relaxed">' +
+      '<div class="public-center">' +
+      iconCircle('✅', 'success') +
+      '<h2 class="public-title">' + t('done_title') + '</h2>' +
+      '<p class="public-text">' +
       (signed.updated
         ? t('done_upd', { c: esc(lastInfo.company) })
         : t('done_new', { c: esc(lastInfo.company) })) +
       '</p>' +
-      '<div class="bg-gradient-to-l from-emerald-600 to-teal-500 text-white rounded-2xl p-4 mb-4 shadow-md">' +
-      '<div class="text-[11px] text-primary-100 mb-1 font-bold">' + t('expiry_l') + '</div>' +
-      '<div id="expiry-cd" class="text-2xl font-black tabular-nums" dir="ltr"></div>' +
+      '<div class="public-green-box">' +
+      '<div class="public-green-box-label">' + t('expiry_l') + '</div>' +
+      '<div id="expiry-cd" class="public-green-box-value" dir="ltr"></div>' +
       '</div>' +
-      '<button id="redownload-btn" type="button" class="btn-secondary w-full">' + t('redownload') + '</button>' +
+      '<button id="redownload-btn" type="button" class="public-btn public-btn-secondary public-w-full">' + t('redownload') + '</button>' +
       '</div>'
     );
     $('redownload-btn').addEventListener('click', () => D.redownload());

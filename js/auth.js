@@ -89,7 +89,10 @@
       armIdle();
       DB.auth.getUser().then(({ data }) => {
         const nameEl = $('user-name');
-        if (nameEl && data && data.user) nameEl.textContent = data.user.email || '';
+        if (nameEl && data && data.user) {
+          nameEl.textContent = (data.user.user_metadata && data.user.user_metadata.full_name) || (data.user.email ? data.user.email.split('@')[0] : '') || '';
+          nameEl.dir = 'auto';
+        }
       });
       if (A.onAuthed) A.onAuthed();
     } else {
