@@ -93,7 +93,7 @@
   function initLang() {
     const lb = $('lang-btn');
     if (lb) {
-      lb.textContent = I18N.label();
+      lb.innerHTML = I18N.label();
       lb.addEventListener('click', () => I18N.setLang(I18N.other()));
     }
     document.addEventListener('langchange', () => {
@@ -148,7 +148,7 @@
       const { error } = await window.DB.auth.resetPasswordForEmail(email, { redirectTo });
       sendBtn.disabled = false;
       if (error) {
-        toast(t('forgot_fail') + ' — ' + (error.message || error), 'error', 7000);
+        toast(t('forgot_fail') + ' — ' + esc(error.message || error), 'error', 7000);
         return;
       }
       $('fp-email').value = '';
@@ -170,7 +170,7 @@
       const { error } = await window.DB.auth.updateUser({ password: pw });
       save.disabled = false;
       if (error) {
-        toast(t('cp_fail') + ' — ' + (error.message || error), 'error', 6000);
+        toast(t('cp_fail') + ' — ' + esc(error.message || error), 'error', 6000);
         return;
       }
       const newEl = $('cp-new');

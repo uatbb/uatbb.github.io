@@ -4,22 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>جامعة عين تموشنت بلحاج بوشعيب — بوابة مكتب الصفقات</title>
-  <link rel="stylesheet" href="css/tailwind.css?v=gotto16">
-  <link rel="stylesheet" href="css/app.css?v=gotto16">
+  <link rel="stylesheet" href="css/tailwind.css?v=gotto25">
+  <link rel="stylesheet" href="css/app.css?v=gotto25">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
   <!-- ===== شريط الإعداد ===== -->
   <div id="setup-banner" class="setup-banner hidden">
-    <h2 data-i18n="setup_title">⚙️ التطبيق غير موصول بقاعدة البيانات</h2>
+    <h2 data-i18n="setup_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M12 3.4v2.4M12 18.2v2.4M20.6 12h-2.4M5.8 12H3.4M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/></svg> التطبيق غير موصول بقاعدة البيانات</h2>
     <ol class="setup-list">
       <li data-i18n-html="setup_s1">أنشئ مشروعًا مجانيًا على <span dir="ltr">supabase.com</span></li>
       <li data-i18n-html="setup_s2">افتح <b>SQL Editor</b> وشغّل محتوى الملف <code dir="ltr">supabase/migrations/001_initial_schema.sql</code></li>
       <li data-i18n-html="setup_s3">من <b>Project Settings → API</b> انسخ <b>Project URL</b> و <b>anon key</b> إلى الملف <code dir="ltr">js/config.js</code></li>
       <li data-i18n="setup_s4">حدّث هذه الصفحة</li>
     </ol>
-    <p class="setup-tip" data-i18n-html="setup_tip">💡 للتجربة المحلية: شغّل <code dir="ltr">npx serve</code> داخل مجلد المشروع وافتح <code dir="ltr">http://localhost:3000</code></p>
+    <p class="setup-tip" data-i18n-html="setup_tip"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6a5.6 5.6 0 0 1 3.3 10.1c-.7.5-1.1 1.3-1.2 2.1H9.9c-.1-.8-.5-1.6-1.2-2.1A5.6 5.6 0 0 1 12 3.6z"/><path d="M9.9 18.4h4.2M10.6 20.6h2.8"/></svg> للتجربة المحلية: شغّل <code dir="ltr">npx serve</code> داخل مجلد المشروع وافتح <code dir="ltr">http://localhost:3000</code></p>
   </div>
 
   <!-- ===== صفحة المتعامل ===== -->
@@ -53,15 +53,15 @@
           </form>
           <div class="login-extra">
             <p data-i18n="login_noacc">لا تملك حسابًا؟ يمكنك تقديم طلب حساب وسيتم تفعيله بعد موافقة الإدارة.</p>
-            <button id="forgot-pass-btn" type="button" class="link-btn" data-i18n="forgot_btn">📧 نسيت كلمة المرور؟</button>
-            <button id="req-acc-btn" type="button" class="link-btn" data-i18n="login_req_acc">📨 طلب حساب جديد</button>
+            <button id="forgot-pass-btn" type="button" class="link-btn" data-i18n="forgot_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2.4"/><path d="M4.6 7.6l6.7 4.6a1.5 1.5 0 0 0 1.8 0l6.7-4.6"/></svg> نسيت كلمة المرور؟</button>
+            <button id="req-acc-btn" type="button" class="link-btn" data-i18n="login_req_acc"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2.4"/><path d="M4.6 7.6l6.7 4.6a1.5 1.5 0 0 0 1.8 0l6.7-4.6"/></svg> طلب حساب جديد</button>
           </div>
           <div id="req-acc-box" class="req-box hidden">
             <form id="req-acc-form" class="form">
               <input id="rq-name" class="input" data-i18n-ph="rq_name_ph" placeholder="الاسم الكامل" required maxlength="100">
               <input id="rq-email" class="input" type="email" dir="ltr" data-i18n-ph="login_email" placeholder="البريد الإلكتروني" required>
               <input id="rq-pass" class="input" type="password" dir="ltr" data-i18n-ph="acc_pass_ph" placeholder="كلمة مرور (8 أحرف على الأقل)" required minlength="8">
-              <button type="submit" class="btn btn-primary btn-block btn-small" data-i18n="rq_submit">📨 إرسال الطلب</button>
+              <button type="submit" class="btn btn-primary btn-block btn-small" data-i18n="rq_submit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2.4"/><path d="M4.6 7.6l6.7 4.6a1.5 1.5 0 0 0 1.8 0l6.7-4.6"/></svg> إرسال الطلب</button>
             </form>
             <p id="rq-msg" class="req-msg hidden"></p>
           </div>
@@ -72,7 +72,7 @@
     <!-- حساب قيد الانتظار -->
     <div id="pending-card" class="screen-center hidden">
       <div class="pending-box">
-        <div class="pending-icon">🕓</div>
+        <div class="pending-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.2 1.9"/></svg></div>
         <h2 data-i18n="pending_t">حسابك بانتظار الموافقة</h2>
         <p data-i18n="pending_s">تم استلام طلب حسابك وسيتم تفعيله من طرف إدارة الجامعة. بعد الموافقة يمكنك الدخول بنفس البريد وكلمة المرور.</p>
         <button id="pending-logout" class="btn btn-secondary btn-block" data-i18n="logout">تسجيل الخروج</button>
@@ -94,34 +94,34 @@
           <div class="topbar-actions">
             <div class="user-info">
               <span id="user-name" class="user-name" dir="auto"></span>
-              <span id="role-badge" class="role-badge hidden">👁️ لجنة — عرض فقط</span>
+              <span id="role-badge" class="role-badge hidden"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 12c1.8-3.2 4.8-5 8.6-5s6.8 1.8 8.6 5c-1.8 3.2-4.8 5-8.6 5s-6.8-1.8-8.6-5z"/><circle cx="12" cy="12" r="2.8"/></svg> لجنة — عرض فقط</span>
             </div>
             <div class="settings-wrap" id="settings-wrap">
               <button id="settings-btn" type="button" class="icon-btn" data-i18n-title="side_settings" title="الإعدادات">
-                <span>⚙️</span>
+                <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M12 3.4v2.4M12 18.2v2.4M20.6 12h-2.4M5.8 12H3.4M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/></svg></span>
               </button>
               <div id="settings-menu" class="settings-menu hidden">
                 <div class="settings-label" data-i18n="side_settings">الإعدادات</div>
-                <button class="settings-link nav-btn" data-tab="tab-accounts"><span class="side-ico">👥</span><span data-i18n="nav_accounts">إدارة الحسابات</span></button>
-                <button class="settings-link nav-btn" data-tab="tab-backup"><span class="side-ico">💾</span><span data-i18n="nav_backup">النسخ الاحتياطي</span></button>
-                <button id="cp-open-btn" class="settings-link" type="button"><span class="side-ico">🔒</span><span data-i18n="cp_open">تغيير كلمة المرور</span></button>
+                <button class="settings-link nav-btn" data-tab="tab-accounts"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.2" cy="8.8" r="3.3"/><path d="M3.4 19.4c0-3.2 2.6-5.4 5.8-5.4s5.8 2.2 5.8 5.4"/><path d="M16.2 6.2a3.2 3.2 0 0 1 0 5.6"/><path d="M17.4 14.4c1.9.8 3.2 2.5 3.2 4.6"/></svg></span><span data-i18n="nav_accounts">إدارة الحسابات</span></button>
+                <button class="settings-link nav-btn" data-tab="tab-backup"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 6a1.8 1.8 0 0 1 1.8-1.8h8.4L19 7.8v9.4a1.8 1.8 0 0 1-1.8 1.8H7a1.8 1.8 0 0 1-1.8-1.8z"/><path d="M8.4 4.2v4.2h6.2"/><rect x="8" y="12.6" width="8" height="6.4"/></svg></span><span data-i18n="nav_backup">النسخ الاحتياطي</span></button>
+                <button id="cp-open-btn" class="settings-link" type="button"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7.2 0v2.6"/></svg></span><span data-i18n="cp_open">تغيير كلمة المرور</span></button>
               </div>
             </div>
             <div class="bell-wrap">
               <button id="remind-btn" type="button" class="icon-btn" data-i18n-title="rm_title">
-                <span id="remind-ico">🔔</span>
+                <span id="remind-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 17.2v-6a5.4 5.4 0 0 1 10.8 0v6"/><path d="M4.8 17.2h14.4"/><path d="M10.1 20a2.1 2.1 0 0 0 3.8 0"/></svg></span>
                 <span id="remind-badge" class="bell-badge hidden">0</span>
               </button>
               <div id="remind-panel" class="remind-panel hidden"></div>
             </div>
-            <button id="lang-btn" class="top-btn" title="Changer de langue">🌐 FR</button>
+            <button id="lang-btn" class="top-btn" title="Changer de langue"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M3.7 12h16.6"/><path d="M12 3.6c2.3 2.3 3.5 5.2 3.5 8.4S14.3 18.1 12 20.4c-2.3-2.3-3.5-5.2-3.5-8.4S9.7 5.9 12 3.6z"/></svg> FR</button>
             <button id="logout-btn" class="top-btn" data-i18n="logout">تسجيل الخروج</button>
           </div>
         </div>
       </header>
 
       <div id="schema-banner" class="schema-banner hidden" data-i18n-html="schema_banner">
-        ⚠️ <b>قاعدة البيانات غير محدثة</b> — إنشاء/حذف الاستشارات سيفشل. افتح Supabase ← <b>SQL Editor</b> وشغّل محتوى الملف
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.9 20.1h18.2z"/><path d="M12 10.2v4"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg> <b>قاعدة البيانات غير محدثة</b> — إنشاء/حذف الاستشارات سيفشل. افتح Supabase ← <b>SQL Editor</b> وشغّل محتوى الملف
         <code dir="ltr">supabase\migrations\006_full_update.sql</code>
         ثم حدّث هذه الصفحة (F5).
       </div>
@@ -130,10 +130,10 @@
       <aside class="sidebar" aria-label="القائمة">
         <div class="side-section">
           <div class="side-label" data-i18n="side_main">القائمة</div>
-          <button class="side-link nav-btn nav-active" data-tab="tab-dashboard"><span class="side-ico">📊</span><span data-i18n="nav_dashboard">اللوحة</span></button>
-          <button class="side-link nav-btn" data-tab="tab-create"><span class="side-ico">📝</span><span data-i18n="nav_create">إنشاء</span></button>
-          <button class="side-link nav-btn" data-tab="tab-tenders"><span class="side-ico">📥</span><span data-i18n="nav_tenders">الاستشارات</span></button>
-          <button class="side-link nav-btn" data-tab="tab-opening"><span class="side-ico">🔓</span><span data-i18n="nav_opening">الفتح</span></button>
+          <button class="side-link nav-btn nav-active" data-tab="tab-dashboard"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5.6" y="11" width="3.4" height="6" rx="1"/><rect x="10.3" y="6.6" width="3.4" height="10.4" rx="1"/><rect x="15" y="13.4" width="3.4" height="3.6" rx="1"/></svg></span><span data-i18n="nav_dashboard">اللوحة</span></button>
+          <button class="side-link nav-btn" data-tab="tab-create"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3"/><path d="M9 15.2l1-2.6 5.4-5.4a1.5 1.5 0 0 1 2.1 2.1l-5.4 5.4z"/></svg></span><span data-i18n="nav_create">إنشاء</span></button>
+          <button class="side-link nav-btn" data-tab="tab-tenders"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6v8.8M8.2 9l3.8 3.8L15.8 9"/><path d="M4.4 14.6v3.8a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2v-3.8"/></svg></span><span data-i18n="nav_tenders">الاستشارات</span></button>
+          <button class="side-link nav-btn" data-tab="tab-opening"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg></span><span data-i18n="nav_opening">الفتح</span></button>
         </div>
       </aside>
 
@@ -151,14 +151,14 @@
         <!-- إنشاء -->
         <section id="tab-create" class="tab-panel">
           <div class="card">
-            <h2 class="card-title" data-i18n="create_title">📝 إنشاء استشارة / طلب عروض</h2>
+            <h2 class="card-title" data-i18n="create_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3"/><path d="M9 15.2l1-2.6 5.4-5.4a1.5 1.5 0 0 1 2.1 2.1l-5.4 5.4z"/></svg> إنشاء استشارة / طلب عروض</h2>
             <p class="card-sub" data-i18n="create_sub">بعد النشر مباشرةً ستظهر بطاقة QR الجاهزة للطباعة والتسليم للمتعامل.</p>
             <form id="create-form" class="form">
               <div class="field">
                 <label class="label" data-i18n="f_kind">نوع الصفقة *</label>
                 <div class="grid-2">
-                  <label class="kind-opt"><input type="radio" name="f-kind" value="consultation" class="sr-only" checked><span data-i18n="kind_consultation">📄 استشارة</span></label>
-                  <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
+                  <label class="kind-opt"><input type="radio" name="f-kind" value="consultation" class="sr-only" checked><span data-i18n="kind_consultation"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.8 3.6H7.4A1.6 1.6 0 0 0 5.8 5.2v13.6a1.6 1.6 0 0 0 1.6 1.6h9.2a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M13.8 3.6v4h4.4"/><path d="M8.6 12.6h6.8M8.6 16h4.4"/></svg> استشارة</span></label>
+                  <label class="kind-opt"><input type="radio" name="f-kind" value="tender" class="sr-only"><span data-i18n="kind_tender"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 5.6H7.6A1.8 1.8 0 0 0 5.8 7.4v11.8a1.8 1.8 0 0 0 1.8 1.8h8.8a1.8 1.8 0 0 0 1.8-1.8V7.4a1.8 1.8 0 0 0-1.8-1.8h-1.6"/><rect x="9.2" y="3.4" width="5.6" height="4.2" rx="1.4"/><path d="M9 12.4h6M9 15.8h4"/></svg> طلب عروض</span></label>
                 </div>
               </div>
               <div class="grid-2">
@@ -183,8 +183,8 @@
                 <label class="label" for="f-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
                 <input id="f-title" class="input" data-i18n-ph="f_title_ar_ph" placeholder="يُملأ تلقائيًا من الفرنسي…" required>
                 <div class="btn-row">
-                  <button type="button" id="translate-title-fr-ar-btn" class="btn btn-secondary" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
-                  <button type="button" id="translate-title-ar-fr-btn" class="btn btn-secondary" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
+                  <button type="button" id="translate-title-fr-ar-btn" class="btn btn-secondary" data-i18n="translate_fr_to_ar"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.7h-4.7"/></svg> ترجم إلى عربي</button>
+                  <button type="button" id="translate-title-ar-fr-btn" class="btn btn-secondary" data-i18n="translate_ar_to_fr"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.7h-4.7"/></svg> ترجم إلى فرنسي</button>
                 </div>
               </div>
               <div class="field">
@@ -200,7 +200,7 @@
                 <input id="f-file" type="file" accept="application/pdf" required class="file-input">
                 <p id="file-info" class="hint"></p>
               </div>
-              <button id="create-btn" type="submit" class="btn btn-primary btn-block" data-i18n="create_btn">🚀 نشر وتوليد QR</button>
+              <button id="create-btn" type="submit" class="btn btn-primary btn-block" data-i18n="create_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 3.4 3.6 10.1l6.4 2.4 2.4 6.4z"/><path d="M10 12.5 20.6 3.4"/></svg> نشر وتوليد QR</button>
             </form>
           </div>
         </section>
@@ -208,8 +208,8 @@
         <!-- الاستشارات -->
         <section id="tab-tenders" class="tab-panel hidden">
           <div class="list-head">
-            <h2 class="card-title" data-i18n="tenders_title">📥 الاستشارات / طلبات العروض</h2>
-            <input id="tender-search" class="input search-input" data-i18n-ph="tenders_search_ph" placeholder="🔍 بحث بالرقم أو العنوان">
+            <h2 class="card-title" data-i18n="tenders_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6v8.8M8.2 9l3.8 3.8L15.8 9"/><path d="M4.4 14.6v3.8a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2v-3.8"/></svg> الاستشارات / طلبات العروض</h2>
+            <input id="tender-search" class="input search-input" data-i18n-ph="tenders_search_ph" placeholder="بحث بالرقم أو العنوان">
           </div>
           <div id="tenders-stats" class="chips"></div>
           <div id="tenders-list" class="stack"></div>
@@ -219,7 +219,7 @@
         <!-- فتح الأظرفة -->
         <section id="tab-opening" class="tab-panel hidden">
           <div class="card">
-            <h2 class="card-title" data-i18n="opening_title">🔓 لجنة فتح الأظرفة</h2>
+            <h2 class="card-title" data-i18n="opening_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg> لجنة فتح الأظرفة</h2>
             <p class="card-sub" data-i18n="opening_sub">ما حان موعد فتحه، المتعاملون الذين حمّلوا، وسجل ما فُتح</p>
             <div id="opening-list" class="stack"></div>
           </div>
@@ -229,13 +229,13 @@
         <section id="tab-accounts" class="tab-panel hidden">
           <div class="list-head">
             <div>
-              <h2 class="card-title" data-i18n="accounts_title">👥 الحسابات</h2>
+              <h2 class="card-title" data-i18n="accounts_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.2" cy="8.8" r="3.3"/><path d="M3.4 19.4c0-3.2 2.6-5.4 5.8-5.4s5.8 2.2 5.8 5.4"/><path d="M16.2 6.2a3.2 3.2 0 0 1 0 5.6"/><path d="M17.4 14.4c1.9.8 3.2 2.5 3.2 4.6"/></svg> الحسابات</h2>
               <p class="card-sub" data-i18n="accounts_sub">إدارة مباشرة: الدور، المكتب، التفعيل، الحذف — مع طلبات الانتظار</p>
             </div>
-            <input id="accounts-search" class="input search-input" data-i18n-ph="acc_search_ph" placeholder="🔍 بحث بالاسم أو البريد">
+            <input id="accounts-search" class="input search-input" data-i18n-ph="acc_search_ph" placeholder="بحث بالاسم أو البريد">
           </div>
           <div id="accounts-chips" class="chips"></div>
-          <button id="acc-add-toggle" type="button" class="btn btn-primary btn-block" data-i18n="acc_add_toggle">➕ إضافة حساب جديد</button>
+          <button id="acc-add-toggle" type="button" class="btn btn-primary btn-block" data-i18n="acc_add_toggle"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.4v13.2M5.4 12h13.2"/></svg> إضافة حساب جديد</button>
           <div id="account-form-box" class="card account-form-box hidden">
             <h3 class="card-title" data-i18n="acc_add_title">إضافة حساب جديد</h3>
             <form id="account-form" class="form">
@@ -245,12 +245,12 @@
               <div class="field">
                 <label class="label" data-i18n="acc_role">نوع الحساب</label>
                 <div class="grid-4">
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="super_admin" class="sr-only"><span data-i18n="acc_role_super">👑 المطور</span></label>
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="admin" class="sr-only"><span data-i18n="acc_role_admin">🧑‍💼 المسؤول</span></label>
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="admin_rectora" class="sr-only"><span data-i18n="acc_role_rectora">🏛️ موظف رئاسة الجامعة</span></label>
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="faculty_admin" class="sr-only"><span data-i18n="acc_role_fadmin">🎓 موظف الكلية</span></label>
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open">🔓 لجنة فتح الأظرفة</span></label>
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="viewer" class="sr-only" checked><span data-i18n="acc_role_viewer">👤 مشاهد</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="super_admin" class="sr-only"><span data-i18n="acc_role_super"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 17.4 3.2 7.6l5 3.5L12 4.6l3.8 6.5 5-3.5-1 9.8z"/><path d="M4.6 20.2h14.8"/></svg> المطور</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="admin" class="sr-only"><span data-i18n="acc_role_admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.6" y="7.6" width="16.8" height="11.8" rx="2.4"/><path d="M9 7.6V6.2A2 2 0 0 1 11 4.2h2a2 2 0 0 1 2 2v1.4"/><path d="M3.6 12.6h16.8"/></svg> المسؤول</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="admin_rectora" class="sr-only"><span data-i18n="acc_role_rectora"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 9.6 12 4.8l8.6 4.8"/><path d="M6.2 10v7.4M10.2 10v7.4M13.8 10v7.4M17.8 10v7.4"/><path d="M3.6 20.4h16.8"/></svg> موظف رئاسة الجامعة</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="faculty_admin" class="sr-only"><span data-i18n="acc_role_fadmin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.8 9 12 13.4l9.2-4.4z"/><path d="M6.6 11v4.4c0 1.4 2.4 2.5 5.4 2.5s5.4-1.1 5.4-2.5V11"/><path d="M21.2 9v5"/></svg> موظف الكلية</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg> لجنة فتح الأظرفة</span></label>
+                  <label class="kind-opt small"><input type="radio" name="a-role" value="viewer" class="sr-only" checked><span data-i18n="acc_role_viewer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.8 20c0-3.7 3.2-6.2 7.2-6.2s7.2 2.5 7.2 6.2"/></svg> مشاهد</span></label>
                 </div>
                 <p class="hint" data-i18n="acc_role_desc">جامعي: كل الصلاحيات لكل الكليات — إداري كلية: إنشاء وإدارة في كليته فقط — لجنة عرض/فتح: حسب الدور — عرض فقط: مشاهدة</p>
               </div>
@@ -259,7 +259,7 @@
                 <select id="a-faculty" class="input"></select>
                 <p class="hint" data-i18n="acc_faculty_note">بدون تحديد = الحساب مرتبط بكلية المنشئ</p>
               </div>
-              <button type="submit" class="btn btn-primary btn-block" data-i18n="acc_add_btn">➕ إضافة الحساب</button>
+              <button type="submit" class="btn btn-primary btn-block" data-i18n="acc_add_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.4v13.2M5.4 12h13.2"/></svg> إضافة الحساب</button>
             </form>
           </div>
           <div id="pending-list" class="stack"></div>
@@ -269,16 +269,16 @@
         <!-- النسخ الاحتياطي -->
         <section id="tab-backup" class="tab-panel hidden">
           <div class="card">
-            <h2 class="card-title" data-i18n="bk_title">💾 النسخ الاحتياطي</h2>
+            <h2 class="card-title" data-i18n="bk_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 6a1.8 1.8 0 0 1 1.8-1.8h8.4L19 7.8v9.4a1.8 1.8 0 0 1-1.8 1.8H7a1.8 1.8 0 0 1-1.8-1.8z"/><path d="M8.4 4.2v4.2h6.2"/><rect x="8" y="12.6" width="8" height="6.4"/></svg> النسخ الاحتياطي</h2>
             <p class="card-sub" data-i18n="bk_sub">حمّل كل البيانات (الاستشارات + سجل التحميلات + الحسابات) إلى حاسوبك — ثلاث ملفات</p>
-            <button id="backup-btn" class="btn btn-primary btn-block" data-i18n="bk_btn">⬇️ تحميل النسخة الاحتياطية</button>
+            <button id="backup-btn" class="btn btn-primary btn-block" data-i18n="bk_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.4v14.2M6.6 13.2 12 18.6l5.4-5.4"/></svg> تحميل النسخة الاحتياطية</button>
           </div>
           <div class="card restore-card">
-            <h2 class="card-title" data-i18n="rs_title">♻️ الاستعادة</h2>
+            <h2 class="card-title" data-i18n="rs_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4.7h4.7"/></svg> الاستعادة</h2>
             <p class="card-sub" data-i18n="rs_sub">استرجاع البيانات من ملفات نسخة سابقة — سيُستبدل محتوى الموقع بما في الملفات</p>
             <input id="restore-files" type="file" multiple accept=".json,.csv" class="file-input">
             <div id="restore-summary" class="restore-summary hidden"></div>
-            <button id="restore-btn" class="btn btn-danger btn-block" data-i18n="rs_btn">♻️ استعادة من الملف</button>
+            <button id="restore-btn" class="btn btn-danger btn-block" data-i18n="rs_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4.7h4.7"/></svg> استعادة من الملف</button>
           </div>
         </section>
 
@@ -319,7 +319,7 @@
       </div>
       <div class="modal-foot qr-foot no-print">
         <div class="btn-row">
-          <button id="print-qr-btn" class="btn btn-primary" data-i18n="print_btn">🖨️ طباعة البطاقة</button>
+          <button id="print-qr-btn" class="btn btn-primary" data-i18n="print_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8.6V4.4h10v4.2"/><rect x="3.6" y="8.6" width="16.8" height="7.4" rx="2"/><path d="M7 13h10v7H7z"/><circle cx="17.4" cy="11.6" r=".95" fill="currentColor" stroke="none"/></svg> طباعة البطاقة</button>
           <button data-close="qr-modal" class="btn btn-secondary" data-i18n="close">إغلاق</button>
         </div>
       </div>
@@ -332,8 +332,8 @@
       <div class="modal-head dl-head">
         <span id="dl-title" class="dl-title"></span>
         <div class="dl-actions">
-          <button id="dl-csv" class="mini-btn">⬇️ CSV</button>
-          <button id="dl-pdf" class="mini-btn">📄 PDF</button>
+          <button id="dl-csv" class="mini-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.4v14.2M6.6 13.2 12 18.6l5.4-5.4"/></svg> CSV</button>
+          <button id="dl-pdf" class="mini-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.8 3.6H7.4A1.6 1.6 0 0 0 5.8 5.2v13.6a1.6 1.6 0 0 0 1.6 1.6h9.2a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M13.8 3.6v4h4.4"/><path d="M8.6 12.6h6.8M8.6 16h4.4"/></svg> PDF</button>
           <button data-close="downloads-modal" class="modal-close">✕</button>
         </div>
       </div>
@@ -346,14 +346,14 @@
   <div id="open-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head danger-head">
-        <h3 data-i18n="open_m_title">⚠️ فتح الأظرفة</h3>
+        <h3 data-i18n="open_m_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.9 20.1h18.2z"/><path d="M12 10.2v4"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg> فتح الأظرفة</h3>
         <p data-i18n="open_m_text">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
       </div>
       <div class="modal-body">
         <div id="open-tender-info" class="info-box"></div>
         <label class="label" for="open-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
         <input id="open-ref-input" class="input" autocomplete="off">
-        <button id="open-confirm-btn" class="btn btn-danger btn-block" data-i18n="open_m_btn">🔓 تأكيد الفتح والحذف النهائي</button>
+        <button id="open-confirm-btn" class="btn btn-danger btn-block" data-i18n="open_m_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg> تأكيد الفتح والحذف النهائي</button>
         <button data-close="open-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
@@ -363,14 +363,14 @@
   <div id="replace-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head primary-head">
-        <h3 data-i18n="rep_m_title">📄 تغيير دفتر الشروط</h3>
+        <h3 data-i18n="rep_m_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.8 3.6H7.4A1.6 1.6 0 0 0 5.8 5.2v13.6a1.6 1.6 0 0 0 1.6 1.6h9.2a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M13.8 3.6v4h4.4"/><path d="M8.6 12.6h6.8M8.6 16h4.4"/></svg> تغيير دفتر الشروط</h3>
         <p data-i18n="rep_m_text">يُحذف الملف الحالي ويُرفع الجديد مكانه. رمز QR يبقى نفسه بدون أي تغيير.</p>
       </div>
       <div class="modal-body">
         <div id="replace-tender-info" class="info-box"></div>
         <input id="replace-file" type="file" accept="application/pdf" class="file-input">
         <p id="replace-file-info" class="hint"></p>
-        <button id="replace-confirm-btn" class="btn btn-primary btn-block" data-i18n="rep_m_btn">📤 استبدال الملف</button>
+        <button id="replace-confirm-btn" class="btn btn-primary btn-block" data-i18n="rep_m_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12.4V3.6M8.2 7.4 12 3.6l3.8 3.8"/><path d="M4.4 14.6v3.8a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2v-3.8"/></svg> استبدال الملف</button>
         <button data-close="replace-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
@@ -380,14 +380,14 @@
   <div id="delete-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head danger-head">
-        <h3 data-i18n="del_m_title">🗑️ حذف الاستشارة</h3>
+        <h3 data-i18n="del_m_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.6 6.6h14.8"/><path d="M9.2 6.6V5a1.4 1.4 0 0 1 1.4-1.4h2.8A1.4 1.4 0 0 1 14.8 5v1.6"/><path d="M6.6 6.6l.8 12.2a1.8 1.8 0 0 0 1.8 1.7h5.6a1.8 1.8 0 0 0 1.8-1.7l.8-12.2"/><path d="M10.2 10.2v6.6M13.8 10.2v6.6"/></svg> حذف الاستشارة</h3>
         <p data-i18n="del_m_text">سيُحذف ملف دفتر الشروط (إن وُجد) مع الاستشارة وجميع سجل تحميلاتها. لا يمكن التراجع.</p>
       </div>
       <div class="modal-body">
         <div id="delete-tender-info" class="info-box"></div>
         <label class="label" for="delete-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
         <input id="delete-ref-input" class="input" autocomplete="off">
-        <button id="delete-confirm-btn" class="btn btn-danger btn-block" data-i18n="del_m_btn">🗑️ تأكيد الحذف النهائي</button>
+        <button id="delete-confirm-btn" class="btn btn-danger btn-block" data-i18n="del_m_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.6 6.6h14.8"/><path d="M9.2 6.6V5a1.4 1.4 0 0 1 1.4-1.4h2.8A1.4 1.4 0 0 1 14.8 5v1.6"/><path d="M6.6 6.6l.8 12.2a1.8 1.8 0 0 0 1.8 1.7h5.6a1.8 1.8 0 0 0 1.8-1.7l.8-12.2"/><path d="M10.2 10.2v6.6M13.8 10.2v6.6"/></svg> تأكيد الحذف النهائي</button>
         <button data-close="delete-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
@@ -397,7 +397,7 @@
   <div id="edit-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head primary-head">
-        <h3 data-i18n="edit_m_title">✏️ تعديل الاستشارة / طلب العروض</h3>
+        <h3 data-i18n="edit_m_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.4 19.6l.9-3.9L15.7 5.3a2.1 2.1 0 0 1 3 3L8.3 18.7z"/><path d="M14.4 6.6l3 3"/></svg> تعديل الاستشارة / طلب العروض</h3>
         <p data-i18n="edit_m_text">يُحفظ التعديل مباشرةً. الرقم والرمز QR لا يتغيران.</p>
       </div>
       <div class="modal-body">
@@ -407,8 +407,8 @@
           <div class="field">
             <label class="label" data-i18n="f_kind">نوع الصفقة *</label>
             <div class="grid-2">
-              <label class="kind-opt"><input type="radio" name="e-kind" value="consultation" class="sr-only"><span data-i18n="kind_consultation">📄 استشارة</span></label>
-              <label class="kind-opt"><input type="radio" name="e-kind" value="tender" class="sr-only"><span data-i18n="kind_tender">📋 طلب عروض</span></label>
+              <label class="kind-opt"><input type="radio" name="e-kind" value="consultation" class="sr-only"><span data-i18n="kind_consultation"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.8 3.6H7.4A1.6 1.6 0 0 0 5.8 5.2v13.6a1.6 1.6 0 0 0 1.6 1.6h9.2a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M13.8 3.6v4h4.4"/><path d="M8.6 12.6h6.8M8.6 16h4.4"/></svg> استشارة</span></label>
+              <label class="kind-opt"><input type="radio" name="e-kind" value="tender" class="sr-only"><span data-i18n="kind_tender"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 5.6H7.6A1.8 1.8 0 0 0 5.8 7.4v11.8a1.8 1.8 0 0 0 1.8 1.8h8.8a1.8 1.8 0 0 0 1.8-1.8V7.4a1.8 1.8 0 0 0-1.8-1.8h-1.6"/><rect x="9.2" y="3.4" width="5.6" height="4.2" rx="1.4"/><path d="M9 12.4h6M9 15.8h4"/></svg> طلب عروض</span></label>
             </div>
           </div>
           <div class="field">
@@ -419,8 +419,8 @@
             <label class="label" for="e-title" data-i18n="f_title_ar">العنوان بالعربي *</label>
             <input id="e-title" class="input" required>
             <div class="btn-row">
-              <button type="button" id="e-translate-fr-ar-btn" class="btn btn-secondary" data-i18n="translate_fr_to_ar">🔄 ترجم إلى عربي</button>
-              <button type="button" id="e-translate-ar-fr-btn" class="btn btn-secondary" data-i18n="translate_ar_to_fr">🔄 ترجم إلى فرنسي</button>
+              <button type="button" id="e-translate-fr-ar-btn" class="btn btn-secondary" data-i18n="translate_fr_to_ar"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.7h-4.7"/></svg> ترجم إلى عربي</button>
+              <button type="button" id="e-translate-ar-fr-btn" class="btn btn-secondary" data-i18n="translate_ar_to_fr"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.7h-4.7"/></svg> ترجم إلى فرنسي</button>
             </div>
           </div>
           <div class="field">
@@ -442,7 +442,7 @@
             </div>
           </div>
           <p class="hint" data-i18n="edit_ref_note">الرقم محجوب — لأنه يحدد الرمز QR (يبقى نفسه).</p>
-          <button id="edit-btn" type="submit" class="btn btn-primary btn-block" data-i18n="edit_m_btn">💾 حفظ التعديلات</button>
+          <button id="edit-btn" type="submit" class="btn btn-primary btn-block" data-i18n="edit_m_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 6a1.8 1.8 0 0 1 1.8-1.8h8.4L19 7.8v9.4a1.8 1.8 0 0 1-1.8 1.8H7a1.8 1.8 0 0 1-1.8-1.8z"/><path d="M8.4 4.2v4.2h6.2"/><rect x="8" y="12.6" width="8" height="6.4"/></svg> حفظ التعديلات</button>
           <button data-close="edit-modal" type="button" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
         </form>
       </div>
@@ -453,7 +453,7 @@
   <div id="restore-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head danger-head">
-        <h3 data-i18n="rs_m_title">⚠️ تأكيد الاستعادة</h3>
+        <h3 data-i18n="rs_m_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.9 20.1h18.2z"/><path d="M12 10.2v4"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg> تأكيد الاستعادة</h3>
         <p data-i18n="rs_m_text">سيُحذف المحتوى الحالي ويستبدل بما في ملفات النسخة. لا يمكن التراجع.</p>
       </div>
       <div class="modal-body">
@@ -462,7 +462,7 @@
           <input type="checkbox" id="restore-safety" checked>
           <span data-i18n="rs_safety">تحميل نسخة أمان من الحالة الحالية أولًا (موصى به)</span>
         </label>
-        <button id="restore-confirm-btn" class="btn btn-danger btn-block" data-i18n="rs_m_btn">✅ تأكيد الاستعادة</button>
+        <button id="restore-confirm-btn" class="btn btn-danger btn-block" data-i18n="rs_m_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/><path d="m8.2 12.4 2.6 2.6 5-5.5"/></svg> تأكيد الاستعادة</button>
         <button data-close="restore-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
@@ -472,7 +472,7 @@
   <div id="edit-account-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head primary-head">
-        <h3 data-i18n="acc_edit_title">✏️ تعديل الحساب</h3>
+        <h3 data-i18n="acc_edit_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.4 19.6l.9-3.9L15.7 5.3a2.1 2.1 0 0 1 3 3L8.3 18.7z"/><path d="M14.4 6.6l3 3"/></svg> تعديل الحساب</h3>
         <button data-close="edit-account-modal" class="modal-close">✕</button>
       </div>
       <div class="modal-body">
@@ -505,7 +505,7 @@
           <input type="checkbox" id="ea-active" checked>
           <span data-i18n="acc_active">الحساب نشط</span>
         </label>
-        <button id="ea-save-btn" type="button" class="btn btn-primary btn-block" data-i18n="acc_edit_btn">💾 حفظ التعديلات</button>
+        <button id="ea-save-btn" type="button" class="btn btn-primary btn-block" data-i18n="acc_edit_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 6a1.8 1.8 0 0 1 1.8-1.8h8.4L19 7.8v9.4a1.8 1.8 0 0 1-1.8 1.8H7a1.8 1.8 0 0 1-1.8-1.8z"/><path d="M8.4 4.2v4.2h6.2"/><rect x="8" y="12.6" width="8" height="6.4"/></svg> حفظ التعديلات</button>
         <button data-close="edit-account-modal" type="button" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
@@ -515,7 +515,7 @@
   <div id="change-password-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head primary-head">
-        <h3 data-i18n="cp_title">🔒 تغيير كلمة المرور</h3>
+        <h3 data-i18n="cp_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7.2 0v2.6"/></svg> تغيير كلمة المرور</h3>
         <button data-close="change-password-modal" class="modal-close">✕</button>
       </div>
       <div class="modal-body">
@@ -528,7 +528,7 @@
           <label class="label" for="cp-confirm" data-i18n="cp_repeat">تأكيد كلمة المرور</label>
           <input id="cp-confirm" class="input" type="password" dir="ltr" autocomplete="new-password" minlength="8">
         </div>
-        <button id="cp-save-btn" type="button" class="btn btn-primary btn-block" data-i18n="cp_btn">💾 تغيير كلمة المرور</button>
+        <button id="cp-save-btn" type="button" class="btn btn-primary btn-block" data-i18n="cp_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 6a1.8 1.8 0 0 1 1.8-1.8h8.4L19 7.8v9.4a1.8 1.8 0 0 1-1.8 1.8H7a1.8 1.8 0 0 1-1.8-1.8z"/><path d="M8.4 4.2v4.2h6.2"/><rect x="8" y="12.6" width="8" height="6.4"/></svg> تغيير كلمة المرور</button>
         <button data-close="change-password-modal" type="button" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
@@ -538,7 +538,7 @@
   <div id="forgot-password-modal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head primary-head">
-        <h3 data-i18n="forgot_title">📧 استعادة كلمة المرور</h3>
+        <h3 data-i18n="forgot_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2.4"/><path d="M4.6 7.6l6.7 4.6a1.5 1.5 0 0 0 1.8 0l6.7-4.6"/></svg> استعادة كلمة المرور</h3>
         <button data-close="forgot-password-modal" class="modal-close">✕</button>
       </div>
       <div class="modal-body">
@@ -547,7 +547,7 @@
           <label class="label" for="fp-email" data-i18n="forgot_email">البريد الإلكتروني</label>
           <input id="fp-email" class="input" type="email" dir="ltr" required>
         </div>
-        <button id="fp-send-btn" type="button" class="btn btn-primary btn-block" data-i18n="forgot_send">📨 إرسال رابط الاستعادة</button>
+        <button id="fp-send-btn" type="button" class="btn btn-primary btn-block" data-i18n="forgot_send"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2.4"/><path d="M4.6 7.6l6.7 4.6a1.5 1.5 0 0 0 1.8 0l6.7-4.6"/></svg> إرسال رابط الاستعادة</button>
         <p class="hint" data-i18n="forgot_tip">إذا لم يصلك البريد، تحقق من المجلد غير المرغوب فيه أو فعّل Recovery Emails في إعدادات Supabase</p>
       </div>
     </div>
@@ -555,14 +555,14 @@
 
   <div id="toasts" class="toasts"></div>
 
-  <script src="js/config.js?v=gotto16"></script>
-  <script src="js/gemini-config.js?v=gotto16"></script>
-  <script src="js/utils.js?v=gotto16"></script>
-  <script src="js/i18n.js?v=gotto16"></script>
-  <script src="js/supabase.js?v=gotto16"></script>
-  <script src="js/auth.js?v=gotto16"></script>
-  <script src="js/download.js?v=gotto16"></script>
-  <script src="js/admin.js?v=gotto16"></script>
-  <script src="js/app.js?v=gotto16"></script>
+  <script src="js/config.js?v=gotto25"></script>
+  <script src="js/gemini-config.js?v=gotto25"></script>
+  <script src="js/utils.js?v=gotto25"></script>
+  <script src="js/i18n.js?v=gotto25"></script>
+  <script src="js/supabase.js?v=gotto25"></script>
+  <script src="js/auth.js?v=gotto25"></script>
+  <script src="js/download.js?v=gotto25"></script>
+  <script src="js/admin.js?v=gotto25"></script>
+  <script src="js/app.js?v=gotto25"></script>
 </body>
 </html>

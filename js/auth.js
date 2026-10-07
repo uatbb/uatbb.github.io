@@ -56,7 +56,7 @@
       const pass = $('rq-pass').value;
       const msg = $('rq-msg');
       const show = (txt, ok) => {
-        msg.textContent = txt;
+        msg.innerHTML = txt;
         msg.className = 'text-[11px] mt-2 leading-relaxed ' + (ok ? 'text-emerald-600 font-bold' : 'text-red-600');
         msg.classList.remove('hidden');
       };
@@ -68,14 +68,14 @@
         const { data, error } = await DB.functions.invoke('manage-users', {
           body: { action: 'self-register', full_name: name, email, password: pass },
         });
-        if (error) return show(I18N.t('t_fail', { msg: error.message || error }), false);
+        if (error) return show(I18N.t('t_fail', { msg: esc(error.message || error) }), false);
         if (data && data.error === 'bad_email') return show(I18N.t('t_bad_email'), false);
         if (data && data.error === 'weak_password') return show(I18N.t('t_pass_short'), false);
-        if (data && data.error) return show(I18N.t('t_fail', { msg: data.error }), false);
+        if (data && data.error) return show(I18N.t('t_fail', { msg: esc(data.error) }), false);
         show(I18N.t('rq_done'), true);
         reqForm.reset();
       } catch (err) {
-        show(I18N.t('t_fail', { msg: (err && err.message) || err }), false);
+        show(I18N.t('t_fail', { msg: esc((err && err.message) || err) }), false);
       } finally {
         setBusy(sub, false, I18N.t('rq_submit'));
       }

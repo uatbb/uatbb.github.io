@@ -106,6 +106,7 @@
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   };
 
+  window.plain = function (v) { return String(v == null ? '' : v).replace(/ ?<i class=["']ico[^"']*["']><\/i>/g, ''); };
   window.toast = function (msg, type, ms) {
     type = type || 'info';
     ms = ms || 4200;
@@ -121,7 +122,7 @@
     el.className =
       'toast pointer-events-auto max-w-md w-full sm:w-auto px-4 py-3 rounded-xl shadow-lg text-sm ' +
       (styles[type] || styles.info);
-    el.textContent = msg;
+    el.innerHTML = msg;
     box.appendChild(el);
     setTimeout(() => {
       el.style.transition = 'opacity .3s';
@@ -147,12 +148,12 @@
   window.setBusy = function (btn, busy, text) {
     if (!btn) return;
     if (busy) {
-      btn.dataset.orig = btn.textContent;
+      btn.dataset.orig = btn.innerHTML;
       btn.disabled = true;
-      btn.textContent = text;
+      btn.innerHTML = text;
     } else {
       btn.disabled = false;
-      btn.textContent = text || btn.dataset.orig || btn.textContent;
+      btn.innerHTML = text || btn.dataset.orig || btn.innerHTML;
     }
   };
 
@@ -169,8 +170,8 @@
   window.emptyState = function (title, sub) {
     return (
       '<div class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center">' +
-      '<div class="text-4xl mb-3">📭</div>' +
-      '<div class="font-bold text-slate-600">' + window.esc(title) + '</div>' +
+      '<div class="text-4xl mb-3"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 13.4h4.2l1.4 2.8h5.6l1.4-2.8h4.2"/><path d="M6.8 5.4A2 2 0 0 1 8.7 4h6.6a2 2 0 0 1 1.9 1.4l2.1 6.6v4.4a2 2 0 0 1-2 2H6.7a2 2 0 0 1-2-2V12z"/></svg></div>' +
+      '<div class="font-bold text-slate-600">' + window.esc(window.plain(title)) + '</div>' +
       (sub ? '<div class="text-xs text-slate-400 mt-1">' + window.esc(sub) + '</div>' : '') +
       '</div>'
     );
@@ -178,7 +179,7 @@
 
   window.errorState = function (err) {
     return (
-      '<div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">⚠️ ' +
+      '<div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.9 20.1h18.2z"/><path d="M12 10.2v4"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg> ' +
       window.esc((err && err.message) || String(err)) +
       '</div>'
     );
@@ -193,7 +194,7 @@
     const item = map[s] || [s, 'bg-slate-100 text-slate-500 border-slate-200'];
     return (
       '<span class="text-[11px] font-bold rounded-full border px-2.5 py-0.5 whitespace-nowrap ' +
-      item[1] + '">' + window.esc(item[0]) + '</span>'
+      item[1] + '">' + window.esc(window.plain(item[0])) + '</span>'
     );
   };
 

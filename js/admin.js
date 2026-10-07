@@ -318,6 +318,19 @@
     }
   }
 
+  const FAC_SVG = {
+    bank: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 9.6 12 4.8l8.6 4.8"/><path d="M6.2 10v7.4M10.2 10v7.4M13.8 10v7.4M17.8 10v7.4"/><path d="M3.6 20.4h16.8"/></svg>',
+    chart: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5.6" y="11" width="3.4" height="6" rx="1"/><rect x="10.3" y="6.6" width="3.4" height="10.4" rx="1"/><rect x="15" y="13.4" width="3.4" height="3.6" rx="1"/></svg>',
+    crown: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 17.4 3.2 7.6l5 3.5L12 4.6l3.8 6.5 5-3.5-1 9.8z"/><path d="M4.6 20.2h14.8"/></svg>',
+    bulb: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6a5.6 5.6 0 0 1 3.3 10.1c-.7.5-1.1 1.3-1.2 2.1H9.9c-.1-.8-.5-1.6-1.2-2.1A5.6 5.6 0 0 1 12 3.6z"/><path d="M9.9 18.4h4.2M10.6 20.6h2.8"/></svg>',
+    building: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.4" y="3.6" width="13.2" height="16.8" rx="2"/><path d="M9 7.6h1.6M13.4 7.6H15M9 11.4h1.6M13.4 11.4H15M9 15.2h1.6M13.4 15.2H15"/><path d="M10.4 20.4v-3h3.2v3"/></svg>'
+  };
+  const FAC_ICONS = { '🏛️': 'bank', '🏛': 'bank', '📊': 'chart', '⚖️': 'crown', '⚖': 'crown', '🔬': 'bulb', '🌍': 'globe' };
+  function facIconHtml(f) {
+    const e = String((f && f.icon) || '').trim();
+    return FAC_SVG[FAC_ICONS[e] || 'building'];
+  }
+
   function facName(f) {
     if (!f) return '';
     return (I18N.lang === 'ar' ? f.name_ar : f.name_fr) || f.name_ar || '';
@@ -326,9 +339,9 @@
   // شارة مصغرة للكلية (تُستخدم في بطاقات الاستشارات والحسابات)
   function facChip(f) {
     if (!f) {
-      return '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">🏛️ ' + t('fac_none') + '</span>';
+      return '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 9.6 12 4.8l8.6 4.8"/><path d="M6.2 10v7.4M10.2 10v7.4M13.8 10v7.4M17.8 10v7.4"/><path d="M3.6 20.4h16.8"/></svg> ' + t('fac_none') + '</span>';
     }
-    return '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap" style="background:' + f.color + '1a;color:' + f.color + '">' + (f.icon || '🎓') + ' ' + esc(facName(f)) + '</span>';
+    return '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap" style="background:' + f.color + '1a;color:' + f.color + '">' + facIconHtml(f) + ' ' + esc(facName(f)) + '</span>';
   }
 
   /* ---------- تذكير بمواعيد الفتح (اليوم / غدًا) ---------- */
@@ -369,7 +382,7 @@
     } catch (e) { /* غير حرج */ }
     addNotif({
       id: nid,
-      icon: '⬇️',
+      icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.4v14.2M6.6 13.2 12 18.6l5.4-5.4"/></svg>',
       title: d.company || '—',
       sub: (ref ? ref + ' • ' : '') + t('ntf_new_download') + ' • ' + fmtDate(d.downloaded_at || new Date().toISOString(), true),
       time: d.downloaded_at || new Date().toISOString()
@@ -380,7 +393,7 @@
     if (!r || !r.id) return;
     addNotif({
       id: 'td-' + r.id,
-      icon: '📄',
+      icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.8 3.6H7.4A1.6 1.6 0 0 0 5.8 5.2v13.6a1.6 1.6 0 0 0 1.6 1.6h9.2a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M13.8 3.6v4h4.4"/><path d="M8.6 12.6h6.8M8.6 16h4.4"/></svg>',
       title: (r.reference ? fmtRef(r.reference) : '—'),
       sub: t('ntf_new_tender') + (r.title ? ' • ' + r.title : ''),
       time: r.created_at || new Date().toISOString()
@@ -493,7 +506,7 @@
     const trunc = (s) => (s && s.length > 60 ? s.slice(0, 60) + '…' : s);
     const notifRowHtml = (n) =>
       '<div class="px-4 py-3 flex items-start gap-2.5 bg-teal-50/40">' +
-      '<span class="mt-0.5 text-base">' + (n.icon || '🔔') + '</span>' +
+      '<span class="mt-0.5 text-base">' + (n.icon || '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 17.2v-6a5.4 5.4 0 0 1 10.8 0v6"/><path d="M4.8 17.2h14.4"/><path d="M10.1 20a2.1 2.1 0 0 0 3.8 0"/></svg>') + '</span>' +
       '<div class="min-w-0">' +
       '<div class="text-sm font-bold text-slate-800">' + esc(n.title || '') + '</div>' +
       (n.sub ? '<div class="text-xs text-slate-500 leading-snug mt-0.5">' + esc(n.sub) + '</div>' : '') +
@@ -502,7 +515,7 @@
     const rowHtml = (i) =>
       '<div class="px-4 py-3 flex items-start gap-2.5 ' +
       (i.isToday ? 'bg-amber-50' : i.isTmr ? 'bg-sky-50/70' : '') + '">' +
-      '<span class="mt-0.5 text-base">' + (i.isToday ? '🔴' : i.isTmr ? '🔵' : '⚪') + '</span>' +
+      '<span class="mt-0.5 text-base">' + (i.isToday ? '<i class="ico ico-dot-red"></i>' : i.isTmr ? '<i class="ico ico-dot-blue"></i>' : '<i class="ico ico-dot-white"></i>') + '</span>' +
       '<div class="min-w-0">' +
       '<div class="text-sm font-bold text-slate-800" dir="ltr">' + esc(fmtRef(i.r.reference)) + '</div>' +
       (i.r.title ? '<div class="text-xs text-slate-500 leading-snug">' + esc(trunc(i.r.title)) + '</div>' : '') +
@@ -513,24 +526,24 @@
     const hasAny = items.length || notifItems.length;
     panel.innerHTML =
       '<div class="px-4 py-3 bg-gradient-to-l from-amber-50 via-white to-white border-b border-amber-100 flex items-center gap-2">' +
-      '<span class="text-lg">🔔</span>' +
+      '<span class="text-lg"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 17.2v-6a5.4 5.4 0 0 1 10.8 0v6"/><path d="M4.8 17.2h14.4"/><path d="M10.1 20a2.1 2.1 0 0 0 3.8 0"/></svg></span>' +
       '<span class="text-sm font-black text-slate-800">' + t('ntf_title') + '</span>' +
       '<span class="text-[11px] font-black text-white bg-amber-500 rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">' + totalBadge + '</span>' +
       '</div>' +
       (hasAny
         ? '<div class="max-h-[55vh] overflow-y-auto divide-y divide-slate-100">' +
           (notifItems.length
-            ? '<div class="px-4 pt-3 pb-1 text-[10px] font-black text-teal-700 bg-teal-50/60">📡 ' + t('ntf_live') + '</div>' +
+            ? '<div class="px-4 pt-3 pb-1 text-[10px] font-black text-teal-700 bg-teal-50/60"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12.4V20M8.6 20.4h6.8"/><circle cx="12" cy="10" r="2"/><path d="M7.7 6.6a6.2 6.2 0 0 0 0 6.8M16.3 6.6a6.2 6.2 0 0 1 0 6.8"/><path d="M5.2 4.2a10 10 0 0 0 0 11.6M18.8 4.2a10 10 0 0 1 0 11.6"/></svg> ' + t('ntf_live') + '</div>' +
               notifItems.map(notifRowHtml).join('')
             : '') +
           (items.length
-            ? '<div class="px-4 pt-3 pb-1 text-[10px] font-black text-amber-700 bg-amber-50/60">🗓️ ' + t('rm_title') + '</div>' +
+            ? '<div class="px-4 pt-3 pb-1 text-[10px] font-black text-amber-700 bg-amber-50/60"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.6" width="16" height="14.8" rx="2.6"/><path d="M4 10.2h16"/><path d="M8.4 3.6v4M15.6 3.6v4"/></svg> ' + t('rm_title') + '</div>' +
               items.map(rowHtml).join('')
             : '') +
           '</div>'
         : '<div class="py-10 text-center text-sm text-slate-400">' + t('ntf_empty') + '</div>') +
       '<div class="px-4 py-2 text-[10px] text-slate-400 border-t border-slate-100 text-center">' +
-      (rtActive ? '📡 ' + t('ntf_realtime') : '🔄 ' + t('ntf_polling')) +
+      (rtActive ? '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12.4V20M8.6 20.4h6.8"/><circle cx="12" cy="10" r="2"/><path d="M7.7 6.6a6.2 6.2 0 0 0 0 6.8M16.3 6.6a6.2 6.2 0 0 1 0 6.8"/><path d="M5.2 4.2a10 10 0 0 0 0 11.6M18.8 4.2a10 10 0 0 1 0 11.6"/></svg> ' + t('ntf_realtime') : '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.7h-4.7"/></svg> ' + t('ntf_polling')) +
       '</div>';
   }
 
@@ -660,7 +673,7 @@
 
     // حساب معلّق: شاشة انتظار فقط
     if (A.pending) {
-      if (badge) { badge.classList.remove('hidden'); badge.textContent = t('role_pending_badge'); }
+      if (badge) { badge.classList.remove('hidden'); badge.innerHTML = t('role_pending_badge'); }
       if (app) app.classList.add('hidden');
       if (pendCard) pendCard.classList.remove('hidden');
       return;
@@ -673,7 +686,7 @@
       document.querySelectorAll('.nav-btn').forEach((b) => b.classList.add('hidden'));
       document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]').forEach((b) => b.classList.remove('hidden'));
       setGrid(1);
-      if (badge) { badge.classList.remove('hidden'); badge.textContent = t('role_disabled_badge'); }
+      if (badge) { badge.classList.remove('hidden'); badge.innerHTML = t('role_disabled_badge'); }
       const bak2 = $('backup-restore-box');
       if (bak2) bak2.classList.add('hidden');
       const settingsWrap2 = $('settings-wrap');
@@ -733,18 +746,18 @@
   function updateBadge() {
     const badge = $('role-badge');
     if (!badge) return;
-    if (A.pending) badge.textContent = t('role_pending_badge');
-    else if (A.disabled) badge.textContent = t('role_disabled_badge');
+    if (A.pending) badge.innerHTML = t('role_pending_badge');
+    else if (A.disabled) badge.innerHTML = t('role_disabled_badge');
     else {
       const labelKey = ROLE_LABELS[A.role] || 'badge_custom';
       let suffix = '';
       const f = A.facultyById[A.facultyId];
       if (A.scopeOf() === 'own') {
-        suffix = f ? ' — ' + f.icon + ' ' + facName(f) : ' — ' + t('fac_central_label');
+        suffix = f ? ' — ' + facIconHtml(f) + ' ' + facName(f) : ' — ' + t('fac_central_label');
       } else if (A.scopeOf() === 'all') {
         suffix = ' — ' + t('scope_all_short');
       }
-      badge.textContent = t(labelKey) + suffix;
+      badge.innerHTML = t(labelKey) + suffix;
     }
     badge.classList.remove('hidden');
   }
@@ -763,7 +776,7 @@
   function populateFacultySelects() {
     const fill = (sel, opts) => {
       sel.innerHTML = opts.map((f) =>
-        '<option value="' + f.id + '">' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>').join('');
+        '<option value="' + f.id + '">' + esc(facName(f)) + '</option>').join('');
     };
     const fsel = $('f-faculty');
     if (fsel) {
@@ -907,10 +920,10 @@
         '<div class="text-xs text-slate-500 font-semibold mt-1">' + label + '</div>' +
         '</div>';
       statsEl.innerHTML =
-        card('📥', t('db_total'), total, 'text-slate-800') +
-        card('🟢', t('db_published'), published, 'text-primary-700') +
-        card('🔓', t('db_opened'), opened, 'text-indigo-600') +
-        card('⬇️', t('db_downloads'), dlTotal, 'text-teal-700');
+        card('<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6v8.8M8.2 9l3.8 3.8L15.8 9"/><path d="M4.4 14.6v3.8a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2v-3.8"/></svg>', t('db_total'), total, 'text-slate-800') +
+        card('<i class="ico ico-dot-green"></i>', t('db_published'), published, 'text-primary-700') +
+        card('<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg>', t('db_opened'), opened, 'text-indigo-600') +
+        card('<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.4v14.2M6.6 13.2 12 18.6l5.4-5.4"/></svg>', t('db_downloads'), dlTotal, 'text-teal-700');
 
       const now = Date.now();
       const today = officePartsDate(new Date());
@@ -1291,7 +1304,7 @@
       if (showFacChips) {
         const counts = await Promise.all(A.faculties.map((f) => countQ({ faculty_id: f.id })));
         A.faculties.forEach((f, i) => {
-          html += stChipHtml('fac:' + f.id, (f.icon || '') + ' ' + esc(facName(f)), counts[i]);
+          html += stChipHtml('fac:' + f.id, facIconHtml(f) + ' ' + esc(facName(f)), counts[i]);
         });
       }
       box.innerHTML = html;
@@ -1448,8 +1461,8 @@
         (tt.opened_by ? t('op_by', { n: esc(userName[tt.opened_by] || t('op_unknown')) }) : '') + '</div>' +
         '</div>' +
         '<div class="flex items-center gap-1.5 shrink-0">' +
-        '<button data-act="downloads" data-id="' + tt.id + '" class="text-xs btn-secondary shrink-0">👥 ' + dl(tt) + '</button>' +
-        '<button data-act="report" data-id="' + tt.id + '" class="text-xs btn-secondary shrink-0" title="' + t('btn_report') + '">' + t('btn_report') + '</button>' +
+        '<button data-act="downloads" data-id="' + tt.id + '" class="text-xs btn-secondary shrink-0"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.2" cy="8.8" r="3.3"/><path d="M3.4 19.4c0-3.2 2.6-5.4 5.8-5.4s5.8 2.2 5.8 5.4"/><path d="M16.2 6.2a3.2 3.2 0 0 1 0 5.6"/><path d="M17.4 14.4c1.9.8 3.2 2.5 3.2 4.6"/></svg> ' + dl(tt) + '</button>' +
+        '<button data-act="report" data-id="' + tt.id + '" class="text-xs btn-secondary shrink-0" title="' + plain(t('btn_report')) + '">' + t('btn_report') + '</button>' +
         '</div>' +
         '</div>'
       );
@@ -1491,7 +1504,7 @@
 
   A.showQR = async function (t) {
     A.lastQrTender = t;
-    $('qr-kind').textContent = kindLabel(t.kind);
+    $('qr-kind').innerHTML = kindLabel(t.kind);
     $('qr-reference').textContent = fmtRef(t.reference);
     $('qr-title').textContent = displayTitle(t);
     $('qr-duration').textContent = t.duration || '—';
@@ -1502,7 +1515,7 @@
     if (qf) {
       const fac = (t.faculty_id && A.facultyById[t.faculty_id]) || A.faculties.find((f) => f.is_central);
       if (fac) {
-        qf.innerHTML = '<span class="inline-flex items-center gap-1 text-sm font-bold rounded-full px-3 py-1" style="background:' + fac.color + '1a;color:' + fac.color + '">' + (fac.icon || '🎓') + ' ' + esc(facName(fac)) + '</span>';
+        qf.innerHTML = '<span class="inline-flex items-center gap-1 text-sm font-bold rounded-full px-3 py-1" style="background:' + fac.color + '1a;color:' + fac.color + '">' + facIconHtml(fac) + ' ' + esc(facName(fac)) + '</span>';
         qf.classList.remove('hidden');
       } else {
         qf.classList.add('hidden');
@@ -1545,7 +1558,7 @@
   A.showDownloads = async function (tt) {
     dlTender = tt;
     dlPage = 1;
-    $('dl-title').textContent = t('dl_title', { ref: fmtRef(tt.reference) });
+    $('dl-title').innerHTML = t('dl_title', { ref: esc(fmtRef(tt.reference)) });
     openModal('downloads-modal');
     await A.loadDownloads();
   };
@@ -1573,7 +1586,7 @@
         '<table class="w-full text-sm">' +
         '<thead><tr class="text-slate-400 text-xs border-b border-slate-200">' +
         '<th class="py-2 text-right">' + t('th_company') + '</th><th class="py-2 text-right">' + t('th_phone') + '</th>' +
-        '<th class="py-2 text-right">' + t('th_email') + '</th><th class="py-2 text-right">IP</th><th class="py-2 text-right">' + t('th_time') + '</th>' +
+        '<th class="py-2 text-right">' + t('th_email') + '</th><th class="py-2 text-right">' + t('th_time') + '</th>' +
         '</tr></thead>' +
         '<tbody>' +
         data.map(
@@ -1582,7 +1595,6 @@
             '<td class="py-2 font-semibold">' + esc(d.company) + '</td>' +
             '<td class="py-2" dir="ltr">' + esc(d.phone) + '</td>' +
             '<td class="py-2 break-all" dir="ltr">' + esc(d.email) + '</td>' +
-            '<td class="py-2 text-xs text-slate-400" dir="ltr">' + esc(d.ip_address || '—') + '</td>' +
             '<td class="py-2 text-xs text-slate-500 whitespace-nowrap">' + fmtDate(d.downloaded_at, true) + '</td>' +
             '</tr>'
         ).join('') +
@@ -1601,7 +1613,7 @@
       .eq('tender_id', dlTender.id)
       .order('downloaded_at');
     if (error || !data) return toast(t('t_export_fail'), 'error');
-    const head = ['company', 'phone', 'email', 'ip_address', 'downloaded_at'];
+    const head = ['company', 'phone', 'email', 'downloaded_at'];
     const rows = data.map((d) => head.map((k) => csvCell(d[k])).join(','));
     const csv = '\uFEFF' + [head.join(','), ...rows].join('\n');
     downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'downloads_' + String(dlTender.reference).replace(/[^\w.-]+/g, '_') + '.csv');
@@ -1626,7 +1638,7 @@
     const th = t('pdf_th');
     const rows = data.map((d, i) =>
       '<tr><td>' + (i + 1) + '</td><td>' + esc(d.company) + '</td><td dir="ltr">' + esc(d.phone) + '</td>' +
-      '<td dir="ltr">' + esc(d.email) + '</td><td dir="ltr">' + esc(d.ip_address || '—') + '</td>' +
+      '<td dir="ltr">' + esc(d.email) + '</td>' +
       '<td>' + fmtDate(d.downloaded_at, true) + '</td></tr>'
     ).join('');
     const html =
@@ -2254,7 +2266,7 @@
     if (pend) {
       pend.innerHTML = pendingUsers.length
         ? '<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">' +
-          '<div class="font-bold text-amber-800 text-sm mb-2">🕓 ' + t('acc_pending_title') + ' (' + pendingUsers.length + ')</div>' +
+          '<div class="font-bold text-amber-800 text-sm mb-2"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.2 1.9"/></svg> ' + t('acc_pending_title') + ' (' + pendingUsers.length + ')</div>' +
           '<div class="space-y-2">' + pendingUsers.map(pendingCard).join('') + '</div>' +
           '</div>'
         : '';
@@ -2298,7 +2310,7 @@
       '<button type="button" data-preset="' + k + '" class="text-[10px] font-bold rounded-full border border-slate-200 hover:border-primary-400 hover:text-primary-700 px-2.5 py-1 whitespace-nowrap">' + t('preset_' + k) + '</button>'
     ).join('');
     const facOpts = scopeFaculties().map((f) =>
-      '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
+      '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + esc(facName(f)) + '</option>'
     ).join('');
     return (
       '<div class="space-y-2.5">' +
@@ -2375,12 +2387,12 @@
       '<div class="account-row pending-row">' +
       '<div class="account-avatar pending-avatar">' + initial + '</div>' +
       '<div class="account-main">' +
-      '<div class="account-name">' + esc(u.full_name || u.email) + ' <span class="pending-tag">🕓 ' + t('acc_pending_title') + '</span></div>' +
+      '<div class="account-name">' + esc(u.full_name || u.email) + ' <span class="pending-tag"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.2 1.9"/></svg> ' + t('acc_pending_title') + '</span></div>' +
       '<div class="account-email" dir="ltr">' + esc(u.email) + '</div>' +
       '</div>' +
       '<div class="account-actions">' +
-      '<button type="button" data-approve="' + u.id + '" class="btn btn-small btn-primary">✅ ' + t('btn_approve') + '</button>' +
-      '<button type="button" data-reject="' + u.id + '" data-email="' + esc(u.email) + '" class="btn btn-small btn-danger">🗑️ ' + t('btn_reject') + '</button>' +
+      '<button type="button" data-approve="' + u.id + '" class="btn btn-small btn-primary"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/><path d="m8.2 12.4 2.6 2.6 5-5.5"/></svg> ' + t('btn_approve') + '</button>' +
+      '<button type="button" data-reject="' + u.id + '" data-email="' + esc(u.email) + '" class="btn btn-small btn-danger"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.6 6.6h14.8"/><path d="M9.2 6.6V5a1.4 1.4 0 0 1 1.4-1.4h2.8A1.4 1.4 0 0 1 14.8 5v1.6"/><path d="M6.6 6.6l.8 12.2a1.8 1.8 0 0 0 1.8 1.7h5.6a1.8 1.8 0 0 0 1.8-1.7l.8-12.2"/><path d="M10.2 10.2v6.6M13.8 10.2v6.6"/></svg> ' + t('btn_reject') + '</button>' +
       '</div>' +
       '</div>'
     );
@@ -2395,7 +2407,7 @@
     );
   }
 
-  const ACT_ICONS = { create: '📝', edit: '✏️', delete: '🗑️', open: '🔓', logs: '📊', accounts: '👥' };
+  const ACT_ICONS = { create: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3"/><path d="M9 15.2l1-2.6 5.4-5.4a1.5 1.5 0 0 1 2.1 2.1l-5.4 5.4z"/></svg>', edit: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.4 19.6l.9-3.9L15.7 5.3a2.1 2.1 0 0 1 3 3L8.3 18.7z"/><path d="M14.4 6.6l3 3"/></svg>', delete: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.6 6.6h14.8"/><path d="M9.2 6.6V5a1.4 1.4 0 0 1 1.4-1.4h2.8A1.4 1.4 0 0 1 14.8 5v1.6"/><path d="M6.6 6.6l.8 12.2a1.8 1.8 0 0 0 1.8 1.7h5.6a1.8 1.8 0 0 0 1.8-1.7l.8-12.2"/><path d="M10.2 10.2v6.6M13.8 10.2v6.6"/></svg>', open: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg>', logs: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5.6" y="11" width="3.4" height="6" rx="1"/><rect x="10.3" y="6.6" width="3.4" height="10.4" rx="1"/><rect x="15" y="13.4" width="3.4" height="3.6" rx="1"/></svg>', accounts: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.2" cy="8.8" r="3.3"/><path d="M3.4 19.4c0-3.2 2.6-5.4 5.8-5.4s5.8 2.2 5.8 5.4"/><path d="M16.2 6.2a3.2 3.2 0 0 1 0 5.6"/><path d="M17.4 14.4c1.9.8 3.2 2.5 3.2 4.6"/></svg>' };
 
   // شارات صغيرة: الصلاحيات الممنوحة فعليًا لهذا الحساب
   function permChips(u) {
@@ -2403,9 +2415,9 @@
     const granted = ACTIONS.filter((a) => acts[a] === true);
     const scope = (u.permissions && u.permissions.scope) || 'none';
     const scopeChip = scope === 'all'
-      ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 whitespace-nowrap">🌐 ' + t('scope_all') + '</span>'
+      ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 whitespace-nowrap"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M3.7 12h16.6"/><path d="M12 3.6c2.3 2.3 3.5 5.2 3.5 8.4S14.3 18.1 12 20.4c-2.3-2.3-3.5-5.2-3.5-8.4S9.7 5.9 12 3.6z"/></svg> ' + t('scope_all') + '</span>'
       : scope === 'own'
-        ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 whitespace-nowrap">📍 ' + t('scope_own') + '</span>'
+        ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 whitespace-nowrap"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.8s6.4-6 6.4-10.6a6.4 6.4 0 1 0-12.8 0C5.6 14.8 12 20.8 12 20.8z"/><circle cx="12" cy="10.2" r="2.5"/></svg> ' + t('scope_own') + '</span>'
         : '';
     const chips = granted.map((a) =>
       '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">' + ACT_ICONS[a] + ' ' + t('act_' + a) + '</span>'
@@ -2434,9 +2446,9 @@
 
   function facultyOptions(u) {
     const opts = scopeFaculties();
-    let html = '<option value=""' + (!u.faculty_id ? ' selected' : '') + '>🏛️ ' + t('fac_central_label') + '</option>';
+    let html = '<option value=""' + (!u.faculty_id ? ' selected' : '') + '><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 9.6 12 4.8l8.6 4.8"/><path d="M6.2 10v7.4M10.2 10v7.4M13.8 10v7.4M17.8 10v7.4"/><path d="M3.6 20.4h16.8"/></svg> ' + t('fac_central_label') + '</option>';
     html += opts.map((f) =>
-      '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + (f.icon || '') + ' ' + esc(facName(f)) + '</option>'
+      '<option value="' + f.id + '"' + (u.faculty_id === f.id ? ' selected' : '') + '>' + esc(facName(f)) + '</option>'
     ).join('');
     return html;
   }
@@ -2457,7 +2469,7 @@
       '<div class="account-name">' +
       esc(u.full_name || u.email) +
       (u.is_you ? ' <span class="you-tag">' + t('you_tag') + '</span>' : '') +
-      (!active ? ' <span class="status-tag inactive">⛔ ' + t('st_inactive') + '</span>' : '') +
+      (!active ? ' <span class="status-tag inactive"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M6.1 17.9 17.9 6.1"/></svg> ' + t('st_inactive') + '</span>' : '') +
       '</div>' +
       '<div class="account-email" dir="ltr">' + esc(u.email) + '</div>' +
       '<div class="account-badges">' +
@@ -2470,10 +2482,10 @@
         '<div class="account-actions">' +
         '<select class="account-select" data-role="' + u.id + '" aria-label="role">' + roleOptions(u) + '</select>' +
         (showFac ? '<select class="account-select" data-fac="' + u.id + '" aria-label="faculty">' + facultyOptions(u) + '</select>' : '') +
-        '<button type="button" data-edit="' + u.id + '" class="btn btn-small btn-secondary">📝 ' + t('btn_edit_acc') + '</button>' +
-        '<button type="button" data-perm="' + u.id + '" class="btn btn-small btn-secondary">⚙️ ' + t('btn_perm') + '</button>' +
+        '<button type="button" data-edit="' + u.id + '" class="btn btn-small btn-secondary"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3"/><path d="M9 15.2l1-2.6 5.4-5.4a1.5 1.5 0 0 1 2.1 2.1l-5.4 5.4z"/></svg> ' + t('btn_edit_acc') + '</button>' +
+        '<button type="button" data-perm="' + u.id + '" class="btn btn-small btn-secondary"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M12 3.4v2.4M12 18.2v2.4M20.6 12h-2.4M5.8 12H3.4M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/></svg> ' + t('btn_perm') + '</button>' +
         '<button type="button" data-toggle="' + u.id + '" data-active="' + (active ? '1' : '0') + '" class="btn btn-small ' + (active ? 'btn-secondary' : 'btn-primary') + '">' +
-        (active ? '⏸️ ' + t('btn_suspend') : '▶️ ' + t('btn_activate')) + '</button>' +
+        (active ? '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7.2" y="5.2" width="3.2" height="13.6" rx="1.4" fill="currentColor" stroke="none"/><rect x="13.6" y="5.2" width="3.2" height="13.6" rx="1.4" fill="currentColor" stroke="none"/></svg> ' + t('btn_suspend') : '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 5.4 18 12l-9.6 6.6z" fill="currentColor" stroke="none"/></svg> ' + t('btn_activate')) + '</button>' +
         '<button type="button" data-del="' + u.id + '" data-email="' + esc(u.email) + '" class="btn btn-small btn-danger">' + t('btn_delete_word') + '</button>' +
         '</div>'
       ) : '') +
@@ -2533,7 +2545,7 @@
 
   // تحديث عام لحقل من حقول الحساب (حالة)
   function changeUserField(id, patch, confirmMsg) {
-    if (confirmMsg && !confirm(confirmMsg)) { A.refreshAccounts(); return; }
+    if (confirmMsg && !confirm(plain(confirmMsg))) { A.refreshAccounts(); return; }
     DB.functions.invoke('manage-users', { body: Object.assign({ action: 'update', id }, patch) }).then(({ data, error }) => {
       if (error) return toast(t('t_role_change_fail', { msg: error.message || error }), 'error', 5000);
       if (data && data.error === 'cannot_change_self') return toast(t('t_role_cannot_self'), 'error');
@@ -2605,7 +2617,7 @@
   }
 
   function rejectUser(id, email) {
-    if (!confirm(t('t_reject_confirm', { email }))) return;
+    if (!confirm(plain(t('t_reject_confirm', { email })))) return;
     DB.functions.invoke('manage-users', { body: { action: 'reject', id } }).then(({ data, error }) => {
       if (error) return toast(t('t_del_acc_fail', { msg: error.message || error }), 'error', 5000);
       if (data && data.error === 'cannot_change_self') return toast(t('t_cannot_del_self'), 'error');
@@ -2616,7 +2628,7 @@
   }
 
   function deleteAccount(id, email) {
-    if (!confirm(t('t_del_acc_confirm', { email }))) return;
+    if (!confirm(plain(t('t_del_acc_confirm', { email })))) return;
     DB.functions.invoke('manage-users', { body: { action: 'delete', id } }).then(({ data, error }) => {
       if (error) return toast(t('t_del_acc_fail', { msg: error.message || error }), 'error', 5000);
       if (data && data.error === 'cannot_delete_self') return toast(t('t_cannot_del_self'), 'error');
