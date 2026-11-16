@@ -1201,7 +1201,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   --public-primary-soft: #ecfdf5;
   --public-secondary: #0d9488;
   --public-accent: #059669;
-  --public-border: #d1fae5;
+  --public-border: #ffedd5;
   min-height: 100vh;
   background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 42%, #f0fdfa 100%);
 }
@@ -1285,7 +1285,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   margin: 6px auto 0;
   max-width: 360px;
   text-align: center;
-  color: #d1fae5;
+  color: #ffedd5;
   font-size: 11px;
   font-weight: 700;
 }
@@ -1350,11 +1350,11 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 #page-download .public-btn-secondary:hover {
   background: var(--public-primary-soft);
-  border-color: #a7f3d0;
+  border-color: #fed7aa;
   color: var(--public-primary-dark);
 }
 #page-download .spinner {
-  border-color: #d1fae5;
+  border-color: #ffedd5;
   border-top-color: var(--public-primary);
 }
 #page-download .public-center { text-align: center; padding: 24px 0; }
@@ -1379,7 +1379,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 #page-download .public-badge-tender { background: #ecfdf5; color: #047857; }
 #page-download .public-badge-consultation,
 #page-download .public-badge-status { background: var(--public-primary-soft); color: var(--public-primary); }
-#page-download .public-badge-status { border: 1px solid #a7f3d0; }
+#page-download .public-badge-status { border: 1px solid #fed7aa; }
 #page-download .public-faculty {
   display: inline-flex;
   align-items: center;
@@ -1440,7 +1440,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   box-shadow: 0 12px 24px rgba(5, 150, 105, 0.16);
 }
 #page-download .public-countdown-head { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; font-size: 12px; font-weight: 800; }
-#page-download .public-countdown-active .public-countdown-head { color: #d1fae5; }
+#page-download .public-countdown-active .public-countdown-head { color: #ffedd5; }
 #page-download .public-countdown-grid { display: flex; align-items: flex-start; justify-content: center; gap: 8px; margin: 12px 0; }
 #page-download .public-countdown-unit { min-width: 46px; text-align: center; }
 #page-download .public-countdown-value { font-size: 30px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; }
@@ -1464,7 +1464,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   background: linear-gradient(135deg, var(--public-primary-dark) 0%, var(--public-primary) 45%, var(--public-secondary) 100%);
   box-shadow: 0 12px 24px rgba(5, 150, 105, 0.16);
 }
-#page-download .public-green-box-label { margin-bottom: 4px; font-size: 11px; font-weight: 800; color: #d1fae5; }
+#page-download .public-green-box-label { margin-bottom: 4px; font-size: 11px; font-weight: 800; color: #ffedd5; }
 #page-download .public-green-box-value { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
 #page-download .public-w-full { width: 100%; }
 @media (max-width: 480px) {
@@ -1473,63 +1473,94 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 
 
 /* ============================================================
-   Treeland (Deepin) — أسلوب الزجاج المضبب (Frosted Glass)
-   ألواح شفافة + ضباب خلفي + خلفية سطح مكتب متدرجة
+   Eco Home Vibes — لوحة المنزل الذكي (داكن دافئ)
+   خلفية غرفة مضببة (فحمي بُني + كهرماني) + ألواح زجاجية داكنة بنص فاتح
    ============================================================ */
 :root {
-  --glass: rgba(255, 255, 255, 0.66);
-  --glass-strong: rgba(255, 255, 255, 0.88);
-  --glass-border: rgba(255, 255, 255, 0.85);
-  --glass-blur: blur(22px) saturate(180%);
-  --glass-shadow: 0 10px 34px rgba(6, 95, 70, 0.12);
+  --glass: rgba(42, 44, 48, 0.55);
+  --glass-strong: rgba(36, 39, 43, 0.80);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-blur: blur(30px) saturate(160%);
+  --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+  --spec: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.30), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --lens: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 48%, rgba(255, 255, 255, 0.07) 100%);
   --wallpaper:
-    radial-gradient(1100px 720px at 12% -10%, #a7f3d0 0%, rgba(167, 243, 208, 0) 62%),
-    radial-gradient(950px 650px at 92% 2%, #99f6e4 0%, rgba(153, 246, 228, 0) 58%),
-    radial-gradient(1000px 800px at 50% 112%, #6ee7b7 0%, rgba(110, 231, 183, 0) 60%),
-    linear-gradient(160deg, #ecfdf5 0%, #f0fdfa 48%, #e6fffb 100%);
+    radial-gradient(900px 700px at 6% 20%, rgba(217, 119, 6, 0.26) 0%, rgba(217, 119, 6, 0) 58%),
+    radial-gradient(1200px 850px at 90% -12%, rgba(168, 162, 158, 0.14) 0%, rgba(168, 162, 158, 0) 60%),
+    radial-gradient(1000px 720px at 78% 108%, rgba(249, 115, 22, 0.10) 0%, rgba(249, 115, 22, 0) 60%),
+    linear-gradient(155deg, #332719 0%, #241b12 42%, #16110c 78%, #100c08 100%);
+  /* قلب ألوان النصوص العامة إلى فاتح (الألواح صارت داكنة) */
+  --text: #eef1f4;
+  --muted: rgba(238, 241, 244, 0.62);
+  --bg: #16110c;
+  --card: rgba(42, 44, 48, 0.55);
+  --border: rgba(255, 255, 255, 0.14);
+  /* هوية برتقالية دافئة منسجمة مع توهج الخلفية */
+  --primary: #c2410c;
+  --primary-dark: #9a3412;
+  --primary-soft: #fff7ed;
+  --secondary: #f97316;
+  --secondary-soft: #ffedd5;
+  --accent: #f97316;
+  --accent-dark: #ea580c;
+  --public-primary: #c2410c;
+  --public-primary-dark: #9a3412;
+  --public-primary-soft: #fff7ed;
+  --public-secondary: #f97316;
 }
 
-body { background: var(--wallpaper) fixed; }
+body { background: var(--wallpaper) fixed; color: var(--text); }
 
-a { transition: color 0.25s ease; }
+a { color: #fb923c; transition: color 0.25s ease; }
+a:hover { color: #fdba74; }
 
-/* ---------- الشريط العلوي: لوح زجاجي ---------- */
+.label { color: var(--text); }
+.hint { color: var(--muted); }
+
+/* ---------- الشريط العلوي: كبسولة زجاجية داكنة (بدون ضباب لسلامة طبقات النوافذ) ---------- */
 .topbar {
   margin: 12px 12px 0;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid var(--glass-border);
+  background: linear-gradient(135deg, rgba(52, 55, 60, 0.72) 0%, rgba(38, 41, 45, 0.62) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 28px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow), var(--spec);
 }
-.brand-logo { border-color: rgba(4, 120, 87, 0.18); box-shadow: 0 6px 18px rgba(6, 95, 70, 0.14); }
+.brand-logo { border-color: rgba(255, 255, 255, 0.22); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
 .top-btn {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--spec);
+  color: var(--text);
 }
-.icon-btn { background: rgba(255, 255, 255, 0.75); border-color: rgba(255, 255, 255, 0.9); }
-.icon-btn:hover { background: var(--primary); }
+.top-btn:hover { background: rgba(255, 255, 255, 0.16); color: #ffffff; }
+.icon-btn { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.14); box-shadow: var(--spec); color: var(--text); }
+.icon-btn:hover { background: var(--primary); box-shadow: none; color: #ffffff; }
+#lang-btn { color: #fdba74; border-color: rgba(253, 186, 116, 0.35); }
 .remind-panel,
 .settings-menu {
   background: var(--glass-strong);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 18px 46px rgba(6, 72, 55, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), var(--spec);
 }
+.settings-link:hover { background: rgba(255, 255, 255, 0.08); }
+.settings-link { color: var(--text); }
 
-/* ---------- القائمة الجانبية: لوح زجاجي ---------- */
+/* ---------- القائمة الجانبية: زجاج داكن مضبب ---------- */
 .sidebar {
-  background: var(--glass);
+  background: linear-gradient(180deg, rgba(50, 53, 58, 0.60) 0%, rgba(36, 39, 43, 0.55) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow), var(--spec);
 }
-.side-link:hover { background: rgba(255, 255, 255, 0.8); }
+.side-link { color: var(--text); }
+.side-link:hover { background: rgba(255, 255, 255, 0.08); }
 .side-link.nav-active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  box-shadow: 0 12px 26px rgba(4, 120, 87, 0.35);
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.35);
 }
 
 /* ---------- الشريط السفلي (إن وُجد) ---------- */
@@ -1539,139 +1570,271 @@ a { transition: color 0.25s ease; }
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--glass-border);
 }
-.tab.nav-active { background: rgba(4, 120, 87, 0.1); }
+.tab { color: var(--text); }
+.tab.nav-active { background: rgba(249, 115, 22, 0.18); color: #fdba74; }
 
-/* ---------- البطاقات: زجاج ملوّن ---------- */
+/* ---------- البطاقات: ألواح زجاجية داكنة عائمة ---------- */
 .card {
-  background: var(--glass);
+  background: linear-gradient(135deg, rgba(58, 61, 66, 0.62) 0%, rgba(40, 43, 47, 0.55) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-top: 25px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 30px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow), var(--spec);
 }
 .card:hover {
-  border-top-color: rgba(13, 148, 136, 0.55);
-  box-shadow: 0 18px 46px rgba(6, 95, 70, 0.18);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), var(--spec);
 }
+.card-title { color: #ffffff; }
 .stat-grid > div {
-  background: var(--glass);
+  background: linear-gradient(135deg, rgba(58, 61, 66, 0.62) 0%, rgba(40, 43, 47, 0.55) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-top: 25px solid transparent;
-  box-shadow: var(--glass-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--glass-shadow), var(--spec);
 }
 .stat-grid > div:hover {
-  background: rgba(255, 255, 255, 0.85);
-  border-top-color: rgba(13, 148, 136, 0.6);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), var(--spec);
 }
 .info-box,
 .suggest-box,
 .suggest-analysis {
-  background: rgba(236, 253, 245, 0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
-/* ---------- عناصر إدخال/أزرار زجاجية ---------- */
+/* ---------- لمسات ملوّنة نابضة (كأضواء الصورة) ---------- */
+.stat-grid .ico { color: #fb923c; }
+
+/* ---------- عناصر إدخال/أزرار زجاجية داكنة ---------- */
 .input {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-color: rgba(4, 120, 87, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  box-shadow: var(--spec);
 }
-.input:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.94); }
+.input::placeholder { color: rgba(238, 241, 244, 0.45); }
+.input:focus { border-color: #f97316; background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.22), var(--spec); }
+select.input option { background: #20180f; color: #eef1f4; }
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  box-shadow: var(--spec);
 }
-.btn-primary { box-shadow: 0 12px 26px rgba(5, 150, 105, 0.3); }
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.16); color: #ffffff; }
+.btn-primary {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.40), inset 0 -2px 2px rgba(0, 0, 0, 0.25);
+}
 .pager button {
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  box-shadow: var(--spec);
 }
-.pager button:hover { background: var(--primary); color: #ffffff; border-color: transparent; }
+.pager button:hover { background: #f97316; color: #ffffff; border-color: transparent; }
 .account-item,
 .dl-rows { background: transparent; }
 
-/* ---------- النوافذ: طبقة ضبابية + صندوق زجاجي ---------- */
+/* ---------- النوافذ: طبقة معتمة دافئة + صندوق زجاجي داكن ---------- */
 .modal {
-  background: rgba(4, 44, 33, 0.42);
-  backdrop-filter: blur(16px) saturate(120%);
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  background: rgba(10, 7, 4, 0.55);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
 .modal-box {
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(150deg, rgba(52, 55, 60, 0.92) 0%, rgba(34, 37, 41, 0.92) 100%);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 34px 80px rgba(3, 40, 30, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6), var(--spec);
 }
-.modal-head { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); }
+.modal-head { background: linear-gradient(135deg, #9a3412 0%, #ea580c 100%); }
 .danger-head { background: linear-gradient(135deg, var(--danger-dark) 0%, var(--danger) 100%); }
 .qr-head,
-.dl-head { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); }
+.dl-head { background: linear-gradient(135deg, #9a3412 0%, #f97316 100%); }
 .modal-body { background: transparent; }
-.modal-foot { background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-.mini-btn { background: rgba(255, 255, 255, 0.85); }
-.mini-btn:hover { background: var(--accent); color: #ffffff; }
+.modal-foot { background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.mini-btn { background: rgba(255, 255, 255, 0.10); border: 1px solid rgba(255, 255, 255, 0.16); color: var(--text); }
+.mini-btn:hover { background: #f97316; color: #ffffff; border-color: transparent; }
 
-/* ---------- شاشة الدخول: خلفية سطح مكتب + بطاقة زجاجية ---------- */
+/* ---------- شاشة الدخول: غرفة دافئة مضببة + بطاقة زجاجية داكنة ---------- */
 .screen-center {
   background:
-    radial-gradient(900px 620px at 14% -6%, #34d399 0%, rgba(52, 211, 153, 0) 58%),
-    radial-gradient(820px 600px at 88% 8%, #0d9488 0%, rgba(13, 148, 136, 0) 55%),
-    radial-gradient(1000px 820px at 50% 114%, #065f46 0%, rgba(6, 95, 70, 0) 62%),
-    linear-gradient(150deg, #047857 0%, #0f766e 52%, #065f46 100%);
+    radial-gradient(900px 620px at 6% 18%, rgba(217, 119, 6, 0.28) 0%, rgba(217, 119, 6, 0) 56%),
+    radial-gradient(1100px 800px at 90% -8%, rgba(168, 162, 158, 0.16) 0%, rgba(168, 162, 158, 0) 58%),
+    radial-gradient(1000px 820px at 70% 112%, rgba(249, 115, 22, 0.12) 0%, rgba(249, 115, 22, 0) 60%),
+    linear-gradient(155deg, #332719 0%, #241b12 45%, #12100d 100%);
 }
 .login-box {
-  background: rgba(255, 255, 255, 0.86);
+  background: linear-gradient(150deg, rgba(56, 59, 64, 0.78) 0%, rgba(36, 39, 43, 0.72) 100%);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-top: 25px solid var(--secondary);
-  box-shadow: 0 36px 80px rgba(3, 40, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), var(--spec);
 }
-.login-head { background: rgba(255, 255, 255, 0.4); }
+.login-head { background: rgba(255, 255, 255, 0.06); }
 .login-head .logo,
-.login-logo { box-shadow: 0 12px 26px rgba(6, 95, 70, 0.2); }
+.login-logo { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5); }
 .pending-box,
 .setup-banner {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(26px) saturate(180%);
-  -webkit-backdrop-filter: blur(26px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 28px 66px rgba(3, 40, 30, 0.35);
+  background: linear-gradient(150deg, rgba(56, 59, 64, 0.78) 0%, rgba(36, 39, 43, 0.72) 100%);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 28px 66px rgba(0, 0, 0, 0.45);
 }
 .schema-banner {
-  background: rgba(254, 242, 242, 0.88);
+  background: rgba(127, 29, 29, 0.55);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 12px 30px rgba(153, 27, 27, 0.14);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
 /* ---------- صفوف الجداول داخل النوافذ ---------- */
-.dl-rows tr:hover td { background: rgba(255, 255, 255, 0.55); }
+.dl-rows tr:hover td { background: rgba(255, 255, 255, 0.07); }
+
+/* ---------- تذييل على الخلفية الداكنة ---------- */
+.foot { color: rgba(238, 241, 244, 0.75); }
 
 /* ---------- صفحة التحميل المدمجة ---------- */
 #page-download { background: var(--wallpaper) fixed; }
 #page-download .public-card {
-  background: rgba(255, 255, 255, 0.72);
+  background: linear-gradient(135deg, rgba(58, 61, 66, 0.62) 0%, rgba(40, 43, 47, 0.55) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-color: var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: var(--glass-shadow), var(--spec);
+}
+#page-download .lbl { color: rgba(238, 241, 244, 0.85); }
+#page-download .public-title,
+#page-download .public-ref,
+#page-download .public-step-label { color: #ffffff; }
+#page-download .public-text { color: rgba(238, 241, 244, 0.75); }
+#page-download .public-info-value { color: rgba(238, 241, 244, 0.88); }
+#page-download .public-info-label { color: rgba(253, 186, 116, 0.90); }
+#page-download .public-info-box,
+#page-download .public-info-box-teal {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+#page-download .public-countdown-passed {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(238, 241, 244, 0.75);
+}
+#page-download .public-countdown-warning {
+  background: rgba(120, 53, 15, 0.45);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fde68a;
 }
 #page-download .inp {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--text);
 }
+#page-download .inp::placeholder { color: rgba(238, 241, 244, 0.45); }
+#page-download .inp:focus { border-color: #f97316; }
+
+/* ---------- تصحيحات عامة: أصناف Tailwind والبطاقات الداخلية على الخلفية الداكنة ---------- */
+.bg-white { background: rgba(255, 255, 255, 0.07) !important; }
+.bg-slate-100 { background: rgba(255, 255, 255, 0.09) !important; }
+.bg-primary-50,
+.bg-indigo-50,
+.bg-teal-50 { background: rgba(249, 115, 22, 0.14) !important; }
+.bg-sky-50 { background: rgba(13, 148, 136, 0.14) !important; }
+.bg-amber-50,
+.bg-amber-50\/60,
+.bg-amber-50\/40 { background: rgba(120, 53, 15, 0.30) !important; }
+.bg-red-50 { background: rgba(127, 29, 29, 0.30) !important; }
+.border-primary-100,
+.border-primary-200,
+.border-primary-300,
+.border-indigo-100,
+.border-indigo-200,
+.border-teal-100 { border-color: rgba(253, 186, 116, 0.30) !important; }
+.border-amber-100,
+.border-amber-300 { border-color: rgba(251, 191, 36, 0.35) !important; }
+.border-red-200 { border-color: rgba(248, 113, 113, 0.35) !important; }
+.hover\:border-primary-300:hover { border-color: #f97316 !important; }
+.text-slate-800,
+.text-slate-900 { color: #eef1f4 !important; }
+.text-slate-700,
+.text-slate-600 { color: rgba(238, 241, 244, 0.85) !important; }
+.text-primary-700,
+.text-primary-800,
+.text-primary-700\/80 { color: #fb923c !important; }
+.text-indigo-700,
+.text-indigo-600,
+.\!text-indigo-600,
+.text-teal-700 { color: #fb923c !important; }
+.text-sky-700 { color: #7dd3fc !important; }
+.text-amber-700 { color: #fcd34d !important; }
+.\!text-red-600,
+.text-red-700 { color: #fca5a5 !important; }
+
+.chips > * { border-color: rgba(255, 255, 255, 0.20); color: #fdba74; }
+.chips > .bg-slate-100 { background: rgba(255, 255, 255, 0.09) !important; color: rgba(238, 241, 244, 0.80) !important; border-color: rgba(255, 255, 255, 0.20) !important; }
+
+.kind-opt { background: rgba(255, 255, 255, 0.08); }
+.kind-opt:hover { border-color: #f97316; color: #fdba74; }
+.file-input { border-color: rgba(255, 255, 255, 0.28); }
+.divider { background: rgba(255, 255, 255, 0.10); }
+.input:focus { color: var(--text); }
+
+/* نصوص الهوية داخل الألواح الداكنة */
+.brand-text h1 { color: #fdba74; }
+.brand-text p { color: #fb923c; }
+.user-name { color: #ffedd5; }
+.settings-label { color: #fb923c; }
+.side-label { color: #fb923c; }
+.link-btn { color: #fb923c; }
+.info-box { color: #fed7aa; }
+.suggest-box { border-color: rgba(249, 115, 22, 0.45); }
+.suggest-head h3 { color: #fdba74; }
+.suggest-sub { color: rgba(238, 241, 244, 0.75); }
+.suggest-analysis { color: #fed7aa; }
+.stat-grid > div > div:nth-child(2) { color: #fb923c; }
+.tab.nav-active { border-bottom-color: #f97316; }
+.login-head h2 { color: #ffffff; }
+.login-head p { color: #fb923c; }
+.pending-box h2 { color: #ffffff; }
+.setup-banner h2 { color: #ffffff; }
+.setup-tip { color: #fdba74; }
+
+/* صفوف الحسابات */
+.account-row {
+  background: rgba(255, 255, 255, 0.06);
+  border-top-color: #f97316;
+}
+.account-row:hover { background: rgba(255, 255, 255, 0.10); border-top-color: #fb923c; }
+.account-row.pending-row { background: rgba(120, 53, 15, 0.30); border-top-color: #d97706; }
+.account-name { color: #ffffff; }
+.account-select { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.account-select:focus { color: var(--text); }
+
+/* بطاقة QR (تبقى بيضاء للطباعة) */
+.qr-card { color: #111827; }
+.qr-univ { color: #c2410c; }
+.qr-title, .qr-note, .qr-cell-label, .qr-cell-value { color: #111827; }
+#page-download .public-badge-tender { background: #fff7ed; color: #c2410c; }
 
 /* ---------- الطباعة: ألغِ الزجاج ---------- */
 @media print {
