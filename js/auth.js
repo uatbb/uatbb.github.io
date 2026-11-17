@@ -86,6 +86,11 @@
     $('login-card').classList.toggle('hidden', authed);
     $('authed-app').classList.toggle('hidden', !authed);
     if (authed) {
+      /* إغلاق فوري (متزامن) قبل معرفة صلاحيات الحساب — يمنع وميض
+         الصفحات غير المسموح بها عند الدخول بحساب مختلف */
+      document.querySelectorAll('.nav-btn, .tab-panel').forEach((el) => el.classList.add('hidden'));
+      const sw = $('settings-wrap');
+      if (sw) sw.classList.add('hidden');
       armIdle();
       DB.auth.getUser().then(({ data }) => {
         const nameEl = $('user-name');

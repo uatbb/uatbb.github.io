@@ -5,8 +5,10 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://oxlrqapdxlivjzgrupxd.supabase.co; connect-src 'self' https://oxlrqapdxlivjzgrupxd.supabase.co wss://oxlrqapdxlivjzgrupxd.supabase.co https://translate.googleapis.com https://api.ipify.org; object-src 'none'; base-uri 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>جامعة عين تموشنت بلحاج بوشعيب — بوابة مكتب الصفقات</title>
-  <link rel="stylesheet" href="css/tailwind.css?v=gotto34">
-  <link rel="stylesheet" href="css/app.css?v=gotto34">
+  <script src="js/theme-init.js?v=gotto43"></script>
+  <link rel="stylesheet" href="fonts/tajawal.css">
+  <link rel="stylesheet" href="css/tailwind.css?v=gotto43">
+  <link rel="stylesheet" href="css/app.css?v=gotto43">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -115,6 +117,7 @@
               </button>
               <div id="remind-panel" class="remind-panel hidden"></div>
             </div>
+            <button id="theme-btn" class="icon-btn" type="button" data-i18n-title="theme_title" title="المظهر"><span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6a8.4 8.4 0 0 0 0 16.8c1 0 1.6-.8 1.6-1.6 0-1-.8-1.5-.8-2.3 0-.9.7-1.5 1.6-1.5h2c2 0 3.6-1.6 3.6-3.6 0-4.4-3.8-7.8-8-7.8z"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="8" r="1"/><circle cx="15.5" cy="9" r="1"/></svg></span></button>
             <button id="lang-btn" class="top-btn" title="Changer de langue"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M3.7 12h16.6"/><path d="M12 3.6c2.3 2.3 3.5 5.2 3.5 8.4S14.3 18.1 12 20.4c-2.3-2.3-3.5-5.2-3.5-8.4S9.7 5.9 12 3.6z"/></svg> FR</button>
             <button id="logout-btn" class="top-btn" data-i18n="logout">تسجيل الخروج</button>
           </div>
@@ -134,7 +137,6 @@
           <button class="side-link nav-btn nav-active" data-tab="tab-dashboard"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5.6" y="11" width="3.4" height="6" rx="1"/><rect x="10.3" y="6.6" width="3.4" height="10.4" rx="1"/><rect x="15" y="13.4" width="3.4" height="3.6" rx="1"/></svg></span><span data-i18n="nav_dashboard">اللوحة</span></button>
           <button class="side-link nav-btn" data-tab="tab-create"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3"/><path d="M9 15.2l1-2.6 5.4-5.4a1.5 1.5 0 0 1 2.1 2.1l-5.4 5.4z"/></svg></span><span data-i18n="nav_create">إنشاء</span></button>
           <button class="side-link nav-btn" data-tab="tab-tenders"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6v8.8M8.2 9l3.8 3.8L15.8 9"/><path d="M4.4 14.6v3.8a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2v-3.8"/></svg></span><span data-i18n="nav_tenders">الاستشارات</span></button>
-          <button class="side-link nav-btn" data-tab="tab-opening"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg></span><span data-i18n="nav_opening">الفتح</span></button>
         </div>
       </aside>
 
@@ -217,15 +219,6 @@
           <div id="tenders-pager" class="pager"></div>
         </section>
 
-        <!-- فتح الأظرفة -->
-        <section id="tab-opening" class="tab-panel hidden">
-          <div class="card">
-            <h2 class="card-title" data-i18n="opening_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg> لجنة فتح الأظرفة</h2>
-            <p class="card-sub" data-i18n="opening_sub">ما حان موعد فتحه، المتعاملون الذين حمّلوا، وسجل ما فُتح</p>
-            <div id="opening-list" class="stack"></div>
-          </div>
-        </section>
-
         <!-- الحسابات -->
         <section id="tab-accounts" class="tab-panel hidden">
           <div class="list-head">
@@ -250,10 +243,9 @@
                   <label class="kind-opt small"><input type="radio" name="a-role" value="admin" class="sr-only"><span data-i18n="acc_role_admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.6" y="7.6" width="16.8" height="11.8" rx="2.4"/><path d="M9 7.6V6.2A2 2 0 0 1 11 4.2h2a2 2 0 0 1 2 2v1.4"/><path d="M3.6 12.6h16.8"/></svg> المسؤول</span></label>
                   <label class="kind-opt small"><input type="radio" name="a-role" value="admin_rectora" class="sr-only"><span data-i18n="acc_role_rectora"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 9.6 12 4.8l8.6 4.8"/><path d="M6.2 10v7.4M10.2 10v7.4M13.8 10v7.4M17.8 10v7.4"/><path d="M3.6 20.4h16.8"/></svg> موظف رئاسة الجامعة</span></label>
                   <label class="kind-opt small"><input type="radio" name="a-role" value="faculty_admin" class="sr-only"><span data-i18n="acc_role_fadmin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.8 9 12 13.4l9.2-4.4z"/><path d="M6.6 11v4.4c0 1.4 2.4 2.5 5.4 2.5s5.4-1.1 5.4-2.5V11"/><path d="M21.2 9v5"/></svg> موظف الكلية</span></label>
-                  <label class="kind-opt small"><input type="radio" name="a-role" value="opener" class="sr-only"><span data-i18n="acc_role_open"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg> لجنة فتح الأظرفة</span></label>
                   <label class="kind-opt small"><input type="radio" name="a-role" value="viewer" class="sr-only" checked><span data-i18n="acc_role_viewer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.8"/><path d="M4.8 20c0-3.7 3.2-6.2 7.2-6.2s7.2 2.5 7.2 6.2"/></svg> مشاهد</span></label>
                 </div>
-                <p class="hint" data-i18n="acc_role_desc">جامعي: كل الصلاحيات لكل الكليات — إداري كلية: إنشاء وإدارة في كليته فقط — لجنة عرض/فتح: حسب الدور — عرض فقط: مشاهدة</p>
+                <div id="a-role-info" class="role-info-card"></div>
               </div>
               <div id="a-faculty-box" class="field hidden">
                 <label class="label" for="a-faculty" data-i18n="acc_faculty">المكتب</label>
@@ -340,23 +332,6 @@
       </div>
       <div id="dl-rows" class="dl-rows"></div>
       <div id="dl-pager" class="pager"></div>
-    </div>
-  </div>
-
-  <!-- ===== تأكيد الفتح ===== -->
-  <div id="open-modal" class="modal hidden">
-    <div class="modal-box">
-      <div class="modal-head danger-head">
-        <h3 data-i18n="open_m_title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 2.9 20.1h18.2z"/><path d="M12 10.2v4"/><circle cx="12" cy="16.9" r="1" fill="currentColor" stroke="none"/></svg> فتح الأظرفة</h3>
-        <p data-i18n="open_m_text">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
-      </div>
-      <div class="modal-body">
-        <div id="open-tender-info" class="info-box"></div>
-        <label class="label" for="open-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
-        <input id="open-ref-input" class="input" autocomplete="off">
-        <button id="open-confirm-btn" class="btn btn-danger btn-block" data-i18n="open_m_btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7-.9"/></svg> تأكيد الفتح والحذف النهائي</button>
-        <button data-close="open-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
-      </div>
     </div>
   </div>
 
@@ -502,6 +477,7 @@
             <select id="ea-faculty" class="input"></select>
           </div>
         </div>
+        <div id="ea-role-info" class="role-info-card"></div>
         <label class="check-label">
           <input type="checkbox" id="ea-active" checked>
           <span data-i18n="acc_active">الحساب نشط</span>
@@ -554,16 +530,31 @@
     </div>
   </div>
 
+  <!-- ===== اختيار المظهر ===== -->
+  <div id="theme-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head primary-head">
+        <h3 data-i18n="theme_title">اختيار المظهر</h3>
+        <button data-close="theme-modal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" data-i18n="theme_sub">اختر اللون الذي يناسبك — يُحفظ على هذا الجهاز</p>
+        <div id="theme-grid" class="theme-grid"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toasts" class="toasts"></div>
 
-  <script src="js/config.js?v=gotto34"></script>
+  <script src="js/config.js?v=gotto43"></script>
 
-  <script src="js/utils.js?v=gotto34"></script>
-  <script src="js/i18n.js?v=gotto34"></script>
-  <script src="js/supabase.js?v=gotto34"></script>
-  <script src="js/auth.js?v=gotto34"></script>
-  <script src="js/download.js?v=gotto34"></script>
-  <script src="js/admin.js?v=gotto34"></script>
-  <script src="js/app.js?v=gotto34"></script>
+  <script src="js/utils.js?v=gotto43"></script>
+  <script src="js/i18n.js?v=gotto43"></script>
+  <script src="js/supabase.js?v=gotto43"></script>
+  <script src="js/auth.js?v=gotto43"></script>
+  <script src="js/download.js?v=gotto43"></script>
+  <script src="js/admin.js?v=gotto43"></script>
+  <script src="js/theme.js?v=gotto43"></script>
+  <script src="js/app.js?v=gotto43"></script>
 </body>
 </html>

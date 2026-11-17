@@ -8,6 +8,8 @@
   A.faculties = [];     // كل الكليات (id, code, name_ar, name_fr, color, icon, is_central)
   A.facultyById = {};
   A.stats = null;
+  A.dlCounts = {};   // عدد التحميلات لكل استشارة (من دالة آمنة لا تكشف السجل)
+  let dlCountsReady = false;
   A.users = [];         // آخر قائمة مستخدمين (للمحرر)
   A.disabled = false;
   A.pending = false;
@@ -24,7 +26,7 @@
     faculty_admin: { scope: 'own', actions: { create: true, edit: true, delete: true, open: true, logs: true, accounts: true }, pages: { dashboard: true, create: true, tenders: true, opening: true, accounts: true, backup: false } },
     committee: { scope: 'own', actions: { logs: true }, pages: { dashboard: true, create: false, tenders: true, opening: true, accounts: false, backup: false } },
     opener: { scope: 'own', actions: { open: true, logs: true }, pages: { dashboard: true, create: false, tenders: true, opening: true, accounts: false, backup: false } },
-    viewer: { scope: 'own', actions: {}, pages: { dashboard: true, create: false, tenders: true, opening: false, accounts: false, backup: false } },
+    viewer: { scope: 'own', actions: { logs: true }, pages: { dashboard: true, create: false, tenders: true, opening: false, accounts: false, backup: false } },
   };
   function normalizePages(input) {
     const out = {};
@@ -284,6 +286,12 @@
   }
 
   A.init = function () {
+    /* إغلاق فوري: لا تُعرض أي صفحة أو زر قبل معرفة صلاحيات الحساب
+       (يمنع وميض صفحات غير مسموح بها عند تبديل الحسابات) */
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.add('hidden'));
+    document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
+    const swInit = $('settings-wrap');
+    if (swInit) swInit.classList.add('hidden');
     bindCreate();
     bindStaticButtons();
     bindAccounts();
@@ -294,7 +302,7 @@
     if (s) s.addEventListener('input', debounce(() => { A.page = 1; A.loadTenders(); }, 300));
     A.page = 1;
     checkSchema();
-    loadFaculties().then(() => initRole()).then(async () => {
+    Promise.all([loadFaculties(), initRole()]).then(async () => {
       populateFacultySelects();
       await autoOpenDue();
       A.loadTenders();
@@ -594,7 +602,7 @@
   // تحديد صلاحياتي من الملف الشخصي الحي (018): permissions + pending
   // مغلق افتراضيًا: فشل القراءة = لا صلاحيات
   async function initRole() {
-    restoreNav();
+    /* الصفحات مغلقة من A.init — تُفتح في applyRoleUI بعد معرفة الصلاحيات فقط */
     A.me = null;
     A.role = '';
     A.facultyId = null;
@@ -704,7 +712,6 @@
     const canDashboard = canView && pages.dashboard !== false;
     const canCreatePage = canView && pages.create !== false;
     const canTenders = canView && pages.tenders !== false;
-    const canOpening = canView && pages.opening !== false;
     const canAccountsPage = canView && pages.accounts !== false && canAccounts;
     const canBak = canView && pages.backup !== false && canBackup();
     document.querySelectorAll('.nav-btn[data-tab="tab-dashboard"]')
@@ -715,8 +722,6 @@
       .forEach((b) => b.classList.toggle('hidden', !canAccountsPage));
     document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]')
       .forEach((b) => b.classList.toggle('hidden', !canTenders));
-    document.querySelectorAll('.nav-btn[data-tab="tab-opening"]')
-      .forEach((b) => b.classList.toggle('hidden', !canOpening));
     document.querySelectorAll('.nav-btn[data-tab="tab-backup"]')
       .forEach((b) => b.classList.toggle('hidden', !canBak));
     const settingsWrap = $('settings-wrap');
@@ -725,7 +730,6 @@
     if (canDashboard) n++;
     if (canCreatePage) n++;
     if (canTenders) n++;
-    if (canOpening) n++;
     if (canAccountsPage) n++;
     if (canBak) n++;
     setGrid(Math.max(1, n));
@@ -733,13 +737,9 @@
     if (afb) afb.classList.toggle('hidden', !canAccountsPage);
     updateBadge();
     if (window.switchTo) {
-      const openerOnly = canOpening && !canCreatePage && !canAccountsPage && A.can('open') && !A.can('edit') && !A.can('delete');
-      const initialTab = openerOnly
-        ? 'tab-opening'
-        : (canDashboard ? 'tab-dashboard' : (canTenders ? 'tab-tenders' : (canOpening ? 'tab-opening' : (canCreatePage ? 'tab-create' : 'tab-dashboard'))));
+      const initialTab = canDashboard ? 'tab-dashboard' : (canTenders ? 'tab-tenders' : (canCreatePage ? 'tab-create' : 'tab-dashboard'));
       window.switchTo(initialTab);
       if (initialTab === 'tab-dashboard' && A.loadDashboard) A.loadDashboard();
-      if (initialTab === 'tab-opening' && A.loadOpening) A.loadOpening();
     }
   }
 
@@ -895,6 +895,29 @@
     A.loadTenders();
   };
 
+  /* ---------- عدد التحميلات: دالة Supabase آمنة (أرقام فقط) ---------- */
+  A.loadDlCounts = async function () {
+    if (dlCountsReady) return;
+    try {
+      const { data, error } = await DB.rpc('tender_download_counts');
+      if (error) throw error;
+      A.dlCounts = {};
+      (data || []).forEach((r) => { A.dlCounts[r.tender_id] = Number(r.download_count) || 0; });
+      dlCountsReady = true;
+    } catch (e) {
+      // الدالة غير مُنشأة بعد في Supabase — نُبقي العدّاد من العلاقة القديمة
+      dlCountsReady = true;
+      console.warn('tender_download_counts غير متاح:', (e && e.message) || e);
+    }
+  };
+  function dlCount(tt) {
+    if (!tt) return 0;
+    if (Object.prototype.hasOwnProperty.call(A.dlCounts, tt.id)) return A.dlCounts[tt.id];
+    const d = tt.downloads;
+    if (Array.isArray(d)) return (d[0] && d[0].count) || 0;
+    return (d && d.count) || 0;
+  }
+
   A.loadDashboard = async function () {
     const statsEl = $('db-stats');
     if (!statsEl) return;
@@ -903,6 +926,7 @@
     if (upEl0) upEl0.innerHTML = '';
 
     try {
+      await A.loadDlCounts();
       let q = DB.from('tenders').select('id, reference, title, kind, status, opening_date, faculty_id, downloads(count)');
       if (A.scopeOf() !== 'all') q = q.eq('faculty_id', A.facultyId);
       const { data: tenders, error } = await q;
@@ -911,7 +935,7 @@
       const total = list.length;
       const published = list.filter((x) => x.status === 'published').length;
       const opened = list.filter((x) => x.status === 'opened').length;
-      const dlTotal = list.reduce((s, x) => s + ((x.downloads && x.downloads.count) || 0), 0);
+      const dlTotal = list.reduce((s, x) => s + dlCount(x), 0);
 
       const card = (icon, label, value, color) =>
         '<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">' +
@@ -1234,6 +1258,7 @@
     const list = $('tenders-list');
     const pager = $('tenders-pager');
     try {
+      await A.loadDlCounts();
       const term = (val('tender-search') || '').trim().replace(/[(),]/g, '');
       let q = DB.from('tenders').select('*, downloads(count), faculties(*)', { count: 'exact' });
       if (term) q = q.or('reference.ilike.%' + term + '%,title.ilike.%' + term + '%,title_fr.ilike.%' + term + '%');
@@ -1326,7 +1351,7 @@
   };
 
   function tenderCard(tt) {
-    const dl = (tt.downloads && tt.downloads[0] && tt.downloads[0].count) || 0;
+    const dl = dlCount(tt);
     const isPub = tt.status === 'published';
     return (
       '<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">' +
@@ -1358,11 +1383,6 @@
         (isPub ? '<button data-act="direct" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_direct_dl') + '</button>' : '') +
        (isPub && hasEdit() && inScope(tt)
          ? '<button data-act="replace" data-id="' + tt.id + '" class="w-full btn-secondary">' + t('btn_replace') + '</button>'
-         : '') +
-       (isPub && hasOpen() && inScope(tt)
-         ? (new Date(tt.opening_date).getTime() <= Date.now()
-             ? '<button data-act="open" data-id="' + tt.id + '" class="w-full btn-danger">' + t('btn_open') + '</button>'
-             : '<span class="btn-secondary w-full opacity-60 flex items-center justify-center" title="' + t('t_open_early', { d: fmtDate(tt.opening_date, true) }) + '">' + t('btn_open_locked') + '</span>')
          : '') +
        (hasDelete() && inScope(tt)
          ? '<button data-act="delete" data-id="' + tt.id + '" class="w-full btn-secondary !text-red-600">' + t('btn_delete') + '</button>'
@@ -1403,6 +1423,7 @@
     if (!list) return;
     list.innerHTML = '<div class="text-center text-slate-400 text-sm py-6">' + t('loading') + '</div>';
     try {
+      await A.loadDlCounts();
       const [tRes, uRes] = await Promise.all([
         DB.from('tenders').select('*, downloads(count), faculties(*)').order('opening_date', { ascending: true }),
         DB.functions.invoke('manage-users', { body: { action: 'list' } }),
@@ -1424,7 +1445,7 @@
         .sort((a, b) => new Date(b.opened_at) - new Date(a.opened_at))
         .slice(0, 10);
 
-      const dl = (t) => (t.downloads && t.downloads[0] && t.downloads[0].count) || 0;
+      const dl = (t) => dlCount(t);
 
       const card = (tt, isReady) => (
         '<div class="bg-white rounded-2xl shadow-sm border p-4 ' + (isReady ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200') + '">' +
@@ -1980,6 +2001,13 @@
     if (eaSave) eaSave.addEventListener('click', saveEditAccount);
     const form = $('account-form');
     if (!form) return;
+    // بطاقة خصائص الدور: تتحدث فور النقر على أي دور
+    form.querySelectorAll('input[name="a-role"]').forEach((r) =>
+      r.addEventListener('change', () => updateRoleInfo('a-role-info', r.value)));
+    const checkedRole = form.querySelector('input[name="a-role"]:checked');
+    updateRoleInfo('a-role-info', checkedRole ? checkedRole.value : 'viewer');
+    const eaRoleSel = $('ea-role');
+    if (eaRoleSel) eaRoleSel.addEventListener('change', () => updateRoleInfo('ea-role-info', eaRoleSel.value));
     // زر إضافة قابل للطي
     const tg = $('acc-add-toggle');
     const fbox = $('account-form-box');
@@ -2001,8 +2029,7 @@
       const btn = form.querySelector('button[type=submit]');
       setBusy(btn, true, t('busy_add'));
       try {
-        const createBody = { action: 'create', full_name, email, password, role, faculty_id };
-        if (role === 'admin' || role === 'admin_rectora') createBody.permissions = PRESETS[role];
+        const createBody = { action: 'create', full_name, email, password, role, faculty_id, permissions: PRESETS[role] };
         const { data, error } = await DB.functions.invoke('manage-users', { body: createBody });
         if (error) throw error;
         if (!data || data.error) {
@@ -2014,6 +2041,7 @@
         }
         toast(t('t_acc_added'), 'success');
         form.reset();
+        updateRoleInfo('a-role-info', 'viewer');
         if (fbox) fbox.classList.add('hidden');
         A.refreshAccounts();
       } catch (err) {
@@ -2426,13 +2454,53 @@
       '<span class="text-[9px] text-slate-400">— ' + t('scope_none') + ' —</span>') + '</div>';
   }
 
+  /* ---------- بطاقة خصائص الدور: تظهر عند اختيار/الضغط على الدور ---------- */
+  const ROLE_INFO_KEYS = {
+    super_admin: 'role_desc_super_admin',
+    admin: 'role_desc_admin',
+    admin_rectora: 'role_desc_admin_rectora',
+    faculty_admin: 'role_desc_faculty_admin',
+    committee: 'role_desc_committee',
+    opener: 'role_desc_opener',
+    viewer: 'role_desc_viewer',
+  };
+  const ROLE_TITLE_KEYS = {
+    super_admin: 'acc_role_super',
+    admin: 'acc_role_admin',
+    admin_rectora: 'acc_role_rectora',
+    faculty_admin: 'acc_role_fadmin',
+    committee: 'acc_role_view',
+    opener: 'acc_role_open',
+    viewer: 'acc_role_viewer',
+  };
+  function roleInfoHtml(role) {
+    const isPreset = !!PRESETS[role];
+    const preset = isPreset ? PRESETS[role] : { scope: 'none', actions: {} };
+    const title = t(ROLE_TITLE_KEYS[role] || 'badge_custom');
+    const scope = preset.scope === 'all' ? t('scope_all')
+      : preset.scope === 'own' ? t('scope_own') : t('scope_none');
+    const chips = ACTIONS.map((a) => {
+      const on = !!(preset.actions && preset.actions[a]);
+      return '<span class="role-info-chip' + (on ? '' : ' off') + '">' +
+        (on ? '✓ ' : '× ') + t('act_' + a) + '</span>';
+    }).join('');
+    return '<div class="role-info-heading">' + t('role_info_title') + '</div>' +
+      '<div class="role-info-head"><span class="role-info-title">' + title + '</span>' +
+      '<span class="role-info-scope">' + scope + '</span></div>' +
+      '<p class="role-info-desc">' + t(ROLE_INFO_KEYS[role] || 'role_desc_custom') + '</p>' +
+      '<div class="role-info-chips">' + chips + '</div>';
+  }
+  function updateRoleInfo(id, role) {
+    const el = $(id);
+    if (el) el.innerHTML = roleInfoHtml(role);
+  }
+
   function roleOptions(u) {
     const opts = [
       ['super_admin', 'acc_role_super'],
       ['admin', 'acc_role_admin'],
       ['admin_rectora', 'acc_role_rectora'],
       ['faculty_admin', 'acc_role_fadmin'],
-      ['opener', 'acc_role_open'],
       ['viewer', 'acc_role_viewer']
     ];
     let html = opts.map(([r, key]) =>
@@ -2473,7 +2541,7 @@
       '</div>' +
       '<div class="account-email" dir="ltr">' + esc(u.email) + '</div>' +
       '<div class="account-badges">' +
-      '<span class="role-badge ' + badgeCls + '">' + t(badgeKey) + '</span>' +
+      '<span class="role-badge role-info-trigger ' + badgeCls + '" data-roleinfo="' + u.role + '" data-rid="' + u.id + '" title="' + t('role_info_title') + '">' + t(badgeKey) + '</span>' +
       (fac ? facChip(fac) : '') +
       '</div>' +
       permChips(u) +
@@ -2491,12 +2559,24 @@
       ) : '') +
       '</div>' +
       (canEdit ? '<div id="perm-' + u.id + '" class="perm-box hidden"></div>' : '') +
+      '<div id="roleinfo-' + u.id + '" class="role-info-card hidden">' + roleInfoHtml(u.role) + '</div>' +
       '</div>'
     );
   }
 
   function bindAccountControls(root) {
-    root.querySelectorAll('[data-role]').forEach((sel) =>
+    root.querySelectorAll('[data-roleinfo]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const box = $('roleinfo-' + b.dataset.rid);
+        if (box) box.classList.toggle('hidden');
+      })
+    );
+    root.querySelectorAll('[data-role]').forEach((sel) => {
+      const info = $('roleinfo-' + sel.dataset.role);
+      if (info) {
+        sel.addEventListener('focus', () => info.classList.remove('hidden'));
+        sel.addEventListener('blur', () => info.classList.add('hidden'));
+      }
       sel.addEventListener('change', () => {
         if (!sel.value) return;
         if (sel.value === 'admin' || sel.value === 'admin_rectora') {
@@ -2505,7 +2585,7 @@
           changeUserField(sel.dataset.role, { role: sel.value }, t('t_role_confirm', { label: t('acc_role_' + (sel.value === 'super_admin' ? 'super' : sel.value === 'faculty_admin' ? 'fadmin' : sel.value === 'opener' ? 'open' : 'viewer')) }));
         }
       })
-    );
+    });
     root.querySelectorAll('[data-fac]').forEach((sel) =>
       sel.addEventListener('change', () => {
         changeUserField(sel.dataset.fac, { faculty_id: sel.value || null });
@@ -2576,6 +2656,7 @@
     emailEl.value = u.email || '';
     passEl.value = '';
     roleEl.innerHTML = roleOptions(u);
+    updateRoleInfo('ea-role-info', roleEl.value);
     facEl.innerHTML = facultyOptions(u);
     const canFac = A.scopeOf() === 'all';
     facEl.disabled = !canFac;
@@ -2596,10 +2677,9 @@
     if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email)) return toast(t('t_bad_email'), 'error');
     if (password && password.length < 8) return toast(t('acc_pass_short'), 'error');
     if (!role) return toast(t('t_fill'), 'error');
-    const patch = { action: 'update', id, full_name, email, is_active: active, role };
+    const patch = { action: 'update', id, full_name, email, is_active: active, role, permissions: PRESETS[role] };
     if (password) patch.password = password;
     if (A.scopeOf() === 'all') patch.faculty_id = $('ea-faculty').value || null;
-    if (role === 'admin' || role === 'admin_rectora') patch.permissions = PRESETS[role];
     const btn = $('ea-save-btn');
     if (btn) btn.disabled = true;
     DB.functions.invoke('manage-users', { body: patch }).then(({ data, error }) => {
@@ -2643,6 +2723,10 @@
     if (!A.me) return;
     populateFacultySelects();
     A.loadStats();
+    const addRole = document.querySelector('input[name="a-role"]:checked');
+    updateRoleInfo('a-role-info', addRole ? addRole.value : 'viewer');
+    const editRole = $('ea-role');
+    if (editRole && editRole.value) updateRoleInfo('ea-role-info', editRole.value);
     if (A.users && A.users.length && A.can('accounts')) A.refreshAccounts();
   });
 
