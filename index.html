@@ -5,10 +5,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://oxlrqapdxlivjzgrupxd.supabase.co; connect-src 'self' https://oxlrqapdxlivjzgrupxd.supabase.co wss://oxlrqapdxlivjzgrupxd.supabase.co https://translate.googleapis.com https://api.ipify.org; object-src 'none'; base-uri 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>جامعة عين تموشنت بلحاج بوشعيب — بوابة مكتب الصفقات</title>
-  <script src="js/theme-init.js?v=gotto43"></script>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/theme-init.js?v=gotto46"></script>
   <link rel="stylesheet" href="fonts/tajawal.css">
-  <link rel="stylesheet" href="css/tailwind.css?v=gotto43">
-  <link rel="stylesheet" href="css/app.css?v=gotto43">
+  <link rel="stylesheet" href="css/tailwind.css?v=gotto46">
+  <link rel="stylesheet" href="css/app.css?v=gotto46">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -137,6 +138,7 @@
           <button class="side-link nav-btn nav-active" data-tab="tab-dashboard"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5.6" y="11" width="3.4" height="6" rx="1"/><rect x="10.3" y="6.6" width="3.4" height="10.4" rx="1"/><rect x="15" y="13.4" width="3.4" height="3.6" rx="1"/></svg></span><span data-i18n="nav_dashboard">اللوحة</span></button>
           <button class="side-link nav-btn" data-tab="tab-create"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3"/><path d="M9 15.2l1-2.6 5.4-5.4a1.5 1.5 0 0 1 2.1 2.1l-5.4 5.4z"/></svg></span><span data-i18n="nav_create">إنشاء</span></button>
           <button class="side-link nav-btn" data-tab="tab-tenders"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6v8.8M8.2 9l3.8 3.8L15.8 9"/><path d="M4.4 14.6v3.8a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2v-3.8"/></svg></span><span data-i18n="nav_tenders">الاستشارات</span></button>
+          <button class="side-link nav-btn" data-tab="tab-opening"><span class="side-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="9.6" rx="2.4"/><path d="M8.4 10.4V7.8a3.6 3.6 0 0 1 7.2 0v2.6"/></svg></span><span data-i18n="nav_opening">الفتح</span></button>
         </div>
       </aside>
 
@@ -219,6 +221,15 @@
           <div id="tenders-pager" class="pager"></div>
         </section>
 
+        <!-- فتح الأظرفة -->
+        <section id="tab-opening" class="tab-panel hidden">
+          <div class="card">
+            <h2 class="card-title" data-i18n="nav_opening">الفتح</h2>
+            <p class="card-sub" data-i18n="op_ready">جاهزة للفتح الآن</p>
+            <div id="opening-list" class="stack"></div>
+          </div>
+        </section>
+
         <!-- الحسابات -->
         <section id="tab-accounts" class="tab-panel hidden">
           <div class="list-head">
@@ -276,6 +287,23 @@
         </section>
 
       </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== فتح الأظرفة ===== -->
+  <div id="open-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head danger-head">
+        <h3 data-i18n="open_m_title">فتح الأظرفة</h3>
+        <p data-i18n="open_m_text">سيُحذف ملف دفتر الشروط نهائيًا من الخادم، وتُغلق صفحة التحميل على المتعاملين. لا يمكن التراجع.</p>
+      </div>
+      <div class="modal-body">
+        <div id="open-tender-info" class="info-box"></div>
+        <label class="label" for="open-ref-input" data-i18n="confirm_ref">اكتب رقم الاستشارة للتأكيد</label>
+        <input id="open-ref-input" class="input" autocomplete="off">
+        <button id="open-confirm-btn" class="btn btn-danger btn-block" data-i18n="open_m_btn">تأكيد الفتح والحذف النهائي</button>
+        <button data-close="open-modal" class="btn btn-secondary btn-block" data-i18n="back">تراجع</button>
       </div>
     </div>
   </div>
@@ -546,15 +574,15 @@
 
   <div id="toasts" class="toasts"></div>
 
-  <script src="js/config.js?v=gotto43"></script>
+  <script src="js/config.js?v=gotto46"></script>
 
-  <script src="js/utils.js?v=gotto43"></script>
-  <script src="js/i18n.js?v=gotto43"></script>
-  <script src="js/supabase.js?v=gotto43"></script>
-  <script src="js/auth.js?v=gotto43"></script>
-  <script src="js/download.js?v=gotto43"></script>
-  <script src="js/admin.js?v=gotto43"></script>
-  <script src="js/theme.js?v=gotto43"></script>
-  <script src="js/app.js?v=gotto43"></script>
+  <script src="js/utils.js?v=gotto46"></script>
+  <script src="js/i18n.js?v=gotto46"></script>
+  <script src="js/supabase.js?v=gotto46"></script>
+  <script src="js/auth.js?v=gotto46"></script>
+  <script src="js/download.js?v=gotto46"></script>
+  <script src="js/admin.js?v=gotto46"></script>
+  <script src="js/theme.js?v=gotto46"></script>
+  <script src="js/app.js?v=gotto46"></script>
 </body>
 </html>
