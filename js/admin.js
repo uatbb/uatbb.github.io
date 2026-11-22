@@ -712,6 +712,7 @@
     const canDashboard = canView && pages.dashboard !== false;
     const canCreatePage = canView && pages.create !== false;
     const canTenders = canView && pages.tenders !== false;
+    const canOpenPage = canView && pages.opening !== false && hasOpen();
     const canAccountsPage = canView && pages.accounts !== false && canAccounts;
     const canBak = canView && pages.backup !== false && canBackup();
     document.querySelectorAll('.nav-btn[data-tab="tab-dashboard"]')
@@ -722,6 +723,8 @@
       .forEach((b) => b.classList.toggle('hidden', !canAccountsPage));
     document.querySelectorAll('.nav-btn[data-tab="tab-tenders"]')
       .forEach((b) => b.classList.toggle('hidden', !canTenders));
+    document.querySelectorAll('.nav-btn[data-tab="tab-opening"]')
+      .forEach((b) => b.classList.toggle('hidden', !canOpenPage));
     document.querySelectorAll('.nav-btn[data-tab="tab-backup"]')
       .forEach((b) => b.classList.toggle('hidden', !canBak));
     const settingsWrap = $('settings-wrap');
@@ -730,6 +733,7 @@
     if (canDashboard) n++;
     if (canCreatePage) n++;
     if (canTenders) n++;
+    if (canOpenPage) n++;
     if (canAccountsPage) n++;
     if (canBak) n++;
     setGrid(Math.max(1, n));
@@ -737,7 +741,7 @@
     if (afb) afb.classList.toggle('hidden', !canAccountsPage);
     updateBadge();
     if (window.switchTo) {
-      const initialTab = canDashboard ? 'tab-dashboard' : (canTenders ? 'tab-tenders' : (canCreatePage ? 'tab-create' : 'tab-dashboard'));
+      const initialTab = canDashboard ? 'tab-dashboard' : (canTenders ? 'tab-tenders' : (canOpenPage ? 'tab-opening' : (canCreatePage ? 'tab-create' : 'tab-dashboard')));
       window.switchTo(initialTab);
       if (initialTab === 'tab-dashboard' && A.loadDashboard) A.loadDashboard();
     }
@@ -761,6 +765,9 @@
     }
     badge.classList.remove('hidden');
   }
+
+  // إعادة تطبيق الصلاحيات/التبويبات بعد أحداث الجلسة المتكررة
+  A.reapplyRoleUI = applyRoleUI;
 
   // إعادة ترجمة شارة الدور عند تبديل اللغة
   A.updateRoleBadge = function () {
