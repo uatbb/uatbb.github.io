@@ -1,12 +1,13 @@
 /* ===== نقطة الدخول: توجيه ذكي + المصادقة + النوافذ ===== */
 (function () {
   const $ = (id) => document.getElementById(id);
+  const t = (k, v) => I18N.t(k, v);
   let adminStarted = false;
   let lastUserId = null;
 
   /* ---------- تبديل التبويبات ---------- */
   window.switchTo = function (id) {
-    ['tab-dashboard', 'tab-create', 'tab-tenders', 'tab-accounts', 'tab-backup'].forEach((s) => {
+    ['tab-dashboard', 'tab-create', 'tab-tenders', 'tab-opening', 'tab-accounts', 'tab-backup'].forEach((s) => {
       const el = $(s);
       if (el) el.classList.add('hidden');
     });
@@ -35,6 +36,7 @@
         tabLoadAt[target] = now;
         if (target === 'tab-dashboard') window.Admin.loadDashboard();
         if (target === 'tab-tenders') window.Admin.refreshTenders();
+        if (target === 'tab-opening' && window.Admin.loadOpening) window.Admin.loadOpening();
         if (target === 'tab-accounts') window.Admin.refreshAccounts();
       });
     });
@@ -49,7 +51,12 @@
         return;
       }
       lastUserId = uid;
-      if (adminStarted) return;
+      if (adminStarted) {
+        // حدث دخول متكرر: أعد تطبيق الصلاحيات بدل العودة الصامتة،
+        // حتى لو أخفت طبقة أخرى اللوحات عن طريق الخطأ.
+        if (window.Admin && window.Admin.reapplyRoleUI) window.Admin.reapplyRoleUI();
+        return;
+      }
       adminStarted = true;
       initBottomNav();
       window.Admin.init();
@@ -61,7 +68,7 @@
     document.querySelectorAll('[data-close]').forEach((btn) => {
       btn.addEventListener('click', () => closeModal(btn.dataset.close));
     });
-    ['qr-modal', 'downloads-modal', 'edit-account-modal', 'theme-modal', 'change-password-modal', 'forgot-password-modal'].forEach((id) => {
+    ['qr-modal', 'downloads-modal', 'open-modal', 'edit-account-modal', 'theme-modal', 'change-password-modal', 'forgot-password-modal'].forEach((id) => {
       const el = $(id);
       if (el) {
         el.addEventListener('click', (e) => {
@@ -219,6 +226,16 @@
       window.Auth.onAuthed = startAdminApp;
       window.Auth.onSignedOut = () => setTimeout(() => location.reload(), 400);
       window.Auth.init();
+      // حارس أمان: إن اختفت كل اللوحات أثناء العودة لتبويب آخر، أعد تطبيق
+      // الصلاحيات تلقائيًا بدل انتظار تحديث يدوي للصفحة (F5).
+      setInterval(() => {
+        const page = $('page-admin');
+        const appEl = $('authed-app');
+        if (!page || page.classList.contains('hidden')) return;
+        if (!appEl || appEl.classList.contains('hidden')) return;
+        if (document.querySelector('.tab-panel:not(.hidden)')) return;
+        if (window.Admin && window.Admin.reapplyRoleUI) window.Admin.reapplyRoleUI();
+      }, 2000);
     }
   }
 
