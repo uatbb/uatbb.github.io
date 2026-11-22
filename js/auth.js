@@ -29,8 +29,14 @@
     DB.auth.getSession().then(({ data }) => {
       updateUI(!!(data && data.session));
     });
-    DB.auth.onAuthStateChange((_event, session) => {
-      updateUI(!!session);
+    DB.auth.onAuthStateChange((event, session) => {
+      const authed = !!session;
+      // Supabase يُعيد إرسال SIGNED_IN عند العودة للتبويب أو استعادة الجلسة.
+      // إعادة بناء الواجهة في هذه الحالة تُخفي كل اللوحات ثم لا تُعاد
+      // (startAdminApp يعود مبكرًا) → شاشة فارغة حتى تحديث الصفحة.
+      // نبني الواجهة فقط عند تغيّر حالة الدخول فعليًا.
+      if (authed === wasAuthed && event !== 'SIGNED_OUT') return;
+      updateUI(authed);
     });
 
     const form = $('login-form');
@@ -87,10 +93,13 @@
     $('authed-app').classList.toggle('hidden', !authed);
     if (authed) {
       /* إغلاق فوري (متزامن) قبل معرفة صلاحيات الحساب — يمنع وميض
-         الصفحات غير المسموح بها عند الدخول بحساب مختلف */
-      document.querySelectorAll('.nav-btn, .tab-panel').forEach((el) => el.classList.add('hidden'));
-      const sw = $('settings-wrap');
-      if (sw) sw.classList.add('hidden');
+         الصفحات غير المسموح بها عند الدخول بحساب مختلف.
+         الشرط !wasAuthed يمنع إخفاء اللوحات عند أحداث الجلسة المتكررة. */
+      if (!wasAuthed) {
+        document.querySelectorAll('.nav-btn, .tab-panel').forEach((el) => el.classList.add('hidden'));
+        const sw = $('settings-wrap');
+        if (sw) sw.classList.add('hidden');
+      }
       armIdle();
       DB.auth.getUser().then(({ data }) => {
         const nameEl = $('user-name');
